@@ -145,8 +145,9 @@ def add_no_cache_headers(response):
 # Default state
 DEFAULT_STATE = {
     "state": "idle",
-    "detail": "等待任务中...",
+    "detail": "修行中...",
     "progress": 0,
+    "officeName": "Saiyan Office 🐉",
     "updated_at": datetime.now().isoformat()
 }
 

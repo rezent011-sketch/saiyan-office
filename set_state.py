@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Update Star Office UI state (for testing or agent-driven sync).
+"""Saiyan Officeの状態を更新するスクリプト（テストおよびエージェント連携用）。
 
-For automatic state sync from OpenClaw: add a rule in your agent SOUL.md or AGENTS.md:
-  Before starting a task: run `python3 set_state.py writing "doing XYZ"`.
-  After finishing: run `python3 set_state.py idle "ready"`.
-The office UI reads state from the same state.json this script writes.
+OpenClawからの自動状態同期：SOUL.mdまたはAGENTS.mdに以下を追加：
+  タスク開始前：`python3 set_state.py writing "作業内容"` を実行
+  タスク完了後：`python3 set_state.py idle "待機中"` を実行
+オフィスUIはこのスクリプトが書き込むstate.jsonを読み取ります。
 """
 
 import json
@@ -34,8 +34,9 @@ def load_state():
             return json.load(f)
     return {
         "state": "idle",
-        "detail": "待命中...",
+        "detail": "修行中...",
         "progress": 0,
+        "officeName": "Saiyan Office 🐉",
         "updated_at": datetime.now().isoformat()
     }
 
@@ -45,20 +46,23 @@ def save_state(state):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("用法: python set_state.py <state> [detail]")
-        print(f"状态选项: {', '.join(VALID_STATES)}")
-        print("\n例子:")
+        print("使用法: python set_state.py <state> [detail]")
+        print(f"状態オプション: {', '.join(VALID_STATES)}")
+        print("\n使用例:")
         print("  python set_state.py idle")
-        print("  python set_state.py researching \"在查 Godot MCP...\"")
-        print("  python set_state.py writing \"在写热点日报模板...\"")
+        print("  python set_state.py researching \"ナメック星で調査中...\"")
+        print("  python set_state.py writing \"修行場でドキュメント作成中...\"")
+        print("  python set_state.py executing \"精神と時の部屋でタスク処理中...\"")
+        print("  python set_state.py syncing \"天下一武道会にデプロイ中...\"")
+        print("  python set_state.py error \"フリーザの宇宙船でエラー発生！\"")
         sys.exit(1)
     
     state_name = sys.argv[1]
     detail = sys.argv[2] if len(sys.argv) > 2 else ""
     
     if state_name not in VALID_STATES:
-        print(f"无效状态: {state_name}")
-        print(f"有效选项: {', '.join(VALID_STATES)}")
+        print(f"無効な状態: {state_name}")
+        print(f"有効なオプション: {', '.join(VALID_STATES)}")
         sys.exit(1)
     
     state = load_state()
@@ -67,4 +71,4 @@ if __name__ == "__main__":
     state["updated_at"] = datetime.now().isoformat()
     
     save_state(state)
-    print(f"状态已更新: {state_name} - {detail}")
+    print(f"状態を更新しました: {state_name} - {detail}")

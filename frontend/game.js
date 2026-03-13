@@ -1,5 +1,5 @@
-// Star Office UI - 游戏主逻辑
-// 依赖: layout.js（必须在这个之前加载）
+// Saiyan Office - ゲームメインロジック
+// 依存: layout.js（このファイルより先に読み込む必要あり）
 
 // 检测浏览器是否支持 WebP
 let supportsWebP = false;
@@ -82,7 +82,7 @@ function updateLoadingProgress() {
     loadingProgressBar.style.width = percent + '%';
   }
   if (loadingText) {
-    loadingText.textContent = `正在加载 Star 的像素办公室... ${percent}%`;
+    loadingText.textContent = `Saiyan Officeを読み込み中... ${percent}%`;
   }
 }
 
@@ -100,12 +100,12 @@ function hideLoadingOverlay() {
 }
 
 const STATES = {
-  idle: { name: '待命', area: 'breakroom' },
-  writing: { name: '整理文档', area: 'writing' },
-  researching: { name: '搜索信息', area: 'researching' },
-  executing: { name: '执行任务', area: 'writing' },
-  syncing: { name: '同步备份', area: 'writing' },
-  error: { name: '出错了', area: 'error' }
+  idle: { name: '待機中...', area: 'breakroom' },
+  writing: { name: '作業中...', area: 'writing' },
+  researching: { name: '調査中...', area: 'researching' },
+  executing: { name: '実行中...', area: 'writing' },
+  syncing: { name: '同期中...', area: 'writing' },
+  error: { name: 'エラー発生！', area: 'error' }
 };
 
 const BUBBLE_TEXTS = {
