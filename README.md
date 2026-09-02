@@ -1,19 +1,71 @@
 # 🐉 Saiyan Office
 
-> An AI agent virtual office inspired by Dragon Ball — powered by OpenClaw
+ピクセルアートの仮想オフィス。**Grok Bot の部屋（デスク）** と **Cursor Cloud Agent の作業** を、ローカル JSON の状態として表示します。
 
-ピクセルアートの修行場で、あなたのAIエージェントたちがタスクをこなします。
+ライブの Cursor API や有料エンドポイントには接続しません。部屋名・社員名は決め打ちの実名のみで、追加の部屋や数字は捏造しません。
 
-## エージェント配置
+## 表示の約束
 
-| エージェント | キャラ | 担当 |
-|---|---|---|
-| Commander | 超戦士型（総大将） | 指揮・全体把握 |
-| Builder | 王子型（開発将） | コーディング |
-| Designer | 天才型（デザイン将） | UI/UX |
-| Analyst | 宇宙人型（調査将） | リサーチ |
+状態バケツ（この文言のみ）:
 
-## 状態とエリア
+| バケツ | 意味 |
+|---|---|
+| 動いている | いま動いているデスク / 作業 |
+| 許可待ち | 許可や開始待ち |
+| できたまま | 終わったまま残っている |
+
+- **デスク = Grok 部屋**（実名のみ）: 司令塔 / Xマーケティング自動化 / 動画生成 / 広告運用 / AIバーチャルオフィス
+- デスクをクリックすると、`state.json` の `url` があればその部屋へ飛びます。空なら飛びません（URL は捏造しません）。
+- **動いている作業 = Cursor Cloud Agent**。クリック先は [cursor.com/agents](https://cursor.com/agents)。ローカルデータに `https://cursor.com/agents/bc-…` があるときだけその URL を使います。
+- サンプル行は必ず「サンプル」と表示します。エージェント ID や指標は作りません。
+- **分・時間の見込み** は、その文言が `state.json` に書いてあるときだけ表示します。見積もりしません。
+
+社員（実名のみ）: メインAI社員, 開発担当Bot, UTAGE・LINE担当Bot, TikTok LIVE切り抜きBot, クラウド環境構築Bot, 広告運用Bot, 動画生成担当Bot, Xマーケティング担当Bot, コンサル管理Bot, 新規事業Bot, 新規顧客開拓Bot, コンテンツ生成社員
+
+投稿・広告・課金・決済・自動承認・支出の機能はありません。
+
+## 起動
+
+```bash
+cd saiyan-office
+cp state.sample.json state.json   # 初回のみ
+python3 -m pip install -r backend/requirements.txt
+python3 backend/app.py
+# または
+./backend/run.sh
+```
+
+ブラウザで http://127.0.0.1:19000 を開きます。GitHub Pages / Vercel は不要です。
+
+部屋と Cursor の表示は **ローカル / デモデータ** です。あとから実データを `state.json` に書けば UI が追従します。
+
+## 状態の更新
+
+```bash
+python3 set_state.py idle
+python3 set_state.py executing "パイプライン実行中..."
+python3 set_state.py room 司令塔 動いている
+python3 set_state.py room 広告運用 許可待ち
+python3 set_state.py teammate メインAI社員 動いている
+python3 set_state.py cursor "サンプル: 表示確認" running
+python3 set_state.py cursor "サンプル: 完了した作業の例" finished
+```
+
+部屋 URL を書くときだけ渡してください（未指定なら空のままです）:
+
+```bash
+python3 set_state.py room 司令塔 動いている
+# url を足す例（実在する部屋 URL を自分で書く。ここには書きません）
+```
+
+確認:
+
+```bash
+python3 scripts/test_office_board.py
+python3 scripts/smoke_test.py --base-url http://127.0.0.1:19000
+```
+
+## ピクセルオフィスのエリア（従来）
 
 | 状態 | エリア |
 |---|---|
@@ -23,53 +75,6 @@
 | researching | ナメック星（情報収集） |
 | syncing | 天下一武道会（デプロイ） |
 | error | フリーザの宇宙船（エラー） |
-
----
-
-## English
-
-> An AI agent virtual office inspired by Dragon Ball — powered by [OpenClaw](https://openclaw.dev)
-
-Pixel-art agents train and battle through tasks in legendary Dragon Ball locations.
-
-### Agent Roster
-
-| Agent | Character Type | Role |
-|---|---|---|
-| Commander | Super Warrior (General) | Direction & oversight |
-| Builder | Prince Type (Dev General) | Coding & building |
-| Designer | Genius Type (Design General) | UI/UX |
-| Analyst | Alien Type (Intel General) | Research & analysis |
-
-### States & Areas
-
-| State | Area |
-|---|---|
-| idle | Capsule Corporation (resting) |
-| writing | Training Ground (documentation) |
-| executing | Hyperbolic Time Chamber (task processing) |
-| researching | Planet Namek (information gathering) |
-| syncing | World Martial Arts Tournament (deploy) |
-| error | Frieza's Spaceship (error) |
-
----
-
-## Setup
-
-```bash
-cd ~/Projects/saiyan-office
-uv run python backend/app.py
-# or
-./backend/run.sh
-```
-
-## State Control
-
-```bash
-python set_state.py idle
-python set_state.py executing "パイプライン実行中..."
-python set_state.py error "エラー発生！"
-```
 
 ## License
 

@@ -129,8 +129,9 @@
         }
         #status-text {
             position: absolute;
-            bottom: 12px;
+            top: 76px;
             left: 12px;
+            bottom: auto;
             transform: none;
             color: #eee;
             font-size: 14px;
@@ -146,6 +147,127 @@
             overflow: hidden;
             text-overflow: ellipsis;
             line-height: 1.2;
+        }
+        /* Grok desks + Cursor work board (local JSON, pixel HUD) */
+        #office-board {
+            position: absolute;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            z-index: 40;
+            max-height: 38%;
+            overflow: auto;
+            background: rgba(20, 23, 34, 0.92);
+            border: 4px solid #0e1119;
+            box-shadow: inset 0 0 0 2px #1a1b2f;
+            color: #eee;
+            font-family: 'ArkPixel', 'Courier New', monospace;
+            pointer-events: auto;
+        }
+        #office-board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            color: #ffd700;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #1a1b2f;
+        }
+        #office-board-source {
+            color: #94a3b8;
+            font-size: 11px;
+            letter-spacing: 0;
+        }
+        #office-buckets {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 6px;
+            padding: 8px;
+        }
+        .office-bucket {
+            min-width: 0;
+            background: #0f1220;
+            border: 2px solid #2a2f42;
+            padding: 6px;
+        }
+        .office-bucket-title {
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+        .office-bucket[data-bucket="動いている"] .office-bucket-title { color: #ffd700; }
+        .office-bucket[data-bucket="許可待ち"] .office-bucket-title { color: #f59e0b; }
+        .office-bucket[data-bucket="できたまま"] .office-bucket-title { color: #94a3b8; }
+        .office-chip-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .office-chip {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: #3a3f4f;
+            color: #fff;
+            border: 2px solid #555;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-family: inherit;
+            font-size: 12px;
+            line-height: 1.35;
+            cursor: pointer;
+        }
+        .office-chip:hover { filter: brightness(1.08); }
+        .office-chip.no-link { cursor: default; opacity: 0.92; }
+        .office-chip .kind {
+            display: inline-block;
+            margin-right: 6px;
+            color: #fde68a;
+            font-size: 10px;
+        }
+        .office-chip .sample-badge {
+            display: inline-block;
+            margin-left: 4px;
+            background: #7c2d12;
+            color: #fed7aa;
+            border: 1px solid #fb923c;
+            padding: 0 4px;
+            font-size: 10px;
+        }
+        .office-chip .meta {
+            display: block;
+            color: #cbd5e1;
+            font-size: 10px;
+            margin-top: 2px;
+        }
+        .office-chip .mates {
+            display: block;
+            color: #a5b4fc;
+            font-size: 10px;
+            margin-top: 2px;
+        }
+        .office-empty {
+            color: #64748b;
+            font-size: 11px;
+            text-align: center;
+            padding: 8px 0;
+        }
+        #office-board-toast {
+            display: none;
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 8px;
+            background: #1f2937;
+            color: #fde68a;
+            border: 2px solid #f59e0b;
+            padding: 6px 8px;
+            font-size: 11px;
+            z-index: 41;
         }
         /* 状态控制栏 */
         #control-bar {
@@ -1004,6 +1126,13 @@
                 margin-left: 0 !important;
             }
 
+            #office-board {
+                max-height: 52%;
+            }
+            #office-buckets {
+                grid-template-columns: 1fr;
+            }
+
             #memo-panel,
             #control-bar,
             #guest-agent-panel {
@@ -1143,6 +1272,27 @@
         <div id="game-container">
             <div id="game-skeleton"><div class="hint">正在进入像素办公室…</div></div>
             <div id="status-text">加载中...</div>
+            <div id="office-board" aria-label="Grok rooms and Cursor agents">
+                <div id="office-board-header">
+                    <span id="office-board-title">デスク＝Grok部屋 / 作業＝Cursor</span>
+                    <span id="office-board-source">ローカルJSON（ライブAPI未接続）</span>
+                </div>
+                <div id="office-buckets">
+                    <section class="office-bucket" data-bucket="動いている">
+                        <div class="office-bucket-title">動いている</div>
+                        <div class="office-chip-list" id="bucket-running"></div>
+                    </section>
+                    <section class="office-bucket" data-bucket="許可待ち">
+                        <div class="office-bucket-title">許可待ち</div>
+                        <div class="office-chip-list" id="bucket-waiting"></div>
+                    </section>
+                    <section class="office-bucket" data-bucket="できたまま">
+                        <div class="office-bucket-title">できたまま</div>
+                        <div class="office-chip-list" id="bucket-done"></div>
+                    </section>
+                </div>
+                <div id="office-board-toast" role="status"></div>
+            </div>
         </div>
     
     <!-- 底部面板容器 -->
@@ -1318,7 +1468,14 @@
                 assetHintDefault: '通用素材：建议保持原图尺寸、透明通道与视觉重心一致，避免错位或失真',
                 showCoords: '显示坐标', hideCoords: '隐藏坐标', moveView: '移动视野', lockView: '锁定视野',
                 memoTitle: '昨 日 小 记', guestTitle: '访 客 列 表', officeTitle: '海辛小龙虾的办公室',
-                loadingOffice: '正在加载 Star 的像素办公室...'
+                loadingOffice: '正在加载 Star 的像素办公室...',
+                officeBoardTitle: 'デスク＝Grok部屋 / 作業＝Cursor',
+                officeBoardSource: '本地JSON（未连接实时API）',
+                officeDeskKind: 'デスク',
+                officeWorkKind: 'Cursor作業',
+                officeSample: 'サンプル',
+                officeNoLink: 'リンク未設定（state.json の url を書いてください）',
+                officeEmptyBucket: 'なし'
             },
             en: {
                 controlTitle: 'Star Status',
@@ -1346,7 +1503,14 @@
                 assetHintDefault: 'Generic asset: keep source size, alpha channel, and visual anchor to avoid drift/distortion',
                 showCoords: 'Show Coords', hideCoords: 'Hide Coords', moveView: 'Pan View', lockView: 'Lock View',
                 memoTitle: 'YESTERDAY NOTES', guestTitle: 'VISITOR LIST', officeTitle: 'Haixin Lobster Office',
-                loadingOffice: 'Loading Star’s pixel office...'
+                loadingOffice: 'Loading Star’s pixel office...',
+                officeBoardTitle: 'Desks = Grok rooms / Work = Cursor',
+                officeBoardSource: 'Local JSON (no live API)',
+                officeDeskKind: 'DESK',
+                officeWorkKind: 'CURSOR',
+                officeSample: 'SAMPLE',
+                officeNoLink: 'No room URL in state.json (not invented)',
+                officeEmptyBucket: 'empty'
             },
             ja: {
                 controlTitle: 'エージェント状態',
@@ -1374,7 +1538,14 @@
                 assetHintDefault: '汎用素材：元サイズ・透過・視覚アンカーを維持し、ズレや崩れを防いでください',
                 showCoords: '座標表示', hideCoords: '座標非表示', moveView: '視点移動', lockView: '視点固定',
                 memoTitle: '昨日の作業ログ', guestTitle: '仲間リスト', officeTitle: 'Saiyan Office 🐉',
-                loadingOffice: 'Saiyan Officeを読み込み中...'
+                loadingOffice: 'Saiyan Officeを読み込み中...',
+                officeBoardTitle: 'デスク＝Grok部屋 / 作業＝Cursor',
+                officeBoardSource: 'ローカルJSON（ライブAPI未接続）',
+                officeDeskKind: 'デスク',
+                officeWorkKind: 'Cursor作業',
+                officeSample: 'サンプル',
+                officeNoLink: 'リンク未設定（state.json の url を書いてください）',
+                officeEmptyBucket: 'なし'
             }
         };
 
@@ -1459,6 +1630,11 @@
             if (memoTitle) memoTitle.textContent = t('memoTitle');
             const guestTitle = document.getElementById('guest-agent-panel-title');
             if (guestTitle) guestTitle.textContent = t('guestTitle');
+            setText('office-board-title', 'officeBoardTitle');
+            setText('office-board-source', 'officeBoardSource');
+            if (window.__officeBoardData) {
+                renderOfficeBoard(window.__officeBoardData);
+            }
             const plaqueTitle = (typeof window.officeNameFromServer !== 'undefined' && window.officeNameFromServer) || t('officeTitle');
             if (window.officePlaqueText && window.officePlaqueText.setText) {
                 window.officePlaqueText.setText(plaqueTitle);
@@ -1722,6 +1898,153 @@
         const TYPEWRITER_DELAY = 50;
         let lastSeenGuestIds = new Set(); // 用于检测新加入的访客，触发欢迎气泡
         let guestWelcomeInitialized = false;
+
+        const OFFICE_BUCKETS = ['動いている', '許可待ち', 'できたまま'];
+        const OFFICE_BUCKET_IDS = {
+            '動いている': 'bucket-running',
+            '許可待ち': 'bucket-waiting',
+            'できたまま': 'bucket-done'
+        };
+        const CURSOR_AGENTS_HOME = 'https://cursor.com/agents';
+        const ETA_LABEL = '分・時間の見込み';
+        let officeBoardToastTimer = null;
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        function normalizeOfficeBucket(value, lifecycle) {
+            const life = String(lifecycle || '').trim().toLowerCase();
+            if (life === 'running') return '動いている';
+            if (life === 'finished') return 'できたまま';
+            const raw = String(value || '').trim();
+            if (OFFICE_BUCKETS.includes(raw)) return raw;
+            const mapped = {
+                idle: 'できたまま', writing: '動いている', receiving: '動いている',
+                replying: '動いている', researching: '動いている', executing: '動いている',
+                syncing: '動いている', error: '動いている', pending: '許可待ち',
+                waiting: '許可待ち', running: '動いている', finished: 'できたまま', done: 'できたまま'
+            };
+            return mapped[raw.toLowerCase()] || 'できたまま';
+        }
+
+        function officeEtaText(item) {
+            if (!item || typeof item !== 'object') return '';
+            if (Object.prototype.hasOwnProperty.call(item, ETA_LABEL)) {
+                const val = String(item[ETA_LABEL] ?? '').trim();
+                return val ? `${ETA_LABEL} ${val}` : '';
+            }
+            const eta = item.eta;
+            if (typeof eta === 'string' && eta.includes(ETA_LABEL)) return eta.trim();
+            return '';
+        }
+
+        function showOfficeBoardToast(message) {
+            const el = document.getElementById('office-board-toast');
+            if (!el) return;
+            el.textContent = message;
+            el.style.display = 'block';
+            if (officeBoardToastTimer) clearTimeout(officeBoardToastTimer);
+            officeBoardToastTimer = setTimeout(() => { el.style.display = 'none'; }, 2400);
+        }
+
+        function openGrokDesk(roomName) {
+            const data = window.__officeBoardData || {};
+            const room = (data.grokRooms || []).find((r) => r.name === roomName);
+            const url = String((room && room.url) || '').trim();
+            if (!url) {
+                showOfficeBoardToast(t('officeNoLink'));
+                return;
+            }
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+        window.openGrokDesk = openGrokDesk;
+
+        function openCursorWork(openUrl) {
+            const url = String(openUrl || '').trim();
+            if (url.startsWith(CURSOR_AGENTS_HOME)) {
+                window.open(url, '_blank', 'noopener,noreferrer');
+                return;
+            }
+            window.open(CURSOR_AGENTS_HOME, '_blank', 'noopener,noreferrer');
+        }
+        window.openCursorWork = openCursorWork;
+
+        function renderOfficeBoard(data) {
+            window.__officeBoardData = data || {};
+            const rooms = Array.isArray(data && data.grokRooms) ? data.grokRooms : [];
+            const agents = Array.isArray(data && data.cursorAgents) ? data.cursorAgents : [];
+            const teammates = Array.isArray(data && data.teammates) ? data.teammates : [];
+            const grouped = { '動いている': [], '許可待ち': [], 'できたまま': [] };
+
+            rooms.forEach((room) => {
+                const bucket = normalizeOfficeBucket(room.status, room.lifecycle);
+                const mates = (room.teammates && room.teammates.length)
+                    ? room.teammates
+                    : teammates.filter((m) => m.room === room.name).map((m) => m.name);
+                const eta = officeEtaText(room);
+                const hasUrl = !!String(room.url || '').trim();
+                grouped[bucket].push({
+                    kind: 'desk',
+                    name: room.name,
+                    hasUrl,
+                    sample: !!room.sample,
+                    eta,
+                    mates,
+                    meta: ''
+                });
+            });
+
+            agents.forEach((agent) => {
+                const bucket = normalizeOfficeBucket(agent.status, agent.lifecycle);
+                const life = String(agent.lifecycle || '').trim().toLowerCase();
+                const lifeLabel = (life === 'running' || life === 'finished') ? life : '';
+                const bits = [];
+                if (lifeLabel) bits.push(lifeLabel);
+                if (agent.branch) bits.push(agent.branch);
+                if (agent.prUrl) bits.push(agent.prUrl);
+                const eta = officeEtaText(agent);
+                if (eta) bits.push(eta);
+                grouped[bucket].push({
+                    kind: 'cursor',
+                    name: agent.name || agent.title || 'Cursor',
+                    title: agent.title || '',
+                    openUrl: agent.openUrl || agent.url || CURSOR_AGENTS_HOME,
+                    sample: !!agent.sample,
+                    eta,
+                    mates: [],
+                    meta: bits.join(' · ')
+                });
+            });
+
+            OFFICE_BUCKETS.forEach((bucket) => {
+                const host = document.getElementById(OFFICE_BUCKET_IDS[bucket]);
+                if (!host) return;
+                const items = grouped[bucket];
+                if (!items.length) {
+                    host.innerHTML = `<div class="office-empty">${escapeHtml(t('officeEmptyBucket'))}</div>`;
+                    return;
+                }
+                host.innerHTML = items.map((item) => {
+                    const kind = item.kind === 'desk' ? t('officeDeskKind') : t('officeWorkKind');
+                    const sample = item.sample ? `<span class="sample-badge">${escapeHtml(t('officeSample'))}</span>` : '';
+                    const title = item.title && item.title !== item.name
+                        ? `<span class="meta">${escapeHtml(item.title)}</span>` : '';
+                    const meta = item.meta ? `<span class="meta">${escapeHtml(item.meta)}</span>` : '';
+                    const mates = item.mates && item.mates.length
+                        ? `<span class="mates">${escapeHtml(item.mates.join(' / '))}</span>` : '';
+                    if (item.kind === 'desk') {
+                        const cls = item.hasUrl ? 'office-chip' : 'office-chip no-link';
+                        const nameAttr = escapeHtml(item.name).replace(/'/g, '&#39;');
+                        return `<button type="button" class="${cls}" onclick="openGrokDesk('${nameAttr}')"><span class="kind">${escapeHtml(kind)}</span>${escapeHtml(item.name)}${sample}${title}${mates}</button>`;
+                    }
+                    const openUrl = escapeHtml(item.openUrl).replace(/'/g, '&#39;');
+                    return `<button type="button" class="office-chip" onclick="openCursorWork('${openUrl}')"><span class="kind">${escapeHtml(kind)}</span>${escapeHtml(item.name)}${sample}${title}${meta}</button>`;
+                }).join('');
+            });
+        }
 
         // 状态控制栏函数（用于测试）
         function setState(state, detail) {
@@ -4202,9 +4525,46 @@ function toggleBrokerPanel() {
             serverroom.anims.stop();
             serverroom.setFrame(0);
 
-            // Desk at (218,417) (v2)
+            // Desk at (218,417) (v2) — Grok room 司令塔
             const desk = this.add.image(218, 417, 'desk_v2').setOrigin(0.5);
             desk.setDepth(1001);  // desk above starWorking
+            desk.setInteractive({ useHandCursor: true });
+            desk.on('pointerdown', () => {
+                if (typeof window.openGrokDesk === 'function') {
+                    window.openGrokDesk('司令塔');
+                }
+            });
+
+            const grokDeskPlates = [
+                { name: '司令塔', x: 140, y: 58 },
+                { name: 'Xマーケティング自動化', x: 390, y: 58 },
+                { name: '動画生成', x: 640, y: 58 },
+                { name: '広告運用', x: 890, y: 58 },
+                { name: 'AIバーチャルオフィス', x: 1140, y: 58 }
+            ];
+            grokDeskPlates.forEach((plate) => {
+                const bg = this.add.rectangle(plate.x, plate.y, 230, 28, 0x3e2723, 0.92);
+                bg.setStrokeStyle(2, 0xffd700);
+                bg.setDepth(1300);
+                bg.setInteractive({ useHandCursor: true });
+                const label = this.add.text(plate.x, plate.y, plate.name, {
+                    fontFamily: 'ArkPixel, monospace',
+                    fontSize: '11px',
+                    fill: '#ffd700',
+                    stroke: '#000',
+                    strokeThickness: 2,
+                    align: 'center'
+                }).setOrigin(0.5);
+                label.setDepth(1301);
+                const openPlate = () => {
+                    if (typeof window.openGrokDesk === 'function') {
+                        window.openGrokDesk(plate.name);
+                    }
+                };
+                bg.on('pointerdown', openPlate);
+                label.setInteractive({ useHandCursor: true });
+                label.on('pointerdown', openPlate);
+            });
 
             // Random flower pot at (310,390), default scale 0.8 (top layer)
             const flowerFrameCount = Math.max(1, FLOWERS_FRAME_COLS * FLOWERS_FRAME_ROWS); // 动态帧数
@@ -4673,6 +5033,7 @@ function toggleBrokerPanel() {
                                 window.officePlaqueText.setText(data.officeName);
                             }
                         }
+                        renderOfficeBoard(data);
                         const nextState = normalizeState(data.state);
                         const stateInfo = STATES[nextState] || STATES.idle;
                         // If we're mid-transition, don't restart the path every poll

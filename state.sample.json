@@ -3,5 +3,95 @@
   "detail": "修行中...",
   "progress": 0,
   "officeName": "Saiyan Office 🐉",
-  "updated_at": "2026-03-13T00:00:00"
+  "updated_at": "2026-03-13T00:00:00",
+  "dataSource": "local-demo",
+  "liveCursorApi": false,
+  "grokRooms": [
+    {
+      "id": "司令塔",
+      "name": "司令塔",
+      "kind": "desk",
+      "status": "動いている",
+      "url": "",
+      "teammates": ["メインAI社員", "コンサル管理Bot", "新規事業Bot", "新規顧客開拓Bot"]
+    },
+    {
+      "id": "Xマーケティング自動化",
+      "name": "Xマーケティング自動化",
+      "kind": "desk",
+      "status": "動いている",
+      "url": "",
+      "teammates": ["Xマーケティング担当Bot"]
+    },
+    {
+      "id": "動画生成",
+      "name": "動画生成",
+      "kind": "desk",
+      "status": "できたまま",
+      "url": "",
+      "teammates": ["TikTok LIVE切り抜きBot", "動画生成担当Bot", "コンテンツ生成社員"]
+    },
+    {
+      "id": "広告運用",
+      "name": "広告運用",
+      "kind": "desk",
+      "status": "許可待ち",
+      "url": "",
+      "teammates": ["広告運用Bot"]
+    },
+    {
+      "id": "AIバーチャルオフィス",
+      "name": "AIバーチャルオフィス",
+      "kind": "desk",
+      "status": "動いている",
+      "url": "",
+      "teammates": ["開発担当Bot", "UTAGE・LINE担当Bot", "クラウド環境構築Bot"]
+    }
+  ],
+  "teammates": [
+    {"id": "メインAI社員", "name": "メインAI社員", "room": "司令塔", "status": "動いている"},
+    {"id": "開発担当Bot", "name": "開発担当Bot", "room": "AIバーチャルオフィス", "status": "動いている"},
+    {"id": "UTAGE・LINE担当Bot", "name": "UTAGE・LINE担当Bot", "room": "AIバーチャルオフィス", "status": "動いている"},
+    {"id": "TikTok LIVE切り抜きBot", "name": "TikTok LIVE切り抜きBot", "room": "動画生成", "status": "できたまま"},
+    {"id": "クラウド環境構築Bot", "name": "クラウド環境構築Bot", "room": "AIバーチャルオフィス", "status": "動いている"},
+    {"id": "広告運用Bot", "name": "広告運用Bot", "room": "広告運用", "status": "許可待ち"},
+    {"id": "動画生成担当Bot", "name": "動画生成担当Bot", "room": "動画生成", "status": "できたまま"},
+    {"id": "Xマーケティング担当Bot", "name": "Xマーケティング担当Bot", "room": "Xマーケティング自動化", "status": "動いている"},
+    {"id": "コンサル管理Bot", "name": "コンサル管理Bot", "room": "司令塔", "status": "動いている"},
+    {"id": "新規事業Bot", "name": "新規事業Bot", "room": "司令塔", "status": "できたまま"},
+    {"id": "新規顧客開拓Bot", "name": "新規顧客開拓Bot", "room": "司令塔", "status": "許可待ち"},
+    {"id": "コンテンツ生成社員", "name": "コンテンツ生成社員", "room": "動画生成", "status": "できたまま"}
+  ],
+  "cursorAgents": [
+    {
+      "name": "サンプル: 表示確認",
+      "title": "ピクセルオフィスの状態表示",
+      "status": "動いている",
+      "lifecycle": "running",
+      "branch": "sample/local-demo",
+      "prUrl": "",
+      "url": "https://cursor.com/agents",
+      "sample": true
+    },
+    {
+      "name": "サンプル: 許可待ちの例",
+      "title": "ローカルJSONの許可待ち表示",
+      "status": "許可待ち",
+      "lifecycle": "",
+      "branch": "sample/pending-demo",
+      "prUrl": "",
+      "url": "https://cursor.com/agents",
+      "sample": true
+    },
+    {
+      "name": "サンプル: 完了した作業の例",
+      "title": "できたままの表示確認",
+      "status": "できたまま",
+      "lifecycle": "finished",
+      "branch": "sample/finished-demo",
+      "prUrl": "",
+      "url": "https://cursor.com/agents",
+      "sample": true
+    }
+  ]
 }

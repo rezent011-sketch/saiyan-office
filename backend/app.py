@@ -27,6 +27,13 @@ from store_utils import (
     load_join_keys as _store_load_join_keys,
     save_join_keys as _store_save_join_keys,
 )
+from office_board import (
+    ensure_office_board,
+    patch_cursor_agent,
+    patch_room,
+    patch_teammate,
+    public_board,
+)
 
 try:
     from PIL import Image
@@ -148,8 +155,11 @@ DEFAULT_STATE = {
     "detail": "修行中...",
     "progress": 0,
     "officeName": "Saiyan Office 🐉",
-    "updated_at": datetime.now().isoformat()
+    "updated_at": datetime.now().isoformat(),
+    "dataSource": "local-demo",
+    "liveCursorApi": False,
 }
+ensure_office_board(DEFAULT_STATE)
 
 
 def load_state():
@@ -171,6 +181,12 @@ def load_state():
 
     if not isinstance(state, dict):
         state = dict(DEFAULT_STATE)
+
+    if ensure_office_board(state):
+        try:
+            save_state(state)
+        except Exception:
+            pass
 
     # Auto-idle
     try:
@@ -1151,6 +1167,8 @@ def get_status():
     office_name = get_office_name_from_identity()
     if office_name:
         state["officeName"] = office_name
+    state.update(public_board(state))
+    state["liveCursorApi"] = False
     return jsonify(state)
 
 
@@ -1302,9 +1320,15 @@ def set_state_endpoint():
                 state["state"] = s
         if "detail" in data:
             state["detail"] = data["detail"]
+        if isinstance(data.get("room"), dict):
+            patch_room(state, data["room"])
+        if isinstance(data.get("teammate"), dict):
+            patch_teammate(state, data["teammate"])
+        if isinstance(data.get("cursor"), dict):
+            patch_cursor_agent(state, data["cursor"])
         state["updated_at"] = datetime.now().isoformat()
         save_state(state)
-        return jsonify({"status": "ok"})
+        return jsonify({"status": "ok", "board": public_board(state)})
     except Exception as e:
         return jsonify({"status": "error", "msg": str(e)}), 500
 

@@ -73,6 +73,37 @@ def main() -> int:
     else:
         print("  OK  POST /set_state -> 200")
 
+    code, body = req("GET", base + "/status", token=token)
+    try:
+        status = json.loads(body) if code == 200 else {}
+    except Exception:
+        status = {}
+    rooms = status.get("grokRooms") if isinstance(status, dict) else None
+    agents = status.get("cursorAgents") if isinstance(status, dict) else None
+    buckets = status.get("buckets") if isinstance(status, dict) else None
+    expected_rooms = {"司令塔", "Xマーケティング自動化", "動画生成", "広告運用", "AIバーチャルオフィス"}
+    expected_buckets = ["動いている", "許可待ち", "できたまま"]
+    if not isinstance(rooms, list) or {r.get("name") for r in rooms if isinstance(r, dict)} != expected_rooms:
+        failures.append(f"GET /status missing canonical grokRooms, got={rooms}")
+    else:
+        print("  OK  /status grokRooms")
+    if buckets != expected_buckets:
+        failures.append(f"GET /status buckets mismatch, got={buckets}")
+    else:
+        print("  OK  /status buckets")
+    if not isinstance(agents, list) or not any(a.get("sample") for a in agents if isinstance(a, dict)):
+        failures.append("GET /status cursorAgents should include sample rows")
+    else:
+        invented = [a for a in agents if isinstance(a, dict) and str(a.get("url") or "") and not str(a.get("url")).startswith("https://cursor.com/agents")]
+        if invented:
+            failures.append(f"cursorAgents has non-cursor.com URL: {invented}")
+        else:
+            print("  OK  /status cursorAgents (sample, no invented URLs)")
+    if status.get("liveCursorApi"):
+        failures.append("liveCursorApi must be false (local JSON only)")
+    else:
+        print("  OK  liveCursorApi is false")
+
     if failures:
         print("\n[smoke] FAIL")
         for f in failures:
