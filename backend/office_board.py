@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -309,14 +310,25 @@ def sanitize_public_detail(detail: Any, fallback: str = "待機中") -> str:
     return text
 
 
-def append_instruction_outbox(item: dict) -> Path:
-    """Append one queued instruction for the Mac app to persist/deliver."""
-    path = Path(
+def instruction_outbox_path() -> Path:
+    return Path(
         os.environ.get(
             "STAR_OFFICE_OUTBOX",
             str(Path(__file__).resolve().parent.parent / "outbox" / "instructions.jsonl"),
         )
     )
+
+
+def delivered_outbox_path() -> Path:
+    override = os.environ.get("STAR_OFFICE_DELIVERED")
+    if override:
+        return Path(override)
+    return instruction_outbox_path().parent / "delivered.jsonl"
+
+
+def append_instruction_outbox(item: dict) -> Path:
+    """Append one queued instruction. Never wipes the file; the Mac app copies to delivered.jsonl."""
+    path = instruction_outbox_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     room = str(item.get("room") or "").strip()
     row = {
@@ -325,9 +337,123 @@ def append_instruction_outbox(item: dict) -> Path:
         "body": item.get("body") or item.get("text") or "",
         "timestamp": item.get("timestamp") or item.get("created_at") or datetime.now().isoformat(),
     }
+    ident = str(item.get("id") or "").strip()
+    if ident:
+        row["id"] = ident
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
     return path
+
+
+def _read_jsonl(path: Path) -> list[dict]:
+    if not path.is_file():
+        return []
+    rows: list[dict] = []
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(obj, dict):
+            rows.append(obj)
+    return rows
+
+
+def instruction_body(row: Any) -> str:
+    if not isinstance(row, dict):
+        return ""
+    return str(row.get("body") or row.get("text") or "").strip()
+
+
+def instruction_is_delivered(row: Any) -> bool:
+    if not isinstance(row, dict):
+        return False
+    delivered = row.get("delivered")
+    if delivered is True or str(delivered).strip().lower() in {"true", "1", "yes"}:
+        return True
+    if str(row.get("delivery") or "").strip().lower() == "delivered":
+        return True
+    if row.get("queued") is False and str(row.get("status") or "") == "できたまま":
+        return True
+    return False
+
+
+def same_instruction(left: Any, right: Any) -> bool:
+    if not isinstance(left, dict) or not isinstance(right, dict):
+        return False
+    lid = str(left.get("id") or "").strip()
+    rid = str(right.get("id") or "").strip()
+    if lid and rid and lid == rid:
+        return True
+    lroom = str(left.get("room") or "").strip()
+    rroom = str(right.get("room") or "").strip()
+    lbody = instruction_body(left)
+    rbody = instruction_body(right)
+    return bool(lroom and rroom and lbody and rbody and lroom == rroom and lbody == rbody)
+
+
+def mark_instruction_delivered(item: dict) -> dict:
+    item["delivered"] = True
+    item["queued"] = False
+    item["executed"] = False
+    item["status"] = "できたまま"
+    item["delivery"] = "delivered"
+    if not item.get("body"):
+        item["body"] = instruction_body(item)
+    if not item.get("text"):
+        item["text"] = instruction_body(item)
+    return item
+
+
+def apply_delivered_outbox(state: dict) -> bool:
+    """Flip queued items that already landed in outbox/delivered.jsonl. Does not wipe instructions.jsonl."""
+    if not isinstance(state, dict):
+        return False
+    delivered_rows = _read_jsonl(delivered_outbox_path())
+    if not delivered_rows:
+        return False
+    rows = state.setdefault("queuedInstructions", [])
+    if not isinstance(rows, list):
+        rows = []
+        state["queuedInstructions"] = rows
+    changed = False
+    for delivered in delivered_rows:
+        matched = False
+        for item in rows:
+            if not isinstance(item, dict) or not same_instruction(item, delivered):
+                continue
+            matched = True
+            if instruction_is_delivered(item):
+                continue
+            before = dict(item)
+            mark_instruction_delivered(item)
+            if item != before:
+                changed = True
+            break
+        if not matched and instruction_body(delivered) and str(delivered.get("room") or "").strip():
+            room = str(delivered.get("room") or "").strip()
+            body = instruction_body(delivered)
+            item = {
+                "id": str(delivered.get("id") or f"delivered-{room}-{body}")[:120],
+                "room": room,
+                "assignee_name": delivered.get("assignee_name") or room_assignee(room),
+                "text": body[:200],
+                "body": body[:200],
+                "source": "delivered-outbox",
+                "created_at": delivered.get("timestamp") or delivered.get("created_at") or "",
+                "timestamp": delivered.get("timestamp") or delivered.get("created_at") or "",
+            }
+            mark_instruction_delivered(item)
+            rows.append(item)
+            changed = True
+    return changed
 
 
 def _index_by_name(rows: list[dict], names: tuple[str, ...]) -> dict[str, dict]:
@@ -465,6 +591,9 @@ def ensure_office_board(state: dict) -> bool:
         state["queuedInstructions"] = []
         changed = True
 
+    if apply_delivered_outbox(state):
+        changed = True
+
     return changed
 
 
@@ -480,7 +609,7 @@ def queue_instruction(state: dict, payload: dict) -> dict | None:
     assignee = ROOM_ASSIGNEES[room]
     now = datetime.now().isoformat()
     item = {
-        "id": str(payload.get("id") or f"q-{int(datetime.now().timestamp() * 1000)}"),
+        "id": str(payload.get("id") or f"q-{time.time_ns()}"),
         "room": room,
         "assignee_name": assignee,
         "text": text[:200],
@@ -563,6 +692,7 @@ def patch_cursor_agent(state: dict, payload: dict) -> bool:
 
 def public_board(state: dict) -> dict:
     ensure_office_board(state)
+    apply_delivered_outbox(state)
     rooms = []
     for room in state.get("grokRooms", []):
         rooms.append({

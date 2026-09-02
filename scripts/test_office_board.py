@@ -22,6 +22,7 @@ from office_board import (  # noqa: E402
     cursor_open_url,
     ensure_office_board,
     eta_display,
+    instruction_is_delivered,
     normalize_bucket,
     patch_cursor_agent,
     patch_room,
@@ -37,6 +38,8 @@ def fail(msg: str) -> None:
 
 def main() -> int:
     os.environ["STAR_OFFICE_OUTBOX"] = str(ROOT / "outbox" / "test-instructions.jsonl")
+    os.environ["STAR_OFFICE_DELIVERED"] = str(ROOT / "outbox" / "test-delivered.jsonl")
+    Path(os.environ["STAR_OFFICE_DELIVERED"]).write_text("", encoding="utf-8")
     assert STATUS_BUCKETS == ("動いている", "許可待ち", "できたまま")
     assert GROK_ROOM_NAMES == (
         "司令塔",
@@ -115,6 +118,49 @@ def main() -> int:
     board = public_board(empty)
     if not any(q.get("id") == queued["id"] for q in board.get("queuedInstructions") or []):
         fail("queuedInstructions missing from public_board /status payload")
+    outbox_before = outbox.read_text(encoding="utf-8")
+    delivered_path = Path(os.environ["STAR_OFFICE_DELIVERED"])
+    delivered_path.write_text(
+        json.dumps(
+            {
+                "room": "AIバーチャルオフィス",
+                "assignee_name": "開発担当Bot2",
+                "body": "状況をまとめて",
+                "timestamp": queued["timestamp"],
+                "delivered": True,
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    flipped = public_board(empty)
+    match = next((q for q in flipped.get("queuedInstructions") or [] if q.get("id") == queued["id"]), None)
+    if not match or not instruction_is_delivered(match) or match.get("status") != "できたまま":
+        fail(f"delivered.jsonl must flip queuedInstructions to delivered/できたまま, got {match}")
+    if match.get("queued") is not False:
+        fail("delivered item must leave the pending queue")
+    if outbox.read_text(encoding="utf-8") != outbox_before:
+        fail("must not wipe instructions.jsonl when applying delivered.jsonl")
+    still_new = queue_instruction(empty, {"room": "司令塔", "text": "キュー確認"})
+    if not still_new or still_new.get("status") != "許可待ち":
+        fail("new Safari instructions must still queue")
+    last2 = outbox.read_text(encoding="utf-8").strip().splitlines()[-1]
+    row2 = json.loads(last2)
+    if row2.get("body") != "キュー確認" or row2.get("room") != "司令塔":
+        fail(f"new instruction must append instructions.jsonl: {last2}")
+    if outbox_before not in outbox.read_text(encoding="utf-8"):
+        fail("existing outbox lines must remain until copied to delivered.jsonl")
+    delivered_path.write_text(
+        delivered_path.read_text(encoding="utf-8")
+        + json.dumps({"room": "司令塔", "body": "キュー確認", "delivered": True}, ensure_ascii=False)
+        + "\n",
+        encoding="utf-8",
+    )
+    after_q = public_board(empty)
+    qmatch = next((q for q in after_q.get("queuedInstructions") or [] if q.get("id") == still_new["id"]), None)
+    if not qmatch or qmatch.get("status") != "できたまま" or qmatch.get("queued") is not False:
+        fail(f"キュー確認 must leave 許可待ち after delivered.jsonl, got {qmatch}")
 
     html = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
     for token in (
@@ -136,6 +182,8 @@ def main() -> int:
     ):
         if token in html:
             fail(f"frontend/index.html still contains {token!r}")
+    if "officeDelivered: '指示（配送済み）'" not in html:
+        fail("delivered instruction label missing")
     if html.count("サンプル") != 1 or "sampleMarkers = ['サンプル'" not in html:
         fail("サンプル may exist only as a hide-filter, never as a visible label")
     if "const uiLang = 'ja'" not in html or 'lang="ja"' not in html:

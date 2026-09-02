@@ -1513,6 +1513,7 @@
                 officeLiveDesk: 'DESK (live name)',
                 officeSampleWork: 'Cursor work',
                 officeQueued: 'Instruction (queued, not run)',
+                officeDelivered: 'Instruction (delivered)',
                 instructionSend: 'Send',
                 instructionPlaceholder: 'Write an instruction for a desk',
                 instructionHint: 'No posting, ads, or billing. Send queues delivery to that room\'s specialist (not executed).',
@@ -1560,6 +1561,7 @@
                 officeLiveDesk: 'デスク（実在）',
                 officeSampleWork: 'Cursor作業',
                 officeQueued: '指示（キュー・未実行）',
+                officeDelivered: '指示（配送済み）',
                 instructionSend: '送る',
                 instructionPlaceholder: 'デスクへの指示を書く',
                 instructionHint: '投稿・広告・課金はしません。送信はその部屋の担当に渡します（未実行）。',
@@ -2004,14 +2006,51 @@
             localStorage.setItem(INSTRUCTION_STORE, JSON.stringify(rows.slice(-40)));
         }
 
+        function instructionBody(row) {
+            return String((row && (row.body || row.text)) || '').trim();
+        }
+
+        function instructionIsDelivered(row) {
+            if (!row) return false;
+            if (row.delivered === true || String(row.delivered || '').toLowerCase() === 'true') return true;
+            if (String(row.delivery || '').toLowerCase() === 'delivered') return true;
+            if (row.queued === false && row.status === 'できたまま') return true;
+            return false;
+        }
+
+        function instructionKey(row) {
+            return `${row && row.id ? row.id : ''}::${row && row.room ? row.room : ''}::${instructionBody(row)}`;
+        }
+
         function mergeInstructions(serverRows) {
-            const byId = {};
-            [...loadLocalInstructions(), ...(Array.isArray(serverRows) ? serverRows : [])].forEach((row) => {
-                if (!row || !row.room || !row.text) return;
-                const id = row.id || `${row.room}:${row.created_at || row.text}`;
-                byId[id] = { ...row, id, queued: true, executed: false, status: '許可待ち' };
+            const server = Array.isArray(serverRows) ? serverRows : [];
+            const pending = [];
+            const delivered = [];
+            const seen = new Set();
+            const remember = (row) => {
+                seen.add(instructionKey(row));
+                seen.add(`::${row.room}::${instructionBody(row)}`);
+            };
+            server.forEach((row) => {
+                if (!row || !row.room || !instructionBody(row)) return;
+                remember(row);
+                if (instructionIsDelivered(row)) {
+                    delivered.push({ ...row, queued: false, delivered: true, status: 'できたまま' });
+                    return;
+                }
+                pending.push({ ...row, queued: true, executed: false, status: '許可待ち' });
             });
-            return Object.values(byId);
+            loadLocalInstructions().forEach((row) => {
+                if (!row || !row.room || !instructionBody(row)) return;
+                if (instructionIsDelivered(row)) return;
+                const k = instructionKey(row);
+                const bodyKey = `::${row.room}::${instructionBody(row)}`;
+                if (seen.has(k) || seen.has(bodyKey)) return;
+                pending.push({ ...row, queued: true, executed: false, status: '許可待ち' });
+                remember(row);
+            });
+            saveLocalInstructions(pending);
+            return { pending, delivered };
         }
 
         function fillInstructionRooms(rooms) {
@@ -2034,7 +2073,7 @@
                     return !sampleMarkers.some((marker) => blob.includes(marker));
                 });
             const teammates = Array.isArray(data && data.teammates) ? data.teammates : [];
-            const queued = mergeInstructions(data && data.queuedInstructions);
+            const { pending: queuedPending, delivered: queuedDelivered } = mergeInstructions(data && data.queuedInstructions);
             fillInstructionRooms(rooms);
             const grouped = { '動いている': [], '許可待ち': [], 'できたまま': [] };
 
@@ -2079,13 +2118,23 @@
                 });
             });
 
-            queued.forEach((row) => {
+            queuedPending.forEach((row) => {
                 grouped['許可待ち'].push({
                     kind: 'queued',
                     name: row.room,
-                    title: row.text,
+                    title: instructionBody(row),
                     sample: false,
                     meta: t('officeQueued'),
+                    mates: []
+                });
+            });
+            queuedDelivered.forEach((row) => {
+                grouped['できたまま'].push({
+                    kind: 'delivered',
+                    name: row.room,
+                    title: instructionBody(row),
+                    sample: false,
+                    meta: t('officeDelivered'),
                     mates: []
                 });
             });
@@ -2099,8 +2148,9 @@
                     return;
                 }
                 host.innerHTML = items.map((item) => {
-                    if (item.kind === 'queued') {
-                        return `<div class="office-chip queued no-link"><span class="kind">${escapeHtml(t('officeQueued'))}</span>${escapeHtml(item.name)}<span class="meta">${escapeHtml(item.title)}</span></div>`;
+                    if (item.kind === 'queued' || item.kind === 'delivered') {
+                        const label = item.kind === 'delivered' ? t('officeDelivered') : t('officeQueued');
+                        return `<div class="office-chip queued no-link"><span class="kind">${escapeHtml(label)}</span>${escapeHtml(item.name)}<span class="meta">${escapeHtml(item.title)}</span></div>`;
                     }
                     const title = item.title && item.title !== item.name
                         ? `<span class="meta">${escapeHtml(item.title)}</span>` : '';
