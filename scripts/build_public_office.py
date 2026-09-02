@@ -39,7 +39,7 @@ def _strip_id_block(html: str, element_id: str) -> str:
 
 def sanitize_public_html(html: str) -> str:
     """Keep the pixel board; drop broker/Gemini/drawer copy from the public page."""
-    html = html.replace("{{VERSION_TIMESTAMP}}", "public-20260902")
+    html = html.replace("{{VERSION_TIMESTAMP}}", "public-20260902e")
     for element_id in (
         "asset-drawer-backdrop",
         "asset-drawer",
@@ -86,6 +86,12 @@ def assert_public_html(html: str) -> None:
         raise SystemExit("public HTML missing instruction form")
     if 'id="staff-floor"' not in html or "Claude Code開発" not in html or "メインAI社員" not in html:
         raise SystemExit("public HTML missing named staff floor")
+    if "STAFF_BIND_FIX_20260902E" not in html:
+        raise SystemExit("public HTML missing staff bind fix")
+    if "{ name: '開発担当Bot', room: '海外EC'" not in html:
+        raise SystemExit("public HTML must bind 海外EC to 開発担当Bot")
+    if "mate.task || mate.currentTask || room.task" in html:
+        raise SystemExit("public HTML still inherits room.task onto every staff card")
     if "コンテンツ生成社員" in html:
         raise SystemExit("public HTML still contains old sample staff")
     worker_set_state = f"{API_ORIGIN}/set_state"
@@ -126,7 +132,7 @@ def main() -> int:
     )
     shim_tag = (
         api_origin_js
-        + '<script src="/static/public-office-shim.js?v=public-20260902c"></script>\n    '
+        + '<script src="/static/public-office-shim.js?v=public-20260902e"></script>\n    '
     )
     needle = '<script src="/static/vendor/phaser-3.80.1.min.js'
     if needle not in html:

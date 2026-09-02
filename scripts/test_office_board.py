@@ -213,6 +213,19 @@ def main() -> int:
             fail(f"frontend/index.html missing staff {staff_name!r}")
     if "コンテンツ生成社員" in html:
         fail("sample/old staff コンテンツ生成社員 must not appear")
+    if "STAFF_BIND_FIX_20260902E" not in html:
+        fail("staff bind fix marker missing")
+    if "{ name: 'メインAI社員', room: '司令塔'" not in html:
+        fail("メインAI社員 must stay bound to 司令塔")
+    if "{ name: '開発担当Bot', room: '海外EC'" not in html:
+        fail("海外EC must stay bound to 開発担当Bot")
+    if "mate.task || mate.currentTask || room.task" in html:
+        fail("staffDeskView must not inherit room.task onto every teammate")
+    if "Never inherit room.task" not in html:
+        fail("staffDeskView must refuse room-task inheritance")
+    main_line = next((ln for ln in html.splitlines() if "{ name: 'メインAI社員'" in ln), "")
+    if "司令塔" not in main_line or "海外EC" in main_line:
+        fail("メインAI社員 roster row must be 司令塔, never 海外EC")
     shim = (ROOT / "scripts" / "public_office_shim.js").read_text(encoding="utf-8")
     if "「' + assignee + '」に渡しました（未実行）" not in shim or "開発担当Bot2" not in shim:
         fail("public office shim must queue instructions to room assignees")

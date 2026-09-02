@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="office-ui" content="ja-staff-floor-20260902">
+    <meta name="office-ui" content="ja-staff-bind-20260902e">
+    <!-- STAFF_BIND_FIX_20260902E: 海外EC binds only to 開発担当Bot; idle desks are 待機中 -->
     <title>AIバーチャルオフィス</title>
     <style>
         @font-face {
@@ -369,6 +370,12 @@
             line-height: 1.25;
             letter-spacing: 0;
             text-shadow: 0 1px 0 #000;
+        }
+        .staff-desk-room {
+            color: #93c5fd;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.25;
         }
         .staff-desk-state {
             font-size: 16px;
@@ -1300,6 +1307,9 @@
             .staff-desk-name,
             .staff-desk-state {
                 font-size: 18px;
+            }
+            .staff-desk-room {
+                font-size: 16px;
             }
             .staff-desk-task,
             .staff-desk-eta {
@@ -2235,47 +2245,76 @@
             if (current && names.includes(current)) sel.value = current;
         }
 
-        function staffInstructionFor(name, room, rows) {
+        const ROOM_ASSIGNEES = {
+            '司令塔': 'メインAI社員',
+            'AIバーチャルオフィス': '開発担当Bot2',
+            '広告運用': '広告運用Bot',
+            '海外EC': '開発担当Bot',
+            '新規事業会議': '新規事業Bot',
+            'Xマーケティング自動化': 'Xマーケティング担当Bot',
+            '動画生成': '動画生成担当Bot',
+            'コンサル管理': 'コンサル管理Bot',
+            '新規顧客開拓': '新規顧客開拓Bot'
+        };
+
+        function officialAssignee(roomName, data) {
+            const fromMap = data && data.roomAssignees && data.roomAssignees[roomName];
+            if (fromMap) return String(fromMap);
+            const rooms = Array.isArray(data && data.grokRooms) ? data.grokRooms : [];
+            const room = rooms.find((r) => r.name === roomName);
+            if (room && room.assignee) return String(room.assignee);
+            return ROOM_ASSIGNEES[roomName] || '';
+        }
+
+        function staffInstructionFor(name, room, rows, data) {
             const list = Array.isArray(rows) ? rows : [];
+            const official = officialAssignee(room, data);
             return list.filter((row) => {
                 if (!row || !instructionBody(row)) return false;
-                const assignee = String(row.assignee_name || row.assignee || '').trim();
+                const assignee = String(row.assignee_name || '').trim();
                 const rowRoom = String(row.room || '').trim();
-                return assignee === name || (!assignee && rowRoom === room);
+                if (assignee) return assignee === name;
+                return rowRoom === room && name === official && official !== '';
             }).pop() || null;
         }
 
         function staffDeskView(staff, data, pending, delivered) {
-            const rooms = Array.isArray(data && data.grokRooms) ? data.grokRooms : [];
             const teammates = Array.isArray(data && data.teammates) ? data.teammates : [];
-            const room = rooms.find((r) => r.name === staff.room) || {};
             const mate = teammates.find((m) => m.name === staff.name) || {};
-            const queued = staffInstructionFor(staff.name, staff.room, pending);
-            const done = staffInstructionFor(staff.name, staff.room, delivered);
+            const official = officialAssignee(staff.room, data);
+            const isOfficialAssignee = staff.name === official;
+            const queued = staffInstructionFor(staff.name, staff.room, pending, data);
+            const done = staffInstructionFor(staff.name, staff.room, delivered, data);
             if (queued) {
                 return {
                     state: '許可待ち',
                     task: instructionBody(queued),
-                    eta: officeEtaText(queued) || officeEtaText(room)
+                    room: staff.room,
+                    eta: officeEtaText(queued)
                 };
             }
             if (done) {
                 return {
                     state: 'できたまま',
                     task: instructionBody(done),
-                    eta: officeEtaText(done) || officeEtaText(room)
+                    room: staff.room,
+                    eta: officeEtaText(done)
                 };
             }
-            const task = String(mate.task || mate.currentTask || room.task || room.currentTask || '').trim();
-            const eta = officeEtaText(mate) || officeEtaText(room);
-            if (task) {
+            // Never inherit room.task / room.status onto anyone. Default room
+            // status 動いている is not in-flight work. Only this person's own task.
+            const ownTask = String(mate.task || mate.currentTask || '').trim();
+            const ownBusy = String(mate.status || '').trim() === '動いている'
+                || String(mate.lifecycle || '').trim().toLowerCase() === 'running';
+            if (isOfficialAssignee && ownTask && ownBusy) {
                 return {
-                    state: normalizeOfficeBucket(mate.status || room.status, mate.lifecycle || room.lifecycle),
-                    task,
-                    eta
+                    state: '動いている',
+                    task: ownTask,
+                    room: staff.room,
+                    eta: officeEtaText(mate)
                 };
             }
-            return { state: '待機中', task: '', eta };
+            return { state: '待機中', task: '', room: staff.room, eta: '' };
         }
 
         function renderStaffFloor(data) {
@@ -2290,10 +2329,11 @@
                 const eta = view.eta
                     ? `<div class="staff-desk-eta">${escapeHtml(view.eta)}</div>`
                     : '';
-                return `<button type="button" class="staff-desk" data-state="${escapeHtml(view.state)}" data-room="${escapeHtml(staff.room)}" style="--staff-hue:${staff.hue}">
+                return `<button type="button" class="staff-desk" data-state="${escapeHtml(view.state)}" data-name="${escapeHtml(staff.name)}" data-room="${escapeHtml(staff.room)}" style="--staff-hue:${staff.hue}">
                     <span class="staff-desk-char" aria-hidden="true"></span>
                     <span class="staff-desk-copy">
                         <span class="staff-desk-name">${escapeHtml(staff.name)}</span>
+                        <span class="staff-desk-room">${escapeHtml(staff.room)}</span>
                         <span class="staff-desk-state">${escapeHtml(view.state)}</span>
                         ${task}${eta}
                     </span>
@@ -2309,6 +2349,34 @@
                     const input = document.getElementById('instruction-text');
                     if (input) input.focus();
                 });
+            });
+            updatePhaserStaffLabels(data || {});
+        }
+
+        function updatePhaserStaffLabels(data) {
+            const sprites = window.staffDeskSprites;
+            if (!Array.isArray(sprites) || !game) return;
+            const queued = mergeInstructions(data && data.queuedInstructions);
+            sprites.forEach((entry) => {
+                if (!entry || !entry.staff || !entry.sprite) return;
+                const view = staffDeskView(entry.staff, data, queued.pending, queued.delivered);
+                const lines = [entry.staff.name, entry.staff.room, view.state];
+                if (view.task) lines.push(view.task);
+                if (!entry.label || !entry.label.active) {
+                    entry.label = game.add.text(entry.sprite.x, entry.sprite.y - 118, lines.join('\n'), {
+                        fontFamily: 'ArkPixel, monospace',
+                        fontSize: '14px',
+                        fill: '#ffffff',
+                        stroke: '#000',
+                        strokeThickness: 4,
+                        align: 'center',
+                        wordWrap: { width: 200 }
+                    }).setOrigin(0.5, 1);
+                    entry.label.setDepth(1260);
+                } else {
+                    entry.label.setText(lines.join('\n'));
+                    entry.label.setPosition(entry.sprite.x, entry.sprite.y - 118);
+                }
             });
         }
 
@@ -2329,10 +2397,15 @@
             const grouped = { '動いている': [], '許可待ち': [], 'できたまま': [] };
 
             rooms.forEach((room) => {
-                const bucket = normalizeOfficeBucket(room.status, room.lifecycle);
-                const mates = (room.teammates && room.teammates.length)
-                    ? room.teammates
-                    : teammates.filter((m) => m.room === room.name).map((m) => m.name);
+                const assignee = room.assignee || (data.roomAssignees || {})[room.name] || officialAssignee(room.name, data);
+                const hasOwnTask = !!(String(room.task || room.currentTask || '').trim());
+                const life = String(room.lifecycle || '').trim().toLowerCase();
+                const realBusy = life === 'running' && hasOwnTask;
+                const realWait = normalizeOfficeBucket(room.status, room.lifecycle) === '許可待ち' && hasOwnTask;
+                const realDone = normalizeOfficeBucket(room.status, room.lifecycle) === 'できたまま' && hasOwnTask;
+                if (!realBusy && !realWait && !realDone) return;
+                const bucket = realBusy ? '動いている' : (realWait ? '許可待ち' : 'できたまま');
+                const mates = assignee ? [assignee] : [];
                 const eta = officeEtaText(room);
                 const hasUrl = !!String(room.url || '').trim();
                 grouped[bucket].push({
@@ -2341,7 +2414,7 @@
                     hasUrl,
                     sample: false,
                     eta,
-                    assignee: room.assignee || (data.roomAssignees || {})[room.name] || '',
+                    assignee,
                     mates,
                     meta: ''
                 });
@@ -4809,7 +4882,17 @@ function toggleBrokerPanel() {
                         sel.value = staff.room;
                     }
                 });
-                staffSprites.push({ staff, sprite });
+                const label = this.add.text(point.x, point.y - 118, `${staff.name}\n${staff.room}\n待機中`, {
+                    fontFamily: 'ArkPixel, monospace',
+                    fontSize: '14px',
+                    fill: '#ffffff',
+                    stroke: '#000',
+                    strokeThickness: 4,
+                    align: 'center',
+                    wordWrap: { width: 200 }
+                }).setOrigin(0.5, 1);
+                label.setDepth(1260);
+                staffSprites.push({ staff, sprite, label });
             });
             window.staffDeskSprites = staffSprites;
 
