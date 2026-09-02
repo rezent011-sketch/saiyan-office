@@ -24,20 +24,15 @@
 
 投稿・広告・課金・決済・自動承認・支出の機能はありません。
 
-## 起動
+## 開く（タップ用）
 
-```bash
-cd saiyan-office
-cp state.sample.json state.json   # 初回のみ
-python3 -m pip install -r backend/requirements.txt
-python3 backend/app.py
-# または
-./backend/run.sh
-```
+静的プレビュー（Flask なし / ライブAPIなし）:
 
-ブラウザで http://127.0.0.1:19000 を開きます。GitHub Pages / Vercel は不要です。
+**https://rezent011-sketch.github.io/saiyan-office/**
 
 部屋と Cursor の表示は **ローカル / デモデータ** です。あとから実データを `state.json` に書けば UI が追従します。
+
+開発者向けに、同じボードは `set_state.py` と `backend/app.py` でも更新できます。公開プレビューは GitHub Pages の静的ファイルです。
 
 ## 状態の更新
 
@@ -62,7 +57,7 @@ python3 set_state.py room 司令塔 動いている
 
 ```bash
 python3 scripts/test_office_board.py
-python3 scripts/smoke_test.py --base-url http://127.0.0.1:19000
+bash scripts/build_pages.sh
 ```
 
 ## ピクセルオフィスのエリア（従来）

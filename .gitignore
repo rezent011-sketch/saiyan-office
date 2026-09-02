@@ -13,6 +13,7 @@ venv/
 
 # Runtime state (local only)
 state.json
+_site/
 agents-state.json
 runtime-config.json
 *.log
