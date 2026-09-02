@@ -190,6 +190,12 @@ def main() -> int:
         fail("UI language must be forced to ja")
     if "昨日の日記はまだない" not in html or "訪問者はいない" not in html or "待機中" not in html:
         fail("Japanese empty states missing from index.html")
+    shim = (ROOT / "scripts" / "public_office_shim.js").read_text(encoding="utf-8")
+    if "「' + assignee + '」に渡しました（未実行）" not in shim or "開発担当Bot2" not in shim:
+        fail("public office shim must queue instructions to room assignees")
+    build = (ROOT / "scripts" / "build_public_office.py").read_text(encoding="utf-8")
+    if "saiyan-ai-virtual-office.surge.sh" not in build:
+        fail("public office must publish to a named surge.sh domain")
 
     print("OK office_board")
     return 0
