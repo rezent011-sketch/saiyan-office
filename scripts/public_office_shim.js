@@ -1,4 +1,4 @@
-/* Public static host: /status + instruction queue without Flask. No posts/ads/billing. */
+/* Public office: /status + /set_state. Persist to the live API origin when set. No posts/ads/billing. */
 (function () {
     const ASSIGNEES = {
         '司令塔': 'メインAI社員',
@@ -12,6 +12,7 @@
         '新規顧客開拓': '新規顧客開拓Bot'
     };
     const STORE = 'saiyan-office-public-queued-instructions';
+    const API_ORIGIN = String(self.__PUBLIC_OFFICE_API_ORIGIN || '').replace(/\/$/, '');
     const jsonHeaders = { 'Content-Type': 'application/json' };
     function loadQueued() {
         try {
@@ -35,18 +36,36 @@
             return String(raw || '').split('?')[0];
         }
     }
+    function apiUrl(path) {
+        if (!API_ORIGIN) return path;
+        return API_ORIGIN + path;
+    }
     const origFetch = window.fetch.bind(window);
     window.fetch = function (input, init) {
         const path = pathOf(input);
         const method = String((init && init.method) || 'GET').toUpperCase();
         if (path === '/status' || path === '/status.json') {
-            return origFetch('/status.json', { cache: 'no-store' }).then(async (res) => {
+            return origFetch(apiUrl('/status'), { cache: 'no-store' }).then(async (res) => {
+                const data = await res.json();
+                if (!API_ORIGIN) {
+                    data.queuedInstructions = [...(data.queuedInstructions || []), ...loadQueued()];
+                }
+                return jsonResponse(data);
+            }).catch(async () => {
+                const res = await origFetch('/status.json', { cache: 'no-store' });
                 const data = await res.json();
                 data.queuedInstructions = [...(data.queuedInstructions || []), ...loadQueued()];
                 return jsonResponse(data);
             });
         }
         if (path === '/set_state' && method === 'POST') {
+            if (API_ORIGIN) {
+                return origFetch(apiUrl('/set_state'), {
+                    method: 'POST',
+                    headers: jsonHeaders,
+                    body: (init && init.body) || '{}'
+                });
+            }
             let body = {};
             try { body = JSON.parse((init && init.body) || '{}'); } catch (e) { body = {}; }
             if (body && body.instruction) {

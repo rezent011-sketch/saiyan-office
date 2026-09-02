@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import sys
@@ -17,6 +18,7 @@ from office_board import public_board  # noqa: E402
 DEST = ROOT / "public-office"
 FRONTEND = ROOT / "frontend"
 DOMAIN = "saiyan-ai-virtual-office.surge.sh"
+API_ORIGIN = os.environ.get("PUBLIC_OFFICE_API_ORIGIN", "").strip().rstrip("/")
 SKIP_NAMES = {
     "electron-standalone.html",
     "join.html",
@@ -97,7 +99,15 @@ def main() -> int:
         shutil.copy2(src, dest)
 
     html = sanitize_public_html((FRONTEND / "index.html").read_text(encoding="utf-8"))
-    shim_tag = '<script src="/static/public-office-shim.js?v=public-20260902"></script>\n    '
+    api_origin_js = (
+        f'<script>self.__PUBLIC_OFFICE_API_ORIGIN={json.dumps(API_ORIGIN)};</script>\n    '
+        if API_ORIGIN
+        else ""
+    )
+    shim_tag = (
+        api_origin_js
+        + '<script src="/static/public-office-shim.js?v=public-20260902"></script>\n    '
+    )
     needle = '<script src="/static/vendor/phaser-3.80.1.min.js'
     if needle not in html:
         raise SystemExit("phaser script tag missing")
