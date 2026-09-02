@@ -49,7 +49,47 @@ def _save_queue_state(state: dict) -> None:
         "queuedInstructions": rows[-80:],
         "updated_at": datetime.now().isoformat(),
     }
-    QUEUE_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    text = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+    QUEUE_PATH.write_text(text, encoding="utf-8")
+    token = (os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or "").strip()
+    if not token:
+        return
+    import base64
+    import urllib.request
+
+    repo = os.environ.get("GITHUB_REPO", "rezent011-sketch/saiyan-office")
+    path = os.environ.get("GITHUB_QUEUE_PATH", "public-queue/queue.json")
+    branch = os.environ.get("GITHUB_BRANCH", "cursor/grok-cursor-office-board-6913")
+    api = f"https://api.github.com/repos/{repo}/contents/{path}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "saiyan-office-public-queue",
+    }
+    sha = None
+    try:
+        req = urllib.request.Request(api + "?ref=" + branch, headers=headers, method="GET")
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            sha = json.loads(resp.read().decode("utf-8")).get("sha")
+    except Exception:
+        sha = None
+    body = {
+        "message": "queue: desk instruction",
+        "content": base64.b64encode(text.encode("utf-8")).decode("ascii"),
+        "branch": branch,
+    }
+    if sha:
+        body["sha"] = sha
+    try:
+        req = urllib.request.Request(
+            api,
+            data=json.dumps(body).encode("utf-8"),
+            headers={**headers, "Content-Type": "application/json"},
+            method="PUT",
+        )
+        urllib.request.urlopen(req, timeout=8).read()
+    except Exception:
+        pass
 
 
 def _cors(resp):

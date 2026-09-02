@@ -49,6 +49,45 @@ async function loadQueued(env) {
   return Array.isArray(memoryRows) ? memoryRows : [];
 }
 
+async function persistGithub(rows, env) {
+  const token = env && (env.GITHUB_TOKEN || env.GH_TOKEN);
+  if (!token) return;
+  const repo = (env && env.GITHUB_REPO) || "rezent011-sketch/saiyan-office";
+  const path = (env && env.GITHUB_QUEUE_PATH) || "public-queue/queue.json";
+  const branch = (env && env.GITHUB_BRANCH) || "cursor/grok-cursor-office-board-6913";
+  const api = "https://api.github.com/repos/" + repo + "/contents/" + path;
+  const headers = {
+    Authorization: "Bearer " + token,
+    Accept: "application/vnd.github+json",
+    "User-Agent": "saiyan-office-public-queue",
+  };
+  let sha;
+  try {
+    const got = await fetch(api + "?ref=" + encodeURIComponent(branch), { headers });
+    if (got.ok) {
+      const data = await got.json();
+      sha = data.sha;
+    }
+  } catch (_e) {}
+  const payload = JSON.stringify({
+    queuedInstructions: rows,
+    updated_at: new Date().toISOString(),
+  }, null, 2) + "\n";
+  const content = btoa(unescape(encodeURIComponent(payload)));
+  try {
+    await fetch(api, {
+      method: "PUT",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: "queue: desk instruction",
+        content,
+        sha,
+        branch,
+      }),
+    });
+  } catch (_e) {}
+}
+
 async function saveQueued(rows, env) {
   memoryRows = rows.slice(-80);
   try {
@@ -59,6 +98,9 @@ async function saveQueued(rows, env) {
   try {
     const kv = await openKv();
     if (kv) await kv.set(["queuedInstructions"], memoryRows);
+  } catch (_e) {}
+  try {
+    await persistGithub(memoryRows, env);
   } catch (_e) {}
   return memoryRows;
 }

@@ -13,7 +13,17 @@
     };
     const STORE = 'saiyan-office-public-queued-instructions';
     const API_ORIGIN = String(self.__PUBLIC_OFFICE_API_ORIGIN || '').replace(/\/$/, '');
+    const QUEUE_URL = String(self.__PUBLIC_OFFICE_QUEUE_URL || 'https://raw.githubusercontent.com/rezent011-sketch/saiyan-office/cursor/grok-cursor-office-board-6913/public-queue/queue.json');
     const jsonHeaders = { 'Content-Type': 'application/json' };
+    async function loadRemoteQueued() {
+        try {
+            const res = await origFetch(QUEUE_URL + (QUEUE_URL.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' });
+            const data = await res.json();
+            if (Array.isArray(data)) return data;
+            if (data && Array.isArray(data.queuedInstructions)) return data.queuedInstructions;
+        } catch (e) {}
+        return [];
+    }
     function loadQueued() {
         try {
             const rows = JSON.parse(localStorage.getItem(STORE) || '[]');
@@ -48,13 +58,15 @@
             return origFetch(apiUrl('/status'), { cache: 'no-store' }).then(async (res) => {
                 const data = await res.json();
                 if (!API_ORIGIN) {
-                    data.queuedInstructions = [...(data.queuedInstructions || []), ...loadQueued()];
+                    const remote = await loadRemoteQueued();
+                    data.queuedInstructions = [...(data.queuedInstructions || []), ...remote, ...loadQueued()];
                 }
                 return jsonResponse(data);
             }).catch(async () => {
                 const res = await origFetch('/status.json', { cache: 'no-store' });
                 const data = await res.json();
-                data.queuedInstructions = [...(data.queuedInstructions || []), ...loadQueued()];
+                const remote = await loadRemoteQueued();
+                data.queuedInstructions = [...(data.queuedInstructions || []), ...remote, ...loadQueued()];
                 return jsonResponse(data);
             });
         }
