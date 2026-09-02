@@ -179,7 +179,7 @@
     <div id="office-board">
       <div id="office-board-header">
         <span>デスク＝Grok部屋 / 作業＝Cursor</span>
-        <span id="office-board-source">Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor行はサンプル。</span>
+        <span id="office-board-source">Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor作業は未接続のため非表示。</span>
       </div>
       <form id="office-instruction">
         <select id="instruction-room" aria-label="desk"></select>
@@ -217,11 +217,7 @@
         { name: '広告運用', status: '許可待ち', url: '', teammates: ['広告運用Bot'] },
         { name: 'AIバーチャルオフィス', status: '動いている', url: '', teammates: ['開発担当Bot', 'UTAGE・LINE担当Bot', 'クラウド環境構築Bot'] }
       ],
-      cursorAgents: [
-        { name: 'サンプル: 表示確認', title: 'ピクセルオフィスの状態表示', status: '動いている', lifecycle: 'running', branch: 'sample/local-demo', url: CURSOR_HOME, sample: true },
-        { name: 'サンプル: 許可待ちの例', title: 'ローカルJSONの許可待ち表示', status: '許可待ち', lifecycle: '', branch: 'sample/pending-demo', url: CURSOR_HOME, sample: true },
-        { name: 'サンプル: 完了した作業の例', title: 'できたままの表示確認', status: 'できたまま', lifecycle: 'finished', branch: 'sample/finished-demo', url: CURSOR_HOME, sample: true }
-      ]
+      cursorAgents: []
     };
 
     function escapeHtml(value) {

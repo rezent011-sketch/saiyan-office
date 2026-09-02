@@ -153,7 +153,7 @@ def add_no_cache_headers(response):
 # Default state
 DEFAULT_STATE = {
     "state": "idle",
-    "detail": "修行中...",
+    "detail": "待機中",
     "progress": 0,
     "officeName": "Saiyan Office 🐉",
     "updated_at": datetime.now().isoformat(),
@@ -183,6 +183,21 @@ def load_state():
     if not isinstance(state, dict):
         state = dict(DEFAULT_STATE)
 
+    legacy_details = {
+        "修行中...",
+        "修行中",
+        "待命中（自动回到休息区）",
+        "待命中，随时准备为你服务",
+        "待命中",
+        "待命",
+    }
+    if str(state.get("detail") or "").strip() in legacy_details:
+        state["detail"] = "待機中"
+        try:
+            save_state(state)
+        except Exception:
+            pass
+
     if ensure_office_board(state):
         try:
             save_state(state)
@@ -205,7 +220,7 @@ def load_state():
                 age = (datetime.now() - dt).total_seconds()
             if age > ttl:
                 state["state"] = "idle"
-                state["detail"] = "待命中（自动回到休息区）"
+                state["detail"] = "待機中"
                 state["progress"] = 0
                 state["updated_at"] = datetime.now().isoformat()
                 # persist the auto-idle so every client sees it consistently
@@ -263,24 +278,24 @@ if not os.path.exists(STATE_FILE):
 ensure_electron_standalone_snapshot()
 
 
+# Do not cache index.html in-process. Safari reloads must pick up office-board copy fixes
+# without requiring a backend restart (this is why 暂无昨日日记 / 待命 lingered).
 _INDEX_HTML_CACHE = None
 
 
 @app.route("/", methods=["GET"])
 def index():
-    """Serve the pixel office UI with built-in version cache busting"""
+    """Serve the pixel office UI from disk every request."""
     # 默认禁用页面打开即换背景，避免首屏慢
     # 如需启用，可配置 AUTO_ROTATE_HOME_ON_PAGE_OPEN=1
     _maybe_apply_random_home_favorite()
 
-    global _INDEX_HTML_CACHE
-    if _INDEX_HTML_CACHE is None:
-        with open(FRONTEND_INDEX_FILE, "r", encoding="utf-8") as f:
-            raw_html = f.read()
-        _INDEX_HTML_CACHE = raw_html.replace("{{VERSION_TIMESTAMP}}", VERSION_TIMESTAMP)
-
-    resp = make_response(_INDEX_HTML_CACHE)
+    with open(FRONTEND_INDEX_FILE, "r", encoding="utf-8") as f:
+        raw_html = f.read()
+    html = raw_html.replace("{{VERSION_TIMESTAMP}}", VERSION_TIMESTAMP)
+    resp = make_response(html)
     resp.headers["Content-Type"] = "text/html; charset=utf-8"
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     return resp
 
 
@@ -328,7 +343,7 @@ DEFAULT_AGENTS = [
         "name": "Star",
         "isMain": True,
         "state": "idle",
-        "detail": "待命中，随时准备为你服务",
+        "detail": "待機中",
         "updated_at": datetime.now().isoformat(),
         "area": "breakroom",
         "source": "local",

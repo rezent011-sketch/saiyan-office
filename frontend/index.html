@@ -1302,7 +1302,7 @@
             <div id="office-board" aria-label="Grok rooms and Cursor agents">
                 <div id="office-board-header">
                     <span id="office-board-title">デスク＝Grok部屋 / 作業＝Cursor</span>
-                    <span id="office-board-source">Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor行はサンプル。</span>
+                    <span id="office-board-source">Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor作業は未接続のため非表示。</span>
                 </div>
                 <form id="office-instruction">
                     <select id="instruction-room" aria-label="desk"></select>
@@ -1345,10 +1345,10 @@
         <div id="control-bar">
             <div id="control-bar-title">Star 状态</div>
             <div id="control-buttons">
-                <button id="btn-state-idle" onclick="setState('idle','待命')">待命</button>
-                <button id="btn-state-writing" onclick="setState('writing','工作中')">工作</button>
-                <button id="btn-state-syncing" onclick="setState('syncing','同步中')">同步</button>
-                <button id="btn-state-error" onclick="setState('error','报警中')">报警</button>
+                <button id="btn-state-idle" onclick="setState('idle','待機中')">待機</button>
+                <button id="btn-state-writing" onclick="setState('writing','作業中')">作業</button>
+                <button id="btn-state-syncing" onclick="setState('syncing','同期中')">同期</button>
+                <button id="btn-state-error" onclick="setState('error','警報')">警報</button>
                 <button id="btn-open-drawer" onclick="toggleAssetDrawer()">装修房间</button>
             </div>
         </div>
@@ -1599,7 +1599,7 @@
                 memoTitle: '昨日の作業ログ', guestTitle: '仲間リスト', officeTitle: 'Saiyan Office 🐉',
                 loadingOffice: 'Saiyan Officeを読み込み中...',
                 officeBoardTitle: 'デスク＝Grok部屋 / 作業＝Cursor',
-                officeBoardSource: 'Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor行はサンプル。',
+                officeBoardSource: 'Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor作業は未接続のため非表示。',
                 officeDeskKind: 'デスク',
                 officeWorkKind: 'Cursor作業',
                 officeSample: 'サンプル',
@@ -1875,12 +1875,12 @@
         // 懒加载逻辑已取消（体验优先：装饰首屏直接出现）
 
         const STATES = {
-            idle: { name: '待命', area: 'breakroom' },
-            writing: { name: '整理文档', area: 'writing' },
-            researching: { name: '搜索信息', area: 'researching' },
-            executing: { name: '执行任务', area: 'writing' },
-            syncing: { name: '同步备份', area: 'writing' },
-            error: { name: '出错了', area: 'error' }
+            idle: { name: '待機中', area: 'breakroom' },
+            writing: { name: '作業中', area: 'writing' },
+            researching: { name: '調査中', area: 'researching' },
+            executing: { name: '実行中', area: 'writing' },
+            syncing: { name: '同期中', area: 'writing' },
+            error: { name: '警報', area: 'error' }
         };
 
         const BUBBLE_TEXTS = {
@@ -2095,7 +2095,8 @@
         function renderOfficeBoard(data) {
             window.__officeBoardData = data || {};
             const rooms = Array.isArray(data && data.grokRooms) ? data.grokRooms : [];
-            const agents = Array.isArray(data && data.cursorAgents) ? data.cursorAgents : [];
+            const agents = (Array.isArray(data && data.cursorAgents) ? data.cursorAgents : [])
+                .filter((agent) => !agent.sample && !String(agent.name || '').startsWith('サンプル'));
             const teammates = Array.isArray(data && data.teammates) ? data.teammates : [];
             const queued = mergeInstructions(data && data.queuedInstructions);
             fillInstructionRooms(rooms);
@@ -3943,7 +3944,7 @@ function toggleBrokerPanel() {
                     offline: '离线'
                 };
                 const stateMap = {
-                    idle: '待命',
+                    idle: '待機',
                     writing: '工作',
                     researching: '调研',
                     executing: '执行',
@@ -4912,7 +4913,7 @@ function toggleBrokerPanel() {
                 game.input.setDefaultCursor(on ? 'grab' : 'default');
                 if (isTouchDevice && statusText) {
                     const info = on ? '视野拖动已开启（可左右拖动画布）' : '视野拖动已关闭（点击左上角“移动视野”可开启）';
-                    statusText.textContent = `状态：[${(STATES[currentState] && STATES[currentState].name) || '待命'}] ${info}`;
+                    statusText.textContent = `${(STATES[currentState] && STATES[currentState].name) || '待機中'} ${info}`;
                 }
             }
 
@@ -5219,7 +5220,11 @@ function toggleBrokerPanel() {
                         const stateInfo = STATES[nextState] || STATES.idle;
                         // If we're mid-transition, don't restart the path every poll
                         const changed = (pendingDesiredState === null) && (nextState !== currentState);
-                        const nextLine = '[' + stateInfo.name + '] ' + (data.detail || '...');
+                        const rawDetail = String(data.detail || '').trim();
+                        const leftoverChinese = /[\u4e00-\u9fff]/.test(rawDetail) && !/[\u3040-\u30ff]/.test(rawDetail);
+                        const nextLine = leftoverChinese || !rawDetail || rawDetail === '...'
+                            ? stateInfo.name
+                            : (rawDetail === stateInfo.name ? stateInfo.name : (stateInfo.name + ' ' + rawDetail));
                         // 不论 changed 与否，都按服务端最新状态强制一次视觉同步，避免动画卡旧状态
                         pendingDesiredState = null;
                         if (currentState !== nextState) {
@@ -5240,13 +5245,13 @@ function toggleBrokerPanel() {
                         }
                     } catch (err) {
                         console.error('fetchStatus apply error', err);
-                        typewriterTarget = '状态更新异常，正在恢复...';
+                        typewriterTarget = '状態の更新に失敗しました';
                         typewriterText = '';
                         typewriterIndex = 0;
                     }
                 })
                 .catch(error => {
-                    typewriterTarget = '连接失败，正在重试...';
+                    typewriterTarget = '接続に失敗しました。再試行中...';
                     typewriterText = '';
                     typewriterIndex = 0;
                 });

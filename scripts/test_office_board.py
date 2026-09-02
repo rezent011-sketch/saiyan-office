@@ -54,10 +54,8 @@ def main() -> int:
         fail(f"rooms {names}")
     if any(r.get("url") for r in empty["grokRooms"]):
         fail("default room URLs must stay empty (do not invent)")
-    if not all(a.get("sample") for a in empty["cursorAgents"]):
-        fail("default cursor rows must be marked sample")
-    if any(a.get("url") not in ("", CURSOR_AGENTS_HOME) for a in empty["cursorAgents"]):
-        fail("default cursor URLs must be cursor.com/agents or empty")
+    if empty.get("cursorAgents"):
+        fail("must not seed sample cursor jobs")
 
     assert eta_display({}) == ""
     assert eta_display({"eta": "30分"}) == ""
@@ -75,13 +73,14 @@ def main() -> int:
     assert next(r for r in state["grokRooms"] if r["name"] == "広告運用")["status"] == "動いている"
     assert not patch_room(state, {"name": "架空ルーム", "status": "動いている"})
 
-    assert patch_cursor_agent(state, {"name": "サンプル: 表示確認", "lifecycle": "finished"})
-    row = next(a for a in state["cursorAgents"] if a["name"] == "サンプル: 表示確認")
-    assert row["status"] == "できたまま"
-    assert row["lifecycle"] == "finished"
+    leftover = {"cursorAgents": [{"name": "サンプル: 表示確認", "sample": True, "status": "動いている", "lifecycle": "running"}]}
+    ensure_office_board(leftover)
+    if leftover.get("cursorAgents"):
+        fail("sample cursor rows must be stripped")
 
     board = public_board(state)
     assert board["liveCursorApi"] is False
+    assert board["cursorAgents"] == []
     assert board["buckets"] == list(STATUS_BUCKETS)
     assert queue_instruction(state, {"room": "架空", "text": "no"}) is None
     queued = queue_instruction(state, {"room": "司令塔", "text": "状況をまとめて"})

@@ -162,39 +162,8 @@ def default_teammates() -> list[dict]:
 
 
 def default_cursor_agents() -> list[dict]:
-    """Sample-only rows. No invented agent IDs, metrics, or PR URLs."""
-    return [
-        {
-            "name": "サンプル: 表示確認",
-            "title": "ピクセルオフィスの状態表示",
-            "status": "動いている",
-            "lifecycle": "running",
-            "branch": "sample/local-demo",
-            "prUrl": "",
-            "url": CURSOR_AGENTS_HOME,
-            "sample": True,
-        },
-        {
-            "name": "サンプル: 許可待ちの例",
-            "title": "ローカルJSONの許可待ち表示",
-            "status": "許可待ち",
-            "lifecycle": "",
-            "branch": "sample/pending-demo",
-            "prUrl": "",
-            "url": CURSOR_AGENTS_HOME,
-            "sample": True,
-        },
-        {
-            "name": "サンプル: 完了した作業の例",
-            "title": "できたままの表示確認",
-            "status": "できたまま",
-            "lifecycle": "finished",
-            "branch": "sample/finished-demo",
-            "prUrl": "",
-            "url": CURSOR_AGENTS_HOME,
-            "sample": True,
-        },
-    ]
+    """No live Cursor API: do not invent or seed sample jobs."""
+    return []
 
 
 def _index_by_name(rows: list[dict], names: tuple[str, ...]) -> dict[str, dict]:
@@ -259,7 +228,7 @@ def _sanitize_cursor_agent(raw: dict) -> dict | None:
         "branch": str(raw.get("branch") or "").strip(),
         "prUrl": str(raw.get("prUrl") or raw.get("pr_url") or "").strip(),
         "url": url,
-        "sample": bool(raw.get("sample")),
+        "sample": bool(raw.get("sample")) or name.startswith("サンプル"),
     }
     if ETA_LABEL in raw:
         row[ETA_LABEL] = raw.get(ETA_LABEL)
@@ -310,7 +279,7 @@ def ensure_office_board(state: dict) -> bool:
         cleaned = []
         for raw in agents_in:
             row = _sanitize_cursor_agent(raw)
-            if row:
+            if row and not row.get("sample"):
                 cleaned.append(row)
         if cleaned != agents_in:
             state["cursorAgents"] = cleaned
@@ -422,6 +391,8 @@ def public_board(state: dict) -> dict:
     teammates = list(state.get("teammates", []))
     agents = []
     for agent in state.get("cursorAgents", []):
+        if agent.get("sample"):
+            continue
         agents.append({
             **agent,
             "openUrl": cursor_open_url(agent),
@@ -435,5 +406,5 @@ def public_board(state: dict) -> dict:
         "teammates": teammates,
         "cursorAgents": agents,
         "queuedInstructions": list(state.get("queuedInstructions") or []),
-        "liveApiNote": "Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor行はサンプル。",
+        "liveApiNote": "Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor作業は未接続のため非表示。",
     }

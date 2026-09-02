@@ -91,14 +91,12 @@ def main() -> int:
         failures.append(f"GET /status buckets mismatch, got={buckets}")
     else:
         print("  OK  /status buckets")
-    if not isinstance(agents, list) or not any(a.get("sample") for a in agents if isinstance(a, dict)):
-        failures.append("GET /status cursorAgents should include sample rows")
+    if not isinstance(agents, list):
+        failures.append("GET /status cursorAgents missing")
+    elif any(a.get("sample") or str(a.get("name") or "").startswith("サンプル") for a in agents if isinstance(a, dict)):
+        failures.append("GET /status must hide sample Cursor rows when live API is off")
     else:
-        invented = [a for a in agents if isinstance(a, dict) and str(a.get("url") or "") and not str(a.get("url")).startswith("https://cursor.com/agents")]
-        if invented:
-            failures.append(f"cursorAgents has non-cursor.com URL: {invented}")
-        else:
-            print("  OK  /status cursorAgents (sample, no invented URLs)")
+        print("  OK  /status cursorAgents (no sample rows)")
     if status.get("liveCursorApi"):
         failures.append("liveCursorApi must be false (local JSON only)")
     else:

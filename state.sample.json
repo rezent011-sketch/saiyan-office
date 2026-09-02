@@ -1,6 +1,6 @@
 {
   "state": "idle",
-  "detail": "修行中...",
+    "detail": "待機中",
   "progress": 0,
   "officeName": "Saiyan Office 🐉",
   "updated_at": "2026-03-13T00:00:00",
@@ -62,36 +62,5 @@
     {"id": "新規顧客開拓Bot", "name": "新規顧客開拓Bot", "room": "司令塔", "status": "許可待ち"},
     {"id": "コンテンツ生成社員", "name": "コンテンツ生成社員", "room": "動画生成", "status": "できたまま"}
   ],
-  "cursorAgents": [
-    {
-      "name": "サンプル: 表示確認",
-      "title": "ピクセルオフィスの状態表示",
-      "status": "動いている",
-      "lifecycle": "running",
-      "branch": "sample/local-demo",
-      "prUrl": "",
-      "url": "https://cursor.com/agents",
-      "sample": true
-    },
-    {
-      "name": "サンプル: 許可待ちの例",
-      "title": "ローカルJSONの許可待ち表示",
-      "status": "許可待ち",
-      "lifecycle": "",
-      "branch": "sample/pending-demo",
-      "prUrl": "",
-      "url": "https://cursor.com/agents",
-      "sample": true
-    },
-    {
-      "name": "サンプル: 完了した作業の例",
-      "title": "できたままの表示確認",
-      "status": "できたまま",
-      "lifecycle": "finished",
-      "branch": "sample/finished-demo",
-      "prUrl": "",
-      "url": "https://cursor.com/agents",
-      "sample": true
-    }
-  ]
+  "cursorAgents": []
 }

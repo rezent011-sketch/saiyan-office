@@ -59,7 +59,7 @@ def load_state():
     else:
         state = {
             "state": "idle",
-            "detail": "修行中...",
+            "detail": "待機中",
             "progress": 0,
             "officeName": "Saiyan Office 🐉",
             "updated_at": datetime.now().isoformat(),
