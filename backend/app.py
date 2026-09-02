@@ -34,6 +34,7 @@ from office_board import (
     patch_teammate,
     public_board,
     queue_instruction,
+    sanitize_public_detail,
 )
 
 try:
@@ -157,7 +158,7 @@ DEFAULT_STATE = {
     "progress": 0,
     "officeName": "Saiyan Office 🐉",
     "updated_at": datetime.now().isoformat(),
-    "dataSource": "local-demo",
+    "dataSource": "local",
     "liveCursorApi": False,
 }
 ensure_office_board(DEFAULT_STATE)
@@ -183,16 +184,9 @@ def load_state():
     if not isinstance(state, dict):
         state = dict(DEFAULT_STATE)
 
-    legacy_details = {
-        "修行中...",
-        "修行中",
-        "待命中（自动回到休息区）",
-        "待命中，随时准备为你服务",
-        "待命中",
-        "待命",
-    }
-    if str(state.get("detail") or "").strip() in legacy_details:
-        state["detail"] = "待機中"
+    cleaned_detail = sanitize_public_detail(state.get("detail"), "待機中")
+    if state.get("detail") != cleaned_detail:
+        state["detail"] = cleaned_detail
         try:
             save_state(state)
         except Exception:
@@ -343,7 +337,7 @@ DEFAULT_AGENTS = [
         "name": "Star",
         "isMain": True,
         "state": "idle",
-        "detail": "待機中",
+        "detail": sanitize_public_detail("待機中", "待機中"),
         "updated_at": datetime.now().isoformat(),
         "area": "breakroom",
         "source": "local",
@@ -356,7 +350,21 @@ DEFAULT_AGENTS = [
 
 
 def load_agents_state():
-    return _store_load_agents_state(AGENTS_STATE_FILE, DEFAULT_AGENTS)
+    agents = _store_load_agents_state(AGENTS_STATE_FILE, DEFAULT_AGENTS)
+    changed = False
+    for agent in agents:
+        if not isinstance(agent, dict):
+            continue
+        cleaned = sanitize_public_detail(agent.get("detail"), "待機中")
+        if agent.get("detail") != cleaned:
+            agent["detail"] = cleaned
+            changed = True
+    if changed:
+        try:
+            save_agents_state(agents)
+        except Exception:
+            pass
+    return agents
 
 
 def save_agents_state(agents):
@@ -878,6 +886,8 @@ def get_agents():
     keys_data = load_join_keys()
 
     for a in agents:
+        if isinstance(a, dict) and "detail" in a:
+            a["detail"] = sanitize_public_detail(a.get("detail"), "待機中")
         if a.get("isMain"):
             cleaned_agents.append(a)
             continue
@@ -1185,6 +1195,7 @@ def get_status():
         state["officeName"] = office_name
     state.update(public_board(state))
     state["liveCursorApi"] = False
+    state["detail"] = sanitize_public_detail(state.get("detail"), "待機中")
     return jsonify(state)
 
 
@@ -1335,7 +1346,7 @@ def set_state_endpoint():
             if s in VALID_AGENT_STATES:
                 state["state"] = s
         if "detail" in data:
-            state["detail"] = data["detail"]
+            state["detail"] = sanitize_public_detail(data["detail"], "待機中")
         if isinstance(data.get("room"), dict):
             patch_room(state, data["room"])
         if isinstance(data.get("teammate"), dict):

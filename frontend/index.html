@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Star 的像素办公室</title>
+    <meta name="office-ui" content="ja-live-board-20260902">
+    <title>AIバーチャルオフィス</title>
     <style>
         @font-face {
             font-family: 'ArkPixel';
@@ -1228,8 +1229,7 @@
             #coords-toggle,
             #pan-toggle,
             #lang-btn-en,
-            #lang-btn-jp,
-            #lang-btn-cn {
+            #lang-btn-jp {
                 font-size: 12px !important;
                 padding: 6px 8px !important;
             }
@@ -1298,17 +1298,17 @@
     <div id="main-stage">
         <div id="game-container">
             <div id="game-skeleton"><div class="hint">Saiyan Officeに入っています…</div></div>
-            <div id="status-text">読み込み中...</div>
+            <div id="status-text">待機中</div>
             <div id="office-board" aria-label="Grok rooms and Cursor agents">
                 <div id="office-board-header">
                     <span id="office-board-title">デスク＝Grok部屋 / 作業＝Cursor</span>
-                    <span id="office-board-source">Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor作業は未接続のため非表示。</span>
+                    <span id="office-board-source">実況ボード（デスク＝Grok部屋 / 作業＝Cursor）</span>
                 </div>
                 <form id="office-instruction">
                     <select id="instruction-room" aria-label="desk"></select>
                     <input id="instruction-text" type="text" maxlength="200" autocomplete="off" placeholder="デスクへの指示を書く" />
                     <button type="submit" id="instruction-send">送る</button>
-                    <div id="office-instruction-hint">投稿・広告・課金はしません。送信はローカル待ち行列（未実行）です。</div>
+                    <div id="office-instruction-hint">投稿・広告・課金はしません。送信は部屋の担当への配送待ち（未実行）です。</div>
                 </form>
                 <div id="office-buckets">
                     <section class="office-bucket" data-bucket="動いている">
@@ -1332,7 +1332,7 @@
     <div id="bottom-panels">
         <!-- Memo 面板 -->
         <div id="memo-panel">
-            <div id="memo-title">昨 日 小 记</div>
+            <div id="memo-title">昨日の作業ログ</div>
             <div id="memo-date"></div>
             <div class="memo-decoration">─ ─ ─ ─ ─</div>
             <div id="memo-content">
@@ -1343,7 +1343,7 @@
         
         <!-- 状态控制栏 -->
         <div id="control-bar">
-            <div id="control-bar-title">Star 状态</div>
+            <div id="control-bar-title">エージェント状態</div>
             <div id="control-buttons">
                 <button id="btn-state-idle" onclick="setState('idle','待機中')">待機</button>
                 <button id="btn-state-writing" onclick="setState('writing','作業中')">作業</button>
@@ -1355,7 +1355,7 @@
 
         <!-- Guest Agent 名单面板（右下角） -->
         <div id="guest-agent-panel">
-            <div id="guest-agent-panel-title">访 客 列 表</div>
+            <div id="guest-agent-panel-title">仲間リスト</div>
             <div id="guest-agent-list">
                 <div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">訪問者はいない</div>
             </div>
@@ -1467,17 +1467,17 @@
     <div id="lang-toggle-group" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 52px); left:12px; z-index:1000002; display:flex; gap:2px; align-items:center;">
         <button id="lang-btn-en" onclick="setUILanguage('en')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">EN</button>
         <button id="lang-btn-jp" onclick="setUILanguage('ja')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">JP</button>
-        <button id="lang-btn-cn" onclick="setUILanguage('zh')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">CN</button>
     </div>
 
     <script src="/static/vendor/phaser-3.80.1.min.js?v={{VERSION_TIMESTAMP}}"></script>
     <script>
-        // 简易中英文切换
+        // EN / JP only. CN toggle is removed so leftover Chinese cannot be injected.
         let uiLang = localStorage.getItem('uiLang') || 'ja';
+        if (uiLang === 'zh') uiLang = 'ja';
         const I18N = {
             zh: {
-                controlTitle: 'Star 状态',
-                btnIdle: '待命', btnWork: '工作', btnSync: '同步', btnError: '报警', btnDecor: '装修房间',
+                controlTitle: 'エージェント状態',
+                btnIdle: '待機', btnWork: '作業', btnSync: '同期', btnError: '警報', btnDecor: '部屋を編集',
                 drawerTitle: '装修房间 · 资产侧边栏', drawerClose: '关闭',
                 authTitle: '请输入装修验证码', authPlaceholder: '输入验证码', authVerify: '验证', authDefaultPassHint: '默认密码：1234（可随时让我帮你改，建议改成强密码）',
                 drawerVisibilityTip: '可见性：点击条目右侧眼睛按钮切换该资产显示',
@@ -1500,10 +1500,10 @@
                 assetHintNotInScene: '当前场景未检测到此对象，仍可替换文件（刷新后生效）',
                 assetHintDefault: '通用素材：建议保持原图尺寸、透明通道与视觉重心一致，避免错位或失真',
                 showCoords: '显示坐标', hideCoords: '隐藏坐标', moveView: '移动视野', lockView: '锁定视野',
-                memoTitle: '昨 日 小 记', guestTitle: '访 客 列 表', officeTitle: '海辛小龙虾的办公室',
-                loadingOffice: '正在加载 Star 的像素办公室...',
+                memoTitle: '昨日の作業ログ', guestTitle: '仲間リスト', officeTitle: 'Saiyan Office 🐉',
+                loadingOffice: 'Saiyan Officeを読み込み中...',
                 officeBoardTitle: 'デスク＝Grok部屋 / 作業＝Cursor',
-                officeBoardSource: '本地JSON（未连接实时API）',
+                officeBoardSource: '実況ボード（デスク＝Grok部屋 / 作業＝Cursor）',
                 officeDeskKind: 'デスク',
                 officeWorkKind: 'Cursor作業',
                 officeSample: 'サンプル',
@@ -1519,9 +1519,9 @@
                 officeQueued: '指示（キュー・未実行）',
                 instructionSend: '送る',
                 instructionPlaceholder: 'デスクへの指示を書く',
-                instructionHint: '投稿・広告・課金はしません。送信はローカル待ち行列（未実行）です。',
+                instructionHint: '投稿・広告・課金はしません。送信は部屋の担当への配送待ち（未実行）です。',
                 instructionNeedText: '指示を書いてから送ってください',
-                instructionQueued: '待ち行列に入れました（未実行）'
+                instructionQueued: '部屋の担当へ配送待ちとしてキューに入れました（未実行）'
             },
             en: {
                 controlTitle: 'Star Status',
@@ -1551,7 +1551,7 @@
                 memoTitle: 'YESTERDAY NOTES', guestTitle: 'VISITOR LIST', officeTitle: 'Haixin Lobster Office',
                 loadingOffice: 'Loading Star’s pixel office...',
                 officeBoardTitle: 'Desks = Grok rooms / Work = Cursor',
-                officeBoardSource: 'No live Cursor/Grok API. Desks are real rooms. Cursor rows are samples.',
+                officeBoardSource: 'Live board from local JSON (desks = Grok rooms / jobs = Cursor)',
                 officeDeskKind: 'DESK',
                 officeWorkKind: 'CURSOR',
                 officeSample: 'SAMPLE',
@@ -1567,9 +1567,9 @@
                 officeQueued: 'Instruction (queued, not run)',
                 instructionSend: 'Send',
                 instructionPlaceholder: 'Write an instruction for a desk',
-                instructionHint: 'No posting, ads, or billing. Send only queues locally (not executed).',
+                instructionHint: 'No posting, ads, or billing. Send queues delivery to that room\'s specialist (not executed).',
                 instructionNeedText: 'Write an instruction first',
-                instructionQueued: 'Queued locally (not executed)'
+                instructionQueued: 'Queued for delivery to that room\'s specialist (not executed)'
             },
             ja: {
                 controlTitle: 'エージェント状態',
@@ -1599,7 +1599,7 @@
                 memoTitle: '昨日の作業ログ', guestTitle: '仲間リスト', officeTitle: 'Saiyan Office 🐉',
                 loadingOffice: 'Saiyan Officeを読み込み中...',
                 officeBoardTitle: 'デスク＝Grok部屋 / 作業＝Cursor',
-                officeBoardSource: 'Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor作業は未接続のため非表示。',
+                officeBoardSource: '実況ボード（デスク＝Grok部屋 / 作業＝Cursor）',
                 officeDeskKind: 'デスク',
                 officeWorkKind: 'Cursor作業',
                 officeSample: 'サンプル',
@@ -1615,13 +1615,18 @@
                 officeQueued: '指示（キュー・未実行）',
                 instructionSend: '送る',
                 instructionPlaceholder: 'デスクへの指示を書く',
-                instructionHint: '投稿・広告・課金はしません。送信はローカル待ち行列（未実行）です。',
+                instructionHint: '投稿・広告・課金はしません。送信は部屋の担当への配送待ち（未実行）です。',
                 instructionNeedText: '指示を書いてから送ってください',
-                instructionQueued: '待ち行列に入れました（未実行）'
+                instructionQueued: '部屋の担当へ配送待ちとしてキューに入れました（未実行）'
             }
         };
 
-        function t(key) { return (I18N[uiLang] && I18N[uiLang][key]) || (I18N.ja && I18N.ja[key]) || key; }
+        function t(key) {
+            const pack = (uiLang === 'zh') ? I18N.ja : ((I18N[uiLang] && I18N[uiLang][key]) ? I18N[uiLang] : I18N.ja);
+            const val = (pack && pack[key]) || (I18N.ja && I18N.ja[key]) || key;
+            if (/待命|暂无|暫無|访客|訪客/.test(String(val))) return (I18N.ja && I18N.ja[key]) || '待機中';
+            return val;
+        }
         function renderBootLoadingText(percent) {
             const loadingEl = document.getElementById('loading-text');
             if (!loadingEl) return;
@@ -1655,8 +1660,7 @@
             setText('btn-open-drawer', 'btnDecor');
             const langButtons = [
                 { id: 'lang-btn-en', lang: 'en' },
-                { id: 'lang-btn-jp', lang: 'ja' },
-                { id: 'lang-btn-cn', lang: 'zh' }
+                { id: 'lang-btn-jp', lang: 'ja' }
             ];
             langButtons.forEach(({ id, lang }) => {
                 const el = document.getElementById(id);
@@ -1738,7 +1742,7 @@
         }
 
         function setUILanguage(lang) {
-            if (!['zh', 'en', 'ja'].includes(lang)) return;
+            if (lang === 'zh' || !['en', 'ja'].includes(lang)) lang = 'ja';
             uiLang = lang;
             localStorage.setItem('uiLang', uiLang);
             applyLanguage();
@@ -1882,10 +1886,20 @@
             syncing: { name: '同期中', area: 'writing' },
             error: { name: '警報', area: 'error' }
         };
+        const BANNED_OVERLAY = /待命|修行中|暂无|暫無|访客|訪客|日記|日记/;
+        function overlayLine(stateKey, detail) {
+            const safeName = (STATES[stateKey] && STATES[stateKey].name) || '待機中';
+            const raw = String(detail || '').trim();
+            const leftover = !raw
+                || BANNED_OVERLAY.test(raw)
+                || (/[\u4e00-\u9fff]/.test(raw) && !/[\u3040-\u30ff]/.test(raw));
+            if (leftover || raw === safeName) return safeName;
+            return safeName + ' ' + raw;
+        }
 
         const BUBBLE_TEXTS = {
             zh: {
-                idle: ['待命中：耳朵竖起来了','我在这儿，随时可以开工','先把桌面收拾干净再说','呼——给大脑放个风','今天也要优雅地高效','等待，是为了更准确的一击','咖啡还热，灵感也还在','我在后台给你加 Buff','状态：静心 / 充电','小猫说：慢一点也没关系'],
+                idle: ['待機中：耳はピン。','ここにいるよ、いつでも開始OK。','まず机を整えよう。','ふー、頭に風を通す。','今日も上品に高効率で。','待つのは、より正確な一撃のため。','コーヒーも発想もまだ温かい。','裏側でそっとバフ中。','状態：静心 / 充電。','猫より：ゆっくりでも大丈夫。'],
                 writing: ['进入专注模式：勿扰','先把关键路径跑通','我来把复杂变简单','把 bug 关进笼子里','写到一半，先保存','把每一步都做成可回滚','今天的进度，明天的底气','先收敛，再发散','让系统变得更可解释','稳住，我们能赢'],
                 researching: ['我在挖证据链','让我把信息熬成结论','找到了：关键在这里','先把变量控制住','我在查：它为什么会这样','把直觉写成验证','先定位，再优化','别急，先画因果图'],
                 executing: ['执行中：不要眨眼','把任务切成小块逐个击破','开始跑 pipeline','一键推进：走你','让结果自己说话','先做最小可行，再做最美版本'],
@@ -2095,8 +2109,13 @@
         function renderOfficeBoard(data) {
             window.__officeBoardData = data || {};
             const rooms = Array.isArray(data && data.grokRooms) ? data.grokRooms : [];
+            const sampleMarkers = ['サンプル', '表示確認', '許可待ちの例', '完了した作業の例', 'sample/pending-demo', 'sample/finished-demo', 'sample/local-demo'];
             const agents = (Array.isArray(data && data.cursorAgents) ? data.cursorAgents : [])
-                .filter((agent) => !agent.sample && !String(agent.name || '').startsWith('サンプル'));
+                .filter((agent) => {
+                    if (agent.sample) return false;
+                    const blob = [agent.name, agent.title, agent.branch, agent.url].map((v) => String(v || '')).join(' ');
+                    return !sampleMarkers.some((marker) => blob.includes(marker));
+                });
             const teammates = Array.isArray(data && data.teammates) ? data.teammates : [];
             const queued = mergeInstructions(data && data.queuedInstructions);
             fillInstructionRooms(rooms);
@@ -2125,7 +2144,6 @@
                 const life = String(agent.lifecycle || '').trim().toLowerCase();
                 const lifeLabel = (life === 'running' || life === 'finished') ? life : '';
                 const bits = [];
-                if (agent.sample) bits.push(t('officeSample'));
                 if (lifeLabel) bits.push(lifeLabel);
                 if (agent.branch) bits.push(agent.branch);
                 if (agent.prUrl) bits.push(agent.prUrl);
@@ -2166,7 +2184,6 @@
                     if (item.kind === 'queued') {
                         return `<div class="office-chip queued no-link"><span class="kind">${escapeHtml(t('officeQueued'))}</span>${escapeHtml(item.name)}<span class="meta">${escapeHtml(item.title)}</span></div>`;
                     }
-                    const sample = item.sample ? `<span class="sample-badge">${escapeHtml(t('officeSample'))}</span>` : '';
                     const title = item.title && item.title !== item.name
                         ? `<span class="meta">${escapeHtml(item.title)}</span>` : '';
                     const meta = item.meta ? `<span class="meta">${escapeHtml(item.meta)}</span>` : '';
@@ -2178,7 +2195,7 @@
                         return `<button type="button" class="${cls}" onclick="openGrokDesk('${nameAttr}')"><span class="kind live">${escapeHtml(t('officeLiveDesk'))}</span>${escapeHtml(item.name)}${title}${mates}${item.eta ? `<span class="meta">${escapeHtml(item.eta)}</span>` : ''}</button>`;
                     }
                     const openUrl = escapeHtml(item.openUrl).replace(/'/g, '&#39;');
-                    return `<button type="button" class="office-chip" onclick="openCursorWork('${openUrl}')"><span class="kind sample">${escapeHtml(t('officeSampleWork'))}</span>${escapeHtml(item.name)}${sample}${title}${meta}</button>`;
+                    return `<button type="button" class="office-chip" onclick="openCursorWork('${openUrl}')"><span class="kind">${escapeHtml(t('officeWorkKind'))}</span>${escapeHtml(item.name)}${title}${meta}</button>`;
                 }).join('');
             });
         }
@@ -2307,7 +2324,7 @@
             const lang = (uiLang || 'zh');
             const nameMap = {
                 zh: {
-                    'star-idle-v5': '主角·待命状态',
+                    'star-idle-v5': '主役・待機',
                     'star-working-spritesheet-grid': '主角·工作状态',
                     'sync-animation': '主角·同步状态',
                     'sync-animation-v3-grid': '主角·同步状态',
@@ -2952,7 +2969,7 @@
             clearAssetThumbTimers();
 
             if (rows.length === 0) {
-                list.innerHTML = '<div class="asset-sub" style="padding:8px">暂无资产（可点“刷新”重试）</div>';
+                list.innerHTML = '<div class="asset-sub" style="padding:8px">資産はまだない</div>';
                 return;
             }
 
@@ -3934,22 +3951,22 @@ function toggleBrokerPanel() {
             }
 
             list.innerHTML = visitors.map(agent => {
-                const name = agent.name || '未命名访客';
+                const name = agent.name || '訪問者';
                 const authStatus = agent.authStatus || 'pending';
                 const state = agent.state || 'idle';
                 const statusMap = {
-                    approved: '已授权',
-                    pending: '待授权',
-                    rejected: '已拒绝',
-                    offline: '离线'
+                    approved: '承認済み',
+                    pending: '許可待ち',
+                    rejected: '却下',
+                    offline: 'オフライン'
                 };
                 const stateMap = {
                     idle: '待機',
-                    writing: '工作',
-                    researching: '调研',
-                    executing: '执行',
-                    syncing: '同步',
-                    error: '报警'
+                    writing: '作業',
+                    researching: '調査',
+                    executing: '実行',
+                    syncing: '同期',
+                    error: '警報'
                 };
 
                 const statusText = statusMap[authStatus] || authStatus;
@@ -4105,7 +4122,7 @@ function toggleBrokerPanel() {
                     const yOffset = (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星')) ? 10 : 0;
 
                     const nameTextY = isDemo ? ((p.y + yOffset) - 80) : ((p.y + yOffset) - 120);
-                    const nameText = game.add.text(p.x, nameTextY, agent.name || '访客', {
+                    const nameText = game.add.text(p.x, nameTextY, agent.name || '訪問者', {
                         fontFamily: 'ArkPixel, monospace',
                         fontSize: isDemo ? '16px' : '15px',
                         fill: '#ffffff',
@@ -4154,7 +4171,7 @@ function toggleBrokerPanel() {
                         g.nameText.y = (p.y + yOffset) - 120;
                     }
 
-                    g.nameText.setText(agent.name || '访客');
+                    g.nameText.setText(agent.name || '訪問者');
                 }
             });
 
@@ -4191,7 +4208,7 @@ function toggleBrokerPanel() {
                 : null;
 
             const statusThoughtsMap = {
-                idle: ['我在休息区待命', '先放松一下，等下一步任务', '我在休息充电中'],
+                idle: ['休憩中', '次の指示を待っている', '充電中'],
                 writing: ['我在工作区处理任务', '正在整理文档与执行中', '工作区专注推进中'],
                 researching: ['我在调研模式，搜集信息', '正在查资料和验证线索', '研究中，稍后同步结论'],
                 executing: ['执行中，正在跑流程', '我在工作区推进任务', '正在把计划落地执行'],
@@ -4912,8 +4929,8 @@ function toggleBrokerPanel() {
                 }
                 game.input.setDefaultCursor(on ? 'grab' : 'default');
                 if (isTouchDevice && statusText) {
-                    const info = on ? '视野拖动已开启（可左右拖动画布）' : '视野拖动已关闭（点击左上角“移动视野”可开启）';
-                    statusText.textContent = `${(STATES[currentState] && STATES[currentState].name) || '待機中'} ${info}`;
+                    const info = on ? '視点ドラッグオン' : '視点ドラッグオフ';
+                    statusText.textContent = overlayLine(currentState, info);
                 }
             }
 
@@ -5221,10 +5238,7 @@ function toggleBrokerPanel() {
                         // If we're mid-transition, don't restart the path every poll
                         const changed = (pendingDesiredState === null) && (nextState !== currentState);
                         const rawDetail = String(data.detail || '').trim();
-                        const leftoverChinese = /[\u4e00-\u9fff]/.test(rawDetail) && !/[\u3040-\u30ff]/.test(rawDetail);
-                        const nextLine = leftoverChinese || !rawDetail || rawDetail === '...'
-                            ? stateInfo.name
-                            : (rawDetail === stateInfo.name ? stateInfo.name : (stateInfo.name + ' ' + rawDetail));
+                        const nextLine = overlayLine(nextState, rawDetail);
                         // 不论 changed 与否，都按服务端最新状态强制一次视觉同步，避免动画卡旧状态
                         pendingDesiredState = null;
                         if (currentState !== nextState) {

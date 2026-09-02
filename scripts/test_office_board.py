@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from office_board import (  # noqa: E402
     CURSOR_AGENTS_HOME,
     ETA_LABEL,
     GROK_ROOM_NAMES,
+    LIVE_CURSOR_NAMES,
     STATUS_BUCKETS,
     TEAMMATE_NAMES,
     cursor_open_url,
@@ -23,6 +25,7 @@ from office_board import (  # noqa: E402
     patch_room,
     public_board,
     queue_instruction,
+    sanitize_public_detail,
 )
 
 
@@ -31,6 +34,7 @@ def fail(msg: str) -> None:
 
 
 def main() -> int:
+    os.environ["STAR_OFFICE_OUTBOX"] = str(ROOT / "outbox" / "test-instructions.jsonl")
     assert STATUS_BUCKETS == ("動いている", "許可待ち", "できたまま")
     assert GROK_ROOM_NAMES == (
         "司令塔",
@@ -54,7 +58,10 @@ def main() -> int:
         fail(f"rooms {names}")
     if any(r.get("url") for r in empty["grokRooms"]):
         fail("default room URLs must stay empty (do not invent)")
-    if empty.get("cursorAgents"):
+    live_names = [a["name"] for a in empty["cursorAgents"]]
+    if live_names != list(LIVE_CURSOR_NAMES):
+        fail(f"live cursor jobs {live_names}")
+    if any(a.get("sample") for a in empty["cursorAgents"]):
         fail("must not seed sample cursor jobs")
 
     assert eta_display({}) == ""
@@ -75,17 +82,30 @@ def main() -> int:
 
     leftover = {"cursorAgents": [{"name": "サンプル: 表示確認", "sample": True, "status": "動いている", "lifecycle": "running"}]}
     ensure_office_board(leftover)
-    if leftover.get("cursorAgents"):
+    leftover_names = [a["name"] for a in leftover.get("cursorAgents") or []]
+    if "サンプル: 表示確認" in leftover_names:
         fail("sample cursor rows must be stripped")
+    if leftover_names != list(LIVE_CURSOR_NAMES):
+        fail(f"samples must be replaced by live jobs, got {leftover_names}")
 
     board = public_board(state)
     assert board["liveCursorApi"] is False
-    assert board["cursorAgents"] == []
+    assert [a["name"] for a in board["cursorAgents"]] == list(LIVE_CURSOR_NAMES)
+    assert "ライブAPI未接続" not in board["liveApiNote"]
+    assert sanitize_public_detail("修行中...") == "待機中"
+    assert sanitize_public_detail("待命") == "待機中"
+    assert sanitize_public_detail("暫無昨日日記") == "待機中"
     assert board["buckets"] == list(STATUS_BUCKETS)
     assert queue_instruction(state, {"room": "架空", "text": "no"}) is None
     queued = queue_instruction(state, {"room": "司令塔", "text": "状況をまとめて"})
     assert queued and queued["executed"] is False and queued["status"] == "許可待ち"
     assert any(q["text"] == "状況をまとめて" for q in public_board(state)["queuedInstructions"])
+    outbox = Path(os.environ.get("STAR_OFFICE_OUTBOX", str(ROOT / "outbox" / "instructions.jsonl")))
+    if not outbox.is_file():
+        fail("instruction send must write outbox/instructions.jsonl")
+    last = outbox.read_text(encoding="utf-8").strip().splitlines()[-1]
+    if "状況をまとめて" not in last or "司令塔" not in last:
+        fail(f"outbox row missing room/text: {last}")
     print("OK office_board")
     return 0
 

@@ -15,6 +15,7 @@ venv/
 state.json
 _site/
 agents-state.json
+outbox/*.jsonl
 runtime-config.json
 *.log
 *.out

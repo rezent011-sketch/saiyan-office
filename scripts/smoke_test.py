@@ -91,12 +91,37 @@ def main() -> int:
         failures.append(f"GET /status buckets mismatch, got={buckets}")
     else:
         print("  OK  /status buckets")
+    expected_jobs = {"オフィス実況化", "切り抜きタイトル直し", "海外EC（Origin待ち）", "LP空き直し", "著名人写真"}
     if not isinstance(agents, list):
         failures.append("GET /status cursorAgents missing")
     elif any(a.get("sample") or str(a.get("name") or "").startswith("サンプル") for a in agents if isinstance(a, dict)):
-        failures.append("GET /status must hide sample Cursor rows when live API is off")
+        failures.append("GET /status must hide sample Cursor rows")
+    elif {a.get("name") for a in agents if isinstance(a, dict)} != expected_jobs:
+        failures.append(f"GET /status live cursor jobs mismatch, got={agents}")
     else:
-        print("  OK  /status cursorAgents (no sample rows)")
+        print("  OK  /status cursorAgents (live jobs, no samples)")
+    code, html = req("GET", base + "/", token=token)
+    banned = (
+        "暂无昨日日记",
+        "暂无访客",
+        "暫無昨日日記",
+        "暫無訪客",
+        "サンプル: 表示確認",
+        "ライブAPI未接続",
+        "idle: { name: '待命'",
+        "[待命]",
+    )
+    if code == 200:
+        for token_s in banned:
+            if token_s in html:
+                failures.append(f"GET / still contains leftover copy: {token_s}")
+        if "昨日の日記はまだない" not in html or "訪問者はいない" not in html or "待機中" not in html:
+            failures.append("GET / missing Japanese empty states")
+        if 'id="lang-btn-cn"' in html:
+            failures.append("GET / still exposes CN language toggle")
+        print("  OK  GET / Japanese office copy")
+    else:
+        failures.append(f"GET / reread failed: {code}")
     if status.get("liveCursorApi"):
         failures.append("liveCursorApi must be false (local JSON only)")
     else:

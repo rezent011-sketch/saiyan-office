@@ -7,7 +7,11 @@ text already exists in the local state data.
 
 from __future__ import annotations
 
+import json
+import os
+import re
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 STATUS_BUCKETS = ("動いている", "許可待ち", "できたまま")
@@ -37,6 +41,49 @@ TEAMMATE_NAMES = (
 
 CURSOR_AGENTS_HOME = "https://cursor.com/agents"
 ETA_LABEL = "分・時間の見込み"
+LIVE_API_NOTE = "実況ボード（デスク＝Grok部屋 / 作業＝Cursor）"
+OUTBOX_FILE = Path(
+    os.environ.get(
+        "STAR_OFFICE_OUTBOX",
+        str(Path(__file__).resolve().parent.parent / "outbox" / "instructions.jsonl"),
+    )
+)
+
+# JSON-backed live Cursor work. Do not invent extras or ETAs.
+LIVE_CURSOR_JOBS = (
+    {"name": "オフィス実況化", "status": "動いている"},
+    {"name": "切り抜きタイトル直し", "status": "動いている"},
+    {"name": "海外EC（Origin待ち）", "status": "許可待ち"},
+    {"name": "LP空き直し", "status": "できたまま"},
+    {"name": "著名人写真", "status": "できたまま"},
+)
+LIVE_CURSOR_NAMES = tuple(job["name"] for job in LIVE_CURSOR_JOBS)
+
+SAMPLE_CURSOR_NAMES = {
+    "サンプル: 表示確認",
+    "サンプル: 許可待ちの例",
+    "サンプル: 完了した作業の例",
+    "表示確認",
+    "許可待ちの例",
+    "完了した作業の例",
+}
+SAMPLE_CURSOR_MARKERS = (
+    "サンプル",
+    "sample/pending-demo",
+    "sample/finished-demo",
+    "sample/local-demo",
+    "ピクセルオフィスの状態表示",
+    "ローカルJSONの許可待ち表示",
+    "できたままの表示確認",
+)
+LEGACY_DETAIL_MARKERS = (
+    "修行中",
+    "待命",
+    "暫無",
+    "暂无",
+    "訪客",
+    "访客",
+)
 
 _TEAMMATE_ROOMS = {
     "メインAI社員": "司令塔",
@@ -162,8 +209,57 @@ def default_teammates() -> list[dict]:
 
 
 def default_cursor_agents() -> list[dict]:
-    """No live Cursor API: do not invent or seed sample jobs."""
-    return []
+    """JSON-backed live Cursor jobs (not samples, no invented ETAs)."""
+    return [_sanitize_cursor_agent({**job, "sample": False}) for job in LIVE_CURSOR_JOBS]
+
+
+def is_sample_cursor_job(raw: Any) -> bool:
+    if not isinstance(raw, dict):
+        return True
+    name = str(raw.get("name") or "").strip()
+    title = str(raw.get("title") or "").strip()
+    branch = str(raw.get("branch") or "").strip()
+    if raw.get("sample") or name.startswith("サンプル"):
+        return True
+    if name in SAMPLE_CURSOR_NAMES or title in SAMPLE_CURSOR_NAMES:
+        return True
+    blob = " ".join((name, title, branch, str(raw.get("url") or ""), str(raw.get("prUrl") or "")))
+    return any(marker in blob for marker in SAMPLE_CURSOR_MARKERS)
+
+
+def sanitize_public_detail(detail: Any, fallback: str = "待機中") -> str:
+    text = str(detail or "").strip()
+    if not text or text in {".", "...", "smoke-check"}:
+        return fallback
+    if any(marker in text for marker in LEGACY_DETAIL_MARKERS):
+        return fallback
+    if re.search(r"[\u4e00-\u9fff]", text) and not re.search(r"[\u3040-\u30ff]", text):
+        return fallback
+    return text
+
+
+def append_instruction_outbox(item: dict) -> Path:
+    """Append one queued instruction for the Mac app to persist/deliver."""
+    path = Path(
+        os.environ.get(
+            "STAR_OFFICE_OUTBOX",
+            str(Path(__file__).resolve().parent.parent / "outbox" / "instructions.jsonl"),
+        )
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    row = {
+        "id": item.get("id"),
+        "room": item.get("room"),
+        "text": item.get("text"),
+        "timestamp": item.get("created_at") or datetime.now().isoformat(),
+        "queued": True,
+        "executed": False,
+        "delivery": "queued",
+        "note": "部屋の担当へ配送待ち（未実行）",
+    }
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return path
 
 
 def _index_by_name(rows: list[dict], names: tuple[str, ...]) -> dict[str, dict]:
@@ -242,7 +338,7 @@ def ensure_office_board(state: dict) -> bool:
     changed = False
 
     if state.get("dataSource") not in {"local", "local-demo"}:
-        state["dataSource"] = "local-demo"
+        state["dataSource"] = "local"
         changed = True
 
     if "liveCursorApi" not in state:
@@ -272,18 +368,32 @@ def ensure_office_board(state: dict) -> bool:
             changed = True
 
     agents_in = state.get("cursorAgents")
-    if not isinstance(agents_in, list):
-        state["cursorAgents"] = default_cursor_agents()
-        changed = True
-    else:
-        cleaned = []
+    cleaned = []
+    seen = set()
+    if isinstance(agents_in, list):
         for raw in agents_in:
+            if is_sample_cursor_job(raw):
+                changed = True
+                continue
             row = _sanitize_cursor_agent(raw)
-            if row and not row.get("sample"):
-                cleaned.append(row)
-        if cleaned != agents_in:
-            state["cursorAgents"] = cleaned
+            if not row or row.get("sample"):
+                changed = True
+                continue
+            row["sample"] = False
+            cleaned.append(row)
+            seen.add(row["name"])
+    else:
+        changed = True
+    for job in LIVE_CURSOR_JOBS:
+        if job["name"] in seen:
+            continue
+        row = _sanitize_cursor_agent({**job, "sample": False})
+        if row:
+            cleaned.append(row)
             changed = True
+    if not isinstance(agents_in, list) or cleaned != agents_in:
+        state["cursorAgents"] = cleaned
+        changed = True
 
     if not isinstance(state.get("queuedInstructions"), list):
         state["queuedInstructions"] = []
@@ -317,6 +427,10 @@ def queue_instruction(state: dict, payload: dict) -> dict | None:
         state["queuedInstructions"] = rows
     if not any(r.get("id") == item["id"] for r in rows if isinstance(r, dict)):
         rows.append(item)
+        try:
+            append_instruction_outbox(item)
+        except Exception:
+            pass
     return item
 
 
@@ -362,6 +476,8 @@ def patch_cursor_agent(state: dict, payload: dict) -> bool:
     title = str(payload.get("title") or "").strip()
     if not name and not title:
         return False
+    if is_sample_cursor_job(payload) and name not in LIVE_CURSOR_NAMES:
+        return False
     agents = state["cursorAgents"]
     target = next((a for a in agents if a.get("name") == name), None)
     if target is None:
@@ -391,20 +507,21 @@ def public_board(state: dict) -> dict:
     teammates = list(state.get("teammates", []))
     agents = []
     for agent in state.get("cursorAgents", []):
-        if agent.get("sample"):
+        if is_sample_cursor_job(agent):
             continue
         agents.append({
             **agent,
+            "sample": False,
             "openUrl": cursor_open_url(agent),
             "eta": eta_display(agent),
         })
     return {
-        "dataSource": state.get("dataSource", "local-demo"),
+        "dataSource": state.get("dataSource", "local"),
         "liveCursorApi": False,
         "buckets": list(STATUS_BUCKETS),
         "grokRooms": rooms,
         "teammates": teammates,
         "cursorAgents": agents,
         "queuedInstructions": list(state.get("queuedInstructions") or []),
-        "liveApiNote": "Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor作業は未接続のため非表示。",
+        "liveApiNote": LIVE_API_NOTE,
     }

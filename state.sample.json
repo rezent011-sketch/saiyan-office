@@ -4,7 +4,7 @@
   "progress": 0,
   "officeName": "Saiyan Office 🐉",
   "updated_at": "2026-03-13T00:00:00",
-  "dataSource": "local-demo",
+  "dataSource": "local",
   "liveCursorApi": false,
   "grokRooms": [
     {
@@ -62,5 +62,11 @@
     {"id": "新規顧客開拓Bot", "name": "新規顧客開拓Bot", "room": "司令塔", "status": "許可待ち"},
     {"id": "コンテンツ生成社員", "name": "コンテンツ生成社員", "room": "動画生成", "status": "できたまま"}
   ],
-  "cursorAgents": []
+  "cursorAgents": [
+    {"name": "オフィス実況化", "status": "動いている", "sample": false},
+    {"name": "切り抜きタイトル直し", "status": "動いている", "sample": false},
+    {"name": "海外EC（Origin待ち）", "status": "許可待ち", "sample": false},
+    {"name": "LP空き直し", "status": "できたまま", "sample": false},
+    {"name": "著名人写真", "status": "できたまま", "sample": false}
+  ]
 }
