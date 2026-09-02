@@ -13,7 +13,7 @@
     {"id": "海外EC", "name": "海外EC", "kind": "desk", "status": "動いている", "url": "", "assignee": "開発担当Bot", "teammates": ["開発担当Bot"]},
     {"id": "新規事業会議", "name": "新規事業会議", "kind": "desk", "status": "動いている", "url": "", "assignee": "新規事業Bot", "teammates": ["新規事業Bot"]},
     {"id": "Xマーケティング自動化", "name": "Xマーケティング自動化", "kind": "desk", "status": "動いている", "url": "", "assignee": "Xマーケティング担当Bot", "teammates": ["Xマーケティング担当Bot"]},
-    {"id": "動画生成", "name": "動画生成", "kind": "desk", "status": "動いている", "url": "", "assignee": "動画生成担当Bot", "teammates": ["動画生成担当Bot", "TikTok LIVE切り抜きBot", "コンテンツ生成社員"]},
+    {"id": "動画生成", "name": "動画生成", "kind": "desk", "status": "動いている", "url": "", "assignee": "動画生成担当Bot", "teammates": ["動画生成担当Bot", "TikTok LIVE切り抜きBot"]},
     {"id": "コンサル管理", "name": "コンサル管理", "kind": "desk", "status": "動いている", "url": "", "assignee": "コンサル管理Bot", "teammates": ["コンサル管理Bot"]},
     {"id": "新規顧客開拓", "name": "新規顧客開拓", "kind": "desk", "status": "動いている", "url": "", "assignee": "新規顧客開拓Bot", "teammates": ["新規顧客開拓Bot"]}
   ],
@@ -30,7 +30,7 @@
     {"id": "コンサル管理Bot", "name": "コンサル管理Bot", "room": "コンサル管理", "status": "動いている"},
     {"id": "新規事業Bot", "name": "新規事業Bot", "room": "新規事業会議", "status": "動いている"},
     {"id": "新規顧客開拓Bot", "name": "新規顧客開拓Bot", "room": "新規顧客開拓", "status": "動いている"},
-    {"id": "コンテンツ生成社員", "name": "コンテンツ生成社員", "room": "動画生成", "status": "動いている"}
+    {"id": "Claude Code開発", "name": "Claude Code開発", "room": "司令塔", "status": "動いている"}
   ],
   "cursorAgents": [
     {"name": "Grok rooms + Cursor status on saiyan-office", "status": "動いている", "id": "bc-3356893b-3dfd-4261-92d1-fd6004956913", "url": "https://cursor.com/agents/bc-3356893b-3dfd-4261-92d1-fd6004956913", "prUrl": "https://github.com/rezent011-sketch/saiyan-office/pull/1"},

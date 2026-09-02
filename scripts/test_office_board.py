@@ -55,7 +55,23 @@ def main() -> int:
     assert ROOM_ASSIGNEES["AIバーチャルオフィス"] == "開発担当Bot2"
     assert ROOM_ASSIGNEES["海外EC"] == "開発担当Bot"
     assert "開発担当Bot2" in TEAMMATE_NAMES
-    assert "コンテンツ生成社員" in TEAMMATE_NAMES
+    assert "Claude Code開発" in TEAMMATE_NAMES
+    assert "コンテンツ生成社員" not in TEAMMATE_NAMES
+    assert TEAMMATE_NAMES == (
+        "メインAI社員",
+        "開発担当Bot",
+        "開発担当Bot2",
+        "UTAGE・LINE担当Bot",
+        "TikTok LIVE切り抜きBot",
+        "動画生成担当Bot",
+        "広告運用Bot",
+        "新規事業Bot",
+        "新規顧客開拓Bot",
+        "Xマーケティング担当Bot",
+        "クラウド環境構築Bot",
+        "コンサル管理Bot",
+        "Claude Code開発",
+    )
     assert len(TEAMMATE_NAMES) == 13
 
     assert normalize_bucket("running") == "動いている"
@@ -190,6 +206,13 @@ def main() -> int:
         fail("UI language must be forced to ja")
     if "昨日の日記はまだない" not in html or "訪問者はいない" not in html or "待機中" not in html:
         fail("Japanese empty states missing from index.html")
+    if 'id="staff-floor"' not in html or 'id="office-mascot"' not in html:
+        fail("staff floor / unlabeled mascot missing from index.html")
+    for staff_name in TEAMMATE_NAMES:
+        if staff_name not in html:
+            fail(f"frontend/index.html missing staff {staff_name!r}")
+    if "コンテンツ生成社員" in html:
+        fail("sample/old staff コンテンツ生成社員 must not appear")
     shim = (ROOT / "scripts" / "public_office_shim.js").read_text(encoding="utf-8")
     if "「' + assignee + '」に渡しました（未実行）" not in shim or "開発担当Bot2" not in shim:
         fail("public office shim must queue instructions to room assignees")

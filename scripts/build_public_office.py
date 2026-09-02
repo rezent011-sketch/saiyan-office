@@ -84,6 +84,10 @@ def assert_public_html(html: str) -> None:
         raise SystemExit("public HTML missing real Grok desk / bucket copy")
     if "デスクへの指示を書く" not in html:
         raise SystemExit("public HTML missing instruction form")
+    if 'id="staff-floor"' not in html or "Claude Code開発" not in html or "メインAI社員" not in html:
+        raise SystemExit("public HTML missing named staff floor")
+    if "コンテンツ生成社員" in html:
+        raise SystemExit("public HTML still contains old sample staff")
     worker_set_state = f"{API_ORIGIN}/set_state"
     if worker_set_state not in html or f"fetch('{worker_set_state}'" not in html:
         raise SystemExit("public HTML must fetch set_state from the rust-sauce workers origin")
@@ -122,7 +126,7 @@ def main() -> int:
     )
     shim_tag = (
         api_origin_js
-        + '<script src="/static/public-office-shim.js?v=public-20260902b"></script>\n    '
+        + '<script src="/static/public-office-shim.js?v=public-20260902c"></script>\n    '
     )
     needle = '<script src="/static/vendor/phaser-3.80.1.min.js'
     if needle not in html:

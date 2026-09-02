@@ -46,14 +46,14 @@ TEAMMATE_NAMES = (
     "開発担当Bot2",
     "UTAGE・LINE担当Bot",
     "TikTok LIVE切り抜きBot",
-    "クラウド環境構築Bot",
-    "広告運用Bot",
     "動画生成担当Bot",
-    "Xマーケティング担当Bot",
-    "コンサル管理Bot",
+    "広告運用Bot",
     "新規事業Bot",
     "新規顧客開拓Bot",
-    "コンテンツ生成社員",
+    "Xマーケティング担当Bot",
+    "クラウド環境構築Bot",
+    "コンサル管理Bot",
+    "Claude Code開発",
 )
 
 CURSOR_AGENTS_HOME = "https://cursor.com/agents"
@@ -153,7 +153,7 @@ _TEAMMATE_ROOMS = {
     "コンサル管理Bot": "コンサル管理",
     "新規事業Bot": "新規事業会議",
     "新規顧客開拓Bot": "新規顧客開拓",
-    "コンテンツ生成社員": "動画生成",
+    "Claude Code開発": "司令塔",
 }
 
 _ROOM_DEFAULT_STATUS = {name: "動いている" for name in GROK_ROOM_NAMES}
