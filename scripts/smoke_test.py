@@ -81,9 +81,20 @@ def main() -> int:
     rooms = status.get("grokRooms") if isinstance(status, dict) else None
     agents = status.get("cursorAgents") if isinstance(status, dict) else None
     buckets = status.get("buckets") if isinstance(status, dict) else None
-    expected_rooms = {"司令塔", "Xマーケティング自動化", "動画生成", "広告運用", "AIバーチャルオフィス"}
+    expected_rooms = {
+        "司令塔",
+        "AIバーチャルオフィス",
+        "広告運用",
+        "海外EC",
+        "新規事業会議",
+        "Xマーケティング自動化",
+        "動画生成",
+        "コンサル管理",
+        "新規顧客開拓",
+    }
     expected_buckets = ["動いている", "許可待ち", "できたまま"]
-    if not isinstance(rooms, list) or {r.get("name") for r in rooms if isinstance(r, dict)} != expected_rooms:
+    room_names = {r.get("name") for r in rooms if isinstance(r, dict)} if isinstance(rooms, list) else set()
+    if not expected_rooms.issubset(room_names):
         failures.append(f"GET /status missing canonical grokRooms, got={rooms}")
     else:
         print("  OK  /status grokRooms")
@@ -126,6 +137,13 @@ def main() -> int:
         "Star 的像素办公室",
         "修行中",
         "待命",
+        "访客动画",
+        "办公桌（旧）",
+        "办公桌",
+        "I18N.zh",
+        "nameMap.zh",
+        "工作中",
+        "officeSample: 'サンプル'",
     )
     if code == 200:
         for token_s in banned:
@@ -133,6 +151,10 @@ def main() -> int:
                 failures.append(f"GET / still contains leftover copy: {token_s}")
         if "昨日の日記はまだない" not in html or "訪問者はいない" not in html or "待機中" not in html:
             failures.append("GET / missing Japanese empty states")
+        if "const uiLang = 'ja'" not in html or 'lang="ja"' not in html:
+            failures.append("GET / must force UI language ja")
+        if html.count("サンプル") != 1 or "sampleMarkers = ['サンプル'" not in html:
+            failures.append("GET / サンプル must be hide-filter only")
         if 'id="lang-btn-cn"' in html:
             failures.append("GET / still exposes CN language toggle")
         print("  OK  GET / Japanese office copy")
@@ -142,6 +164,40 @@ def main() -> int:
         failures.append("liveCursorApi must be false (local JSON only)")
     else:
         print("  OK  liveCursorApi is false")
+    if "queuedInstructions" not in status:
+        failures.append("GET /status must keep queuedInstructions")
+    else:
+        print("  OK  /status queuedInstructions present")
+
+    code, body = req(
+        "POST",
+        base + "/set_state",
+        {"instruction": {"room": "AIバーチャルオフィス", "text": "smoke-instruction-ack"}},
+        token=token,
+    )
+    try:
+        instr = json.loads(body) if body else {}
+    except Exception:
+        instr = {}
+    if code != 200:
+        failures.append(f"POST /set_state instruction failed: {code}, body={body[:200]}")
+    elif "開発担当Bot2" not in str(instr.get("msg") or "") or "渡しました" not in str(instr.get("msg") or ""):
+        failures.append(f"instruction ack must name the room assignee in Japanese: {instr}")
+    else:
+        print("  OK  instruction Japanese ack")
+    code, body = req("GET", base + "/status", token=token)
+    try:
+        status2 = json.loads(body) if code == 200 else {}
+    except Exception:
+        status2 = {}
+    queued = status2.get("queuedInstructions") if isinstance(status2, dict) else None
+    if not isinstance(queued, list) or not any(
+        isinstance(q, dict) and q.get("body") == "smoke-instruction-ack" and q.get("assignee_name") == "開発担当Bot2"
+        for q in queued
+    ):
+        failures.append("GET /status queuedInstructions missing the just-sent row")
+    else:
+        print("  OK  /status queuedInstructions after send")
 
     if failures:
         print("\n[smoke] FAIL")

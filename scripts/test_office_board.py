@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -105,10 +106,15 @@ def main() -> int:
     if not outbox.is_file():
         fail("instruction send must write outbox/instructions.jsonl")
     last = outbox.read_text(encoding="utf-8").strip().splitlines()[-1]
-    if '"assignee_name": "開発担当Bot2"' not in last or '"body": "状況をまとめて"' not in last:
-        fail(f"outbox row missing room/assignee/body: {last}")
-    if '"room": "AIバーチャルオフィス"' not in last:
-        fail(f"outbox missing room: {last}")
+    row = json.loads(last)
+    for key in ("room", "assignee_name", "body", "timestamp"):
+        if key not in row or not str(row[key]).strip():
+            fail(f"outbox row missing {key}: {last}")
+    if row["room"] != "AIバーチャルオフィス" or row["assignee_name"] != "開発担当Bot2" or row["body"] != "状況をまとめて":
+        fail(f"outbox fields wrong: {last}")
+    board = public_board(empty)
+    if not any(q.get("id") == queued["id"] for q in board.get("queuedInstructions") or []):
+        fail("queuedInstructions missing from public_board /status payload")
 
     html = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
     for token in (
@@ -119,10 +125,22 @@ def main() -> int:
         "lang-btn-cn",
         "修行中",
         "Star 的像素办公室",
+        "访客动画",
+        "办公桌（旧）",
+        "办公桌",
+        "I18N.zh",
+        "nameMap.zh",
+        "nameMap['zh']",
+        "工作中",
+        "officeSample: 'サンプル'",
     ):
         if token in html:
             fail(f"frontend/index.html still contains {token!r}")
-    if 'lang="ja"' not in html or "昨日の日記はまだない" not in html or "訪問者はいない" not in html:
+    if html.count("サンプル") != 1 or "sampleMarkers = ['サンプル'" not in html:
+        fail("サンプル may exist only as a hide-filter, never as a visible label")
+    if "const uiLang = 'ja'" not in html or 'lang="ja"' not in html:
+        fail("UI language must be forced to ja")
+    if "昨日の日記はまだない" not in html or "訪問者はいない" not in html or "待機中" not in html:
         fail("Japanese empty states missing from index.html")
 
     print("OK office_board")

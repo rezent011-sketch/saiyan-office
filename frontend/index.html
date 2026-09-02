@@ -25,7 +25,7 @@
             gap: 10px;
             overflow-x: hidden;
         }
-        /* 底部面板容器 */
+        /* 下部パネル */
         #main-stage {
             position: relative;
             width: 1280px;
@@ -33,7 +33,7 @@
             will-change: transform;
         }
         body.drawer-open #main-stage {
-            /* 与右侧抽屉并列：按视口动态左移，确保与抽屉至少保留 20px 间隔 */
+            /* 右ドロワーと並べる：間隔20px以上を保って左へずらす */
             transform: translateX(calc(-1 * max(0px, (min(320px, 92vw) + 20px) - ((100vw - 1280px) / 2))));
         }
         #bottom-panels {
@@ -59,14 +59,14 @@
             width: 100% !important;
             height: 100% !important;
             image-rendering: pixelated;
-            /* 再兜底一次：即使外层高度变化，也不要拉伸变形 */
+            /* 外枠の高さが変わっても引き伸ばさない */
             object-fit: contain;
-            /* 边框改为直接贴合画布内部，避免“框比地图大” */
+            /* 枠はキャンバス内側に密着。地図より大きくしない */
             box-shadow: inset 0 0 0 4px #64477d;
             position: relative;
             z-index: 10;
         }
-        /* 首屏骨架：避免 Phaser 未就绪时纯黑屏 */
+        /* 初回スケルトン：Phaser未準備時の真っ黒画面を避ける */
         #game-skeleton {
             position: absolute;
             inset: 0;
@@ -298,7 +298,8 @@
         .office-chip.queued { border-color: #f59e0b; }
         .kind.live { color: #86efac; }
         .kind.sample { color: #fdba74; }
-        /* 状态控制栏 */
+        /* 状態バー */
+
         #control-bar {
             position: relative;
             background: #141722;
@@ -794,7 +795,7 @@
             background: #4a4f5f;
             border-color: #e94560;
         }
-        /* Star 状态四按钮（不含装修）使用像素精灵皮肤 */
+        /* Star状態ボタン（部屋編集以外）はピクセルスプライト */
         #control-bar #btn-state-idle,
         #control-bar #btn-state-writing,
         #control-bar #btn-state-syncing,
@@ -832,7 +833,7 @@
             padding-bottom: 0;
             filter: brightness(0.97);
         }
-        /* 装修房间按钮使用像素精灵皮肤 */
+        /* 部屋編集ボタンはピクセルスプライト */
         #control-bar #btn-open-drawer {
             background-image: url('/static/btn-open-drawer-sprite.png?v={{VERSION_TIMESTAMP}}') !important;
             background-color: transparent !important;
@@ -862,7 +863,7 @@
             padding-bottom: 5px !important;
             filter: brightness(0.97);
         }
-        /* Guest Agent 名单面板（右下角） */
+        /* ゲスト一覧（右下） */
         #guest-agent-panel {
             position: relative;
             width: 390px;
@@ -984,7 +985,7 @@
         .guest-agent-buttons button.leave-btn:hover {
             background: #6a2828;
         }
-        /* Memo 区域 - 4:3 小正方形 */
+        /* メモ領域 - 4:3 */
         #memo-panel {
             position: relative;
             width: 460px;
@@ -1105,7 +1106,7 @@
             flex-shrink: 0;
         }
 
-        /* 手机端专属适配（不影响桌面） */
+        /* スマホ専用（デスクトップは変更しない） */
         @media (max-width: 900px), (pointer: coarse) {
             html, body {
                 height: 100%;
@@ -1122,7 +1123,7 @@
 
             #game-container {
                 width: 100vw;
-                height: 66.666vh; /* 办公室占 2/3 屏幕高度 */
+                height: 66.666vh; /* オフィスは画面高の 2/3 */
                 max-width: 100vw;
                 max-height: 66.666vh;
                 border-width: 0;
@@ -1142,7 +1143,7 @@
             #bottom-panels {
                 width: 100vw;
                 max-width: 100vw;
-                min-height: 33.334vh; /* 余下约 1/3 可见区 */
+                min-height: 33.334vh; /* 残り約 1/3 */
                 padding: 10px 10px 16px;
                 display: flex;
                 flex-direction: column;
@@ -1287,7 +1288,7 @@
     </style>
 </head>
 <body>
-    <!-- 加载遮罩 -->
+    <!-- 読み込みオーバーレイ -->
     <div id="loading-overlay">
         <div id="loading-text">Loading Star’s pixel office...</div>
         <div id="loading-progress-container">
@@ -1328,9 +1329,9 @@
             </div>
         </div>
     
-    <!-- 底部面板容器 -->
+    <!-- 下部パネル -->
     <div id="bottom-panels">
-        <!-- Memo 面板 -->
+        <!-- メモパネル -->
         <div id="memo-panel">
             <div id="memo-title">昨日の作業ログ</div>
             <div id="memo-date"></div>
@@ -1341,7 +1342,7 @@
             <div class="memo-decoration">─ ─ ─ ─ ─</div>
         </div>
         
-        <!-- 状态控制栏 -->
+        <!-- 状態バー -->
         <div id="control-bar">
             <div id="control-bar-title">エージェント状態</div>
             <div id="control-buttons">
@@ -1353,7 +1354,7 @@
             </div>
         </div>
 
-        <!-- Guest Agent 名单面板（右下角） -->
+        <!-- ゲスト一覧（右下） -->
         <div id="guest-agent-panel">
             <div id="guest-agent-panel-title">仲間リスト</div>
             <div id="guest-agent-list">
@@ -1381,8 +1382,8 @@
             <div id="asset-auth-gate" class="asset-preview-box">
                 <div class="asset-preview-title">編集パスコードを入力</div>
                 <div class="asset-toolbar">
-                    <input id="asset-pass-input" type="password" placeholder="输入验证码" />
-                    <button onclick="unlockAssetDrawer()">验证</button>
+                    <input id="asset-pass-input" type="password" placeholder="パスコード入力" />
+                    <button onclick="unlockAssetDrawer()">認証</button>
                 </div>
                 <div id="asset-auth-msg" class="asset-sub"></div>
             </div>
@@ -1390,64 +1391,64 @@
             <div id="asset-main-content" style="display:none;">
                 <div id="asset-move-panel">
                     <div class="asset-toolbar" id="asset-move-row">
-                        <button id="btn-move-house" class="btn-move" onclick="generateRpgBackground()">📦 搬新家</button>
-                        <button id="btn-back-home" class="btn-home" onclick="restoreHomeBackground()">🐚 回老家</button>
+                        <button id="btn-move-house" class="btn-move" onclick="generateRpgBackground()">📦 引っ越し</button>
+                        <button id="btn-back-home" class="btn-home" onclick="restoreHomeBackground()">🐚 実家に戻る</button>
                     </div>
                     <div class="asset-toolbar" id="asset-broker-row">
-                        <button class="btn-broker" onclick="toggleBrokerPanel()">🤝 找中介</button>
-                        <button id="btn-diy" class="btn-diy" onclick="toggleManualPanel()">🪚 自己装</button>
+                        <button class="btn-broker" onclick="toggleBrokerPanel()">🤝 仲介</button>
+                        <button id="btn-diy" class="btn-diy" onclick="toggleManualPanel()">🪚 自分で装飾</button>
                     </div>
                     <div id="asset-move-result" class="asset-sub" style="margin-top:4px; margin-bottom:6px;"></div>
                     <div id="asset-broker-panel">
-                        <div class="asset-sub" style="margin-bottom:6px;">写你的风格主题（严格保持原始房间结构，只改变视觉风格）</div>
-                        <textarea id="asset-broker-prompt" placeholder="例如：像素风赛博东京夜景，霓虹灯、雨夜地面反光、蓝紫主色"></textarea>
+                        <div class="asset-sub" style="margin-bottom:6px;">ロブスターにはどんな家をおすすめしますか</div>
+                        <textarea id="asset-broker-prompt" placeholder="例：故宮テーマ、モネ風、ダンジョン風、兵馬俑テーマ…"></textarea>
                         <div class="asset-toolbar" style="margin-top:6px; gap:8px; align-items:center; justify-content:flex-start;">
-                            <span id="speed-mode-label" class="asset-sub" style="min-width:62px;">生成模式</span>
+                            <span id="speed-mode-label" class="asset-sub" style="min-width:62px;">生成モード</span>
                             <button id="speed-fast-btn" type="button" onclick="setSpeedMode('fast')" style="background:#22c55e;color:#052e16;border-color:#16a34a;">🍌2</button>
                             <button id="speed-quality-btn" type="button" onclick="setSpeedMode('quality')" style="background:#334155;color:#e5e7eb;border-color:#475569;">🍌Pro</button>
                         </div>
                         <details id="asset-gemini-panel" style="margin-top:6px; border:0; border-top:1px solid rgba(148,163,184,.18); border-radius:0; padding:8px 0 0; background:transparent;">
-                            <summary id="gemini-panel-summary" style="cursor:pointer; color:#cbd5e1;">🔐 API 设置（可折叠）</summary>
+                            <summary id="gemini-panel-summary" style="cursor:pointer; color:#cbd5e1;">🔐 API設定（折りたたみ）</summary>
                             <div id="asset-gemini-config" style="display:block; margin-top:6px;">
-                                <div id="gemini-config-hint" class="asset-sub" style="margin-bottom:4px;">可选：填写你的生图 API Key（留空不影响基础功能）</div>
-                                <div class="asset-sub" style="margin-bottom:6px;"><a id="gemini-api-doc-link" href="https://ai.google.dev/gemini-api/docs/api-key?hl=zh-cn" target="_blank" rel="noopener noreferrer">📘 如何申请 Google API Key</a></div>
+                                <div id="gemini-config-hint" class="asset-sub" style="margin-bottom:4px;">任意：画像生成APIキーを設定（未設定でも基本機能は利用可）</div>
+                                <div class="asset-sub" style="margin-bottom:6px;"><a id="gemini-api-doc-link" href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank" rel="noopener noreferrer">📘 Google API Keyの取得方法</a></div>
                                 <div id="gemini-mask-status" class="asset-sub" style="margin-bottom:6px; color:#a7f3d0;"></div>
                                 <div class="asset-toolbar" style="gap:6px; flex-wrap:wrap;">
-                                    <input id="gemini-api-key-input" type="password" placeholder="粘贴 GEMINI_API_KEY（不会回显）" style="min-width:220px; flex:1;" autocomplete="new-password" />
-                                    <button id="btn-save-gemini-key" onclick="saveGeminiConfigFromUI()">保存 Key</button>
+                                    <input id="gemini-api-key-input" type="password" placeholder="GEMINI_API_KEY を貼り付け（入力は非表示）" style="min-width:220px; flex:1;" autocomplete="new-password" />
+                                    <button id="btn-save-gemini-key" onclick="saveGeminiConfigFromUI()">Keyを保存</button>
                                 </div>
                                 <div id="gemini-config-msg" class="asset-sub" style="margin-top:4px;"></div>
                             </div>
                         </details>
                         <div id="asset-broker-actions">
-                            <button onclick="generateCustomRpgBackground()">按中介方案搬家</button>
+                            <button onclick="generateCustomRpgBackground()">仲介に任せる</button>
                         </div>
                     </div>
                 </div>
 
                 <div id="asset-home-actions-panel" class="asset-preview-box" style="margin-bottom:10px;">
                     <div class="asset-toolbar" style="margin-bottom:6px; gap:8px;">
-                        <button id="btn-back-last-bg" class="btn-home" onclick="restoreLastGeneratedBackground()">↩️ 回上一个家</button>
-                        <button id="btn-favorite-home" class="btn-home" onclick="saveCurrentHomeFavorite()">⭐ 收藏这个家</button>
+                        <button id="btn-back-last-bg" class="btn-home" onclick="restoreLastGeneratedBackground()">↩️ ひとつ前へ</button>
+                        <button id="btn-favorite-home" class="btn-home" onclick="saveCurrentHomeFavorite()">⭐ この家を保存</button>
                     </div>
                     <details id="asset-home-favorites" style="margin:0;">
-                        <summary id="asset-home-favorites-title" class="asset-preview-title">🏠 收藏的家</summary>
+                        <summary id="asset-home-favorites-title" class="asset-preview-title">🏠 保存した家</summary>
                         <div id="asset-home-favorites-list" class="home-fav-list"></div>
                     </details>
                 </div>
 
                 <div id="asset-manual-panel" style="display:flex; flex-direction:column; flex:1; min-height:0;">
                     <div class="asset-toolbar">
-                        <input id="asset-search" placeholder="搜索资产名（如 desk / sofa / star）" oninput="renderAssetDrawerList()" />
+                        <input id="asset-search" placeholder="アセット検索（desk / sofa / star）" oninput="renderAssetDrawerList()" />
                     </div>
                     <div id="asset-list"></div>
                     <div id="asset-upload-panel">
                         <input id="asset-upload-file" type="file" accept="image/*" style="display:none;" />
                         <div class="asset-upload-grid" style="margin-top:0; margin-bottom:6px; gap:8px;">
-                            <button id="asset-choose-btn" onclick="openInlineAssetUploader()">上传素材</button>
-                            <button id="asset-commit-refresh-btn" onclick="commitAndRefresh()" disabled style="opacity:.55;">确认刷新</button>
-                            <button id="asset-reset-default-btn" onclick="resetSelectedAssetToDefault()" disabled style="opacity:.55;">重置默认</button>
-                            <button id="asset-restore-prev-btn" onclick="restoreSelectedAssetPrev()" disabled style="opacity:.55;">恢复上版</button>
+                            <button id="asset-choose-btn" onclick="openInlineAssetUploader()">素材アップロード</button>
+                            <button id="asset-commit-refresh-btn" onclick="commitAndRefresh()" disabled style="opacity:.55;">確定して更新</button>
+                            <button id="asset-reset-default-btn" onclick="resetSelectedAssetToDefault()" disabled style="opacity:.55;">初期に戻す</button>
+                            <button id="asset-restore-prev-btn" onclick="restoreSelectedAssetPrev()" disabled style="opacity:.55;">前版に戻す</button>
                         </div>
                         <div id="asset-upload-result" class="asset-sub"></div>
                     </div>
@@ -1464,16 +1465,12 @@
     <button id="pan-toggle" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 12px); left:12px; z-index:999999; padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">
         視点移動
     </button>
-    <div id="lang-toggle-group" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 52px); left:12px; z-index:1000002; display:flex; gap:2px; align-items:center;">
-        <button id="lang-btn-en" onclick="setUILanguage('en')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">EN</button>
-        <button id="lang-btn-jp" onclick="setUILanguage('ja')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">JP</button>
-    </div>
+    <div id="lang-toggle-group" style="display:none;"></div>
 
     <script src="/static/vendor/phaser-3.80.1.min.js?v={{VERSION_TIMESTAMP}}"></script>
     <script>
-        // EN / JP only. CN toggle is removed so leftover Chinese cannot be injected.
-        let uiLang = localStorage.getItem('uiLang') || 'ja';
-        if (uiLang === 'zh') uiLang = 'ja';
+        const uiLang = 'ja';
+        try { localStorage.setItem('uiLang', 'ja'); } catch (e) {}
         const I18N = {
             en: {
                 controlTitle: 'Star Status',
@@ -1506,7 +1503,6 @@
                 officeBoardSource: 'Live board from local JSON (desks = Grok rooms / jobs = Cursor)',
                 officeDeskKind: 'DESK',
                 officeWorkKind: 'CURSOR',
-                officeSample: 'SAMPLE',
                 officeNoLink: 'No room URL in state.json (not invented)',
                 officeEmptyBucket: 'empty',
                 memoEmpty: '昨日の日記はまだない',
@@ -1554,7 +1550,6 @@
                 officeBoardSource: '実況ボード（デスク＝Grok部屋 / 作業＝Cursor）',
                 officeDeskKind: 'デスク',
                 officeWorkKind: 'Cursor作業',
-                officeSample: 'サンプル',
                 memoEmpty: '昨日の日記はまだない',
                 memoLoading: '読み込み中...',
                 memoLoadFail: '読み込みに失敗しました',
@@ -1574,8 +1569,7 @@
         };
 
         function t(key) {
-            const pack = (uiLang === 'en' && I18N.en) ? I18N.en : I18N.ja;
-            return (pack && pack[key]) || (I18N.ja && I18N.ja[key]) || key;
+            return (I18N.ja && I18N.ja[key]) || key;
         }
         function renderBootLoadingText(percent) {
             const loadingEl = document.getElementById('loading-text');
@@ -1608,18 +1602,6 @@
             setText('btn-state-syncing', 'btnSync');
             setText('btn-state-error', 'btnError');
             setText('btn-open-drawer', 'btnDecor');
-            const langButtons = [
-                { id: 'lang-btn-en', lang: 'en' },
-                { id: 'lang-btn-jp', lang: 'ja' }
-            ];
-            langButtons.forEach(({ id, lang }) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                const active = (uiLang === lang);
-                el.style.background = active ? '#22c55e' : '#333';
-                el.style.borderColor = active ? '#22c55e' : '#333';
-                el.style.color = '#fff';
-            });
 
             const drawerTitle = document.querySelector('#asset-drawer-header span');
             if (drawerTitle) drawerTitle.textContent = t('drawerTitle');
@@ -1691,33 +1673,30 @@
             renderBootLoadingText(Number(loadingProgressBar?.style?.width?.replace('%','') || 0));
         }
 
-        function setUILanguage(lang) {
-            if (lang === 'zh' || !['en', 'ja'].includes(lang)) lang = 'ja';
-            uiLang = lang;
-            localStorage.setItem('uiLang', uiLang);
+        function setUILanguage(_lang) {
             applyLanguage();
             updateSpeedModeUI();
 
-            // 语言切换后立即重绘资产侧栏，确保易懂名同步更新
+            // 表示名を同期してアセット側欄を描き直す
             renderAssetDrawerList();
 
-            // 语言切换后同步刷新已选资产的指导文案（上传区小字三语联动）
+            // 選択中アセットの案内文を更新
             if (selectedAssetInfo && selectedAssetInfo.path) {
                 const inScene = !!mapAssetPathToSprite(selectedAssetInfo.path);
                 renderSelectedAssetGuidance(selectedAssetInfo.path, inScene);
             }
 
-            // 语言切换时，当前正在显示的 loading 文案也实时切换
+            // 表示中の loading 文も更新
             const overlay = document.getElementById('room-loading-overlay');
             if (overlay && overlay.style.display === 'flex') {
                 showRoomLoadingOverlay();
             }
         }
 
-        // 检测浏览器是否支持 WebP
+        // ブラウザの WebP 対応を確認
         let supportsWebP = false;
         
-        // 方法 1: 使用 canvas 检测
+        // 方法1: canvas で確認
         function checkWebPSupport() {
             return new Promise((resolve) => {
                 const canvas = document.createElement('canvas');
@@ -1729,7 +1708,7 @@
             });
         }
         
-        // 方法 2: 使用 image 检测（备用）
+        // 方法2: image で確認（予備）
         function checkWebPSupportFallback() {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -1747,7 +1726,7 @@
             height: 720,
             parent: 'game-container',
             pixelArt: true,
-            // 桌面端保持 FIT；手机端用 RESIZE，并在相机里按高度做 fit（可横向 pan）
+            // デスクトップは FIT。スマホは RESIZE＋高さフィット（横パン可）
             scale: {
                 mode: IS_TOUCH_DEVICE ? Phaser.Scale.RESIZE : Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -1762,7 +1741,7 @@
         let loadedAssets = 0;
         let loadingProgressBar, loadingProgressContainer, loadingOverlay, loadingText;
 
-        // Memo 相关函数
+        // メモ関数
         async function loadMemo() {
             const memoDate = document.getElementById('memo-date');
             const memoContent = document.getElementById('memo-content');
@@ -1783,7 +1762,7 @@
             }
         }
 
-        // 更新加载进度
+        // 読み込み進捗を更新
         function updateLoadingProgress() {
             loadedAssets++;
             const percent = Math.min(100, Math.round((loadedAssets / totalAssets) * 100));
@@ -1795,7 +1774,7 @@
             }
         }
 
-        // 隐藏加载界面
+        // 読み込み画面を隠す
         function hideLoadingOverlay() {
             setTimeout(() => {
                 if (loadingOverlay) {
@@ -1808,7 +1787,7 @@
             }, 80);
         }
 
-        // Phaser 就绪后，移除首屏骨架，避免黑屏感
+        // Phaser準備後にスケルトンを外す
         function hideGameSkeleton() {
             const sk = document.getElementById('game-skeleton');
             if (!sk) return;
@@ -1819,14 +1798,14 @@
             }, 260);
         }
 
-        // 兜底：某些移动网络/CDN 抖动时，避免一直卡在“加载中”遮罩
+        // 通信揺れでも読み込みオーバーレイに張り付かない
         setTimeout(() => {
             if (loadingOverlay && loadingOverlay.style.display !== 'none') {
                 hideLoadingOverlay();
             }
         }, 8000);
         
-        // 懒加载逻辑已取消（体验优先：装饰首屏直接出现）
+        // 遅延読み込みは無効（装飾は初回から出す）
 
         const STATES = {
             idle: { name: '待機中', area: 'breakroom' },
@@ -1866,9 +1845,9 @@
         };
 
         let game, star, sofa, serverroom, officeBgSprite, areas = {}, currentState = 'idle', pendingDesiredState = null, statusText, lastFetch = 0, lastBlink = 0, lastBubble = 0, targetX = 660, targetY = 170, bubble = null, typewriterText = '', typewriterTarget = '', typewriterIndex = 0, lastTypewriter = 0, syncAnimSprite = null, syncAnimPlayable = false, catBubble = null, selectionBoxGraphics = null;
-        const IDLE_SOFA_ANCHOR = { x: 798, y: 272 }; // 统一中心锚点（原 sofa 左上 670,144 的中心）
-        const IDLE_STAR_SCALE = 1.0; // star idle 改为256帧原生显示，不再放大
-        // flowers 精灵表规格：固定单帧 128x128，4x4
+        const IDLE_SOFA_ANCHOR = { x: 798, y: 272 }; // 中心アンカー（旧 sofa 左上 670,144 の中心）
+        const IDLE_STAR_SCALE = 1.0; // star idle は 256 フレーム原寸。拡大しない
+        // flowers スプライト：1フレーム 128x128、4x4
         let FLOWERS_FRAME_W = 65;
         let FLOWERS_FRAME_H = 65;
         let FLOWERS_FRAME_COLS = 4;
@@ -1886,13 +1865,13 @@
         let homeFavoritesCache = [];
         let homeFavoritesLoadedAt = 0;
 
-        // 坐标以服务端为准；清理历史本地缓存，避免把素材挪飞
+        // 座標はサーバ優先。古いローカルキャッシュを消す
         let assetPositionOverrides = {};
         let roomLoadingTimer = null;
         let roomLoadingIndex = 0;
         let roomLoadingEmojiIndex = 0;
 
-        // 默认走更稳的模型档（quality），避免部分通道不支持 fast 模型时报错
+        // 既定は quality。fast 非対応チャネルのエラーを避ける
         let speedMode = localStorage.getItem('speedMode') || 'quality';
         function setSpeedMode(mode) {
             speedMode = (mode === 'quality') ? 'quality' : 'fast';
@@ -1934,7 +1913,7 @@
         let lastGuestAgentsFetch = 0;
         let lastGuestBubbleAt = 0;
         const TYPEWRITER_DELAY = 50;
-        let lastSeenGuestIds = new Set(); // 用于检测新加入的访客，触发欢迎气泡
+        let lastSeenGuestIds = new Set();
         let guestWelcomeInitialized = false;
 
         const OFFICE_BUCKETS = ['動いている', '許可待ち', 'できたまま'];
@@ -2169,17 +2148,20 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ instruction: { room, text, id: row.id } })
                 });
+                const payload = await res.json().catch(() => ({}));
                 if (res.ok) {
                     await fetchStatus();
-                } else {
-                    renderOfficeBoard(window.__officeBoardData || {});
+                    showOfficeBoardToast(payload.msg || t('instructionQueued'));
+                    return;
                 }
+                renderOfficeBoard(window.__officeBoardData || {});
+                showOfficeBoardToast(payload.msg || t('instructionNeedText'));
+                return;
             } catch (e) {
                 renderOfficeBoard(window.__officeBoardData || {});
+                showOfficeBoardToast(t('instructionNeedText'));
+                return;
             }
-            const assignees = (window.__officeBoardData && window.__officeBoardData.roomAssignees) || {};
-            const assignee = assignees[room] || '';
-            showOfficeBoardToast(assignee ? `「${assignee}」に渡しました（未実行）` : t('instructionQueued'));
         }
 
         const instructionForm = document.getElementById('office-instruction');
@@ -2187,7 +2169,7 @@
             instructionForm.addEventListener('submit', sendOfficeInstruction);
         }
 
-        // 状态控制栏函数（用于测试）
+        // 状態バー（テスト用）
         function setState(state, detail) {
             fetch('/set_state', {
                 method: 'POST',
@@ -2223,7 +2205,7 @@
             const msg = document.getElementById('asset-auth-msg');
             const val = (input?.value || '').trim();
             if (!val) {
-                if (msg) msg.textContent = '❌ 请输入验证码';
+                if (msg) msg.textContent = '❌ パスコードを入力してください';
                 return;
             }
             try {
@@ -2235,18 +2217,18 @@
                 const data = await res.json();
                 if (data && data.ok) {
                     assetDrawerAuthed = true;
-                    if (msg) msg.textContent = '✅ 验证通过';
+                    if (msg) msg.textContent = '✅ 認証できました';
                     updateAssetAuthUI();
                     await refreshAssetDrawerList();
                     await renderHomeFavorites(false);
                     bindDrawerFileMeta();
                 } else {
                     assetDrawerAuthed = false;
-                    if (msg) msg.textContent = '❌ 验证码错误';
+                    if (msg) msg.textContent = '❌ パスコードが違います';
                 }
             } catch (e) {
                 assetDrawerAuthed = false;
-                if (msg) msg.textContent = `❌ 验证失败：${e}`;
+                if (msg) msg.textContent = `❌ 認証に失敗しました：${e}`;
             }
         }
 
@@ -2263,153 +2245,34 @@
 
         function getAssetDisplayName(path) {
             const stem = toAssetStem(path);
-            const lang = (uiLang || 'zh');
             const nameMap = {
-                zh: {
-                    'star-idle-v5': '主役・待機',
-                    'star-working-spritesheet-grid': '主角·工作状态',
-                    'sync-animation': '主角·同步状态',
-                    'sync-animation-v3-grid': '主角·同步状态',
-                    'error-bug-spritesheet-grid': '主角·报错状态',
-                    'cats-spritesheet': '随机猫猫',
-                    'coffee-machine-v3-grid': '咖啡机',
-                    'coffee-machine-shadow-v1': '咖啡机阴影',
-                    'posters-spritesheet': '随机海报',
-                    'serverroom-spritesheet': '服务器房动画',
-                    'plants-spritesheet': '随机绿植',
-                    'flowers-bloom-v2': '随机花朵',
-                    'office_bg_small': '办公室背景',
-                    'memo-bg': '昨日小记底图',
-                    'desk-v3': '办公桌',
-                    'desk': '办公桌（旧）',
-                    'guest_anim_1': '访客动画 1',
-                    'guest_anim_2': '访客动画 2',
-                    'guest_anim_3': '访客动画 3',
-                    'guest_anim_4': '访客动画 4',
-                    'guest_anim_5': '访客动画 5',
-                    'guest_anim_6': '访客动画 6'
-                },
-                en: {
-                    'star-idle-v5': 'Main · Idle',
-                    'star-working-spritesheet-grid': 'Main · Working',
-                    'sync-animation': 'Main · Syncing',
-                    'sync-animation-v3-grid': 'Main · Syncing',
-                    'error-bug-spritesheet-grid': 'Main · Error',
-                    'cats-spritesheet': 'Random Cats',
-                    'coffee-machine-v3-grid': 'Coffee Machine',
-                    'coffee-machine-shadow-v1': 'Coffee Machine Shadow',
-                    'posters-spritesheet': 'Random Posters',
-                    'serverroom-spritesheet': 'Server Room',
-                    'plants-spritesheet': 'Random Plants',
-                    'flowers-bloom-v2': 'Random Flowers',
-                    'office_bg_small': 'Office Background',
-                    'memo-bg': 'Memo Background',
-                    'desk-v3': 'Desk',
-                    'desk': 'Desk (Old)',
-                    'guest_anim_1': 'Guest Animation 1',
-                    'guest_anim_2': 'Guest Animation 2',
-                    'guest_anim_3': 'Guest Animation 3',
-                    'guest_anim_4': 'Guest Animation 4',
-                    'guest_anim_5': 'Guest Animation 5',
-                    'guest_anim_6': 'Guest Animation 6'
-                },
-                ja: {
-                    'star-idle-v5': 'メイン・待機状態',
-                    'star-working-spritesheet-grid': 'メイン・作業状態',
-                    'sync-animation': 'メイン・同期状態',
-                    'sync-animation-v3-grid': 'メイン・同期状態',
-                    'error-bug-spritesheet-grid': 'メイン・エラー状態',
-                    'cats-spritesheet': 'ランダム猫',
-                    'coffee-machine-v3-grid': 'コーヒーマシン',
-                    'coffee-machine-shadow-v1': 'コーヒーマシン影',
-                    'posters-spritesheet': 'ランダムポスター',
-                    'serverroom-spritesheet': 'サーバールーム',
-                    'plants-spritesheet': 'ランダム植物',
-                    'flowers-bloom-v2': 'ランダム花',
-                    'office_bg_small': 'オフィス背景',
-                    'memo-bg': 'メモ背景',
-                    'desk-v3': 'デスク',
-                    'desk': 'デスク（旧）',
-                    'guest_anim_1': '訪客アニメ 1',
-                    'guest_anim_2': '訪客アニメ 2',
-                    'guest_anim_3': '訪客アニメ 3',
-                    'guest_anim_4': '訪客アニメ 4',
-                    'guest_anim_5': '訪客アニメ 5',
-                    'guest_anim_6': '訪客アニメ 6'
-                }
+                'star-idle-v5': 'メイン・待機状態',
+                'star-working-spritesheet-grid': 'メイン・作業状態',
+                'sync-animation': 'メイン・同期状態',
+                'sync-animation-v3-grid': 'メイン・同期状態',
+                'error-bug-spritesheet-grid': 'メイン・エラー状態',
+                'cats-spritesheet': 'ランダム猫',
+                'coffee-machine-v3-grid': 'コーヒーマシン',
+                'coffee-machine-shadow-v1': 'コーヒーマシン影',
+                'posters-spritesheet': 'ランダムポスター',
+                'serverroom-spritesheet': 'サーバールーム',
+                'plants-spritesheet': 'ランダム植物',
+                'flowers-bloom-v2': 'ランダム花',
+                'office_bg_small': 'オフィス背景',
+                'memo-bg': 'メモ背景',
+                'desk-v3': 'デスク',
+                'desk': 'デスク（旧）',
+                'guest_anim_1': 'ゲストアニメ 1',
+                'guest_anim_2': 'ゲストアニメ 2',
+                'guest_anim_3': 'ゲストアニメ 3',
+                'guest_anim_4': 'ゲストアニメ 4',
+                'guest_anim_5': 'ゲストアニメ 5',
+                'guest_anim_6': 'ゲストアニメ 6'
             };
-            const langMap = nameMap[lang] || nameMap.zh;
-            return langMap[stem] || stem;
+            return nameMap[stem] || stem;
         }
 
         const ASSET_HELP_TEXT_MAP = {
-            zh: {
-                'office_bg_small': '主场景底图（当前生效）。建议 1280×720（16:9），保留房间结构与视角，避免角色站位错位。',
-                'office_bg': '历史背景备份。通常不直接生效，建议与 office_bg_small 保持同构图用于回退。',
-                'star-idle-v5': '主角待机动画表。请保持 256×256 分帧与网格布局一致，否则待机动作会错帧。',
-                'star-working-spritesheet-grid': '主角工作动画表（工位状态）。请保持 300×300 分帧，建议人物重心与原图一致。',
-                'sync-animation': '同步状态素材（当前引用）。建议按 256×256 帧规范制作，避免同步状态显示静止或抖动。',
-                'sync-animation-v3-grid': '同步动画表（兼容资源）。保持 256×256 网格可用于替换同步动作细节。',
-                'error-bug-spritesheet-grid': '报错状态动画表。请保持 220×220 分帧，建议高对比度以增强异常提示感。',
-                'desk-v3': '办公桌前景层。影响主角前后遮挡关系，建议保持当前比例与锚点视觉重心。',
-                'desk': '旧版办公桌素材（兼容用）。建议与 desk-v3 保持相近体积与锚点，避免遮挡异常。',
-                'sofa-idle-v3': '沙发静态素材。建议保持 256×256 与透明背景，避免替换后位置漂移。',
-                'sofa-shadow-v1': '沙发阴影层。建议与沙发主体同坐标叠放，增强贴地感。',
-                'memo-bg': '小记面板底图。建议留出文字阅读区域，降低高频纹理，避免信息难读。',
-                'plants-spritesheet': '绿植随机素材。保持 160×160 分帧，可一次替换多个绿植位的观感。',
-                'posters-spritesheet': '海报随机素材。保持 160×160 分帧，建议统一风格避免墙面杂乱。',
-                'cats-spritesheet': '猫咪随机素材。保持 160×160 分帧，建议轮廓清晰、识别度高。',
-                'coffee-machine-v3-grid': '咖啡机静态素材。建议保持 230×230 与当前锚点，避免位置偏移。',
-                'coffee-machine-shadow-v1': '咖啡机阴影层。建议与咖啡机本体同宽对齐，增强贴地感。',
-                'serverroom-spritesheet': '服务器房动画表。保持 180×251 分帧，灯效变化建议节奏均匀不过闪。',
-                'flowers-bloom-v2': '花朵随机素材。保持 128×128 分帧，建议色彩与整体办公室主色协调。',
-                'guest_anim_1': '访客动画序列 1（32×32 分帧）。建议保持像素风、轮廓清晰，与主角风格统一。',
-                'guest_anim_2': '访客动画序列 2（32×32 分帧）。建议保持像素风、轮廓清晰，与主角风格统一。',
-                'guest_anim_3': '访客动画序列 3（32×32 分帧）。建议保持像素风、轮廓清晰，与主角风格统一。',
-                'guest_anim_4': '访客动画序列 4（32×32 分帧）。建议保持像素风、轮廓清晰，与主角风格统一。',
-                'guest_anim_5': '访客动画序列 5（32×32 分帧）。建议保持像素风、轮廓清晰，与主角风格统一。',
-                'guest_anim_6': '访客动画序列 6（32×32 分帧）。建议保持像素风、轮廓清晰，与主角风格统一。',
-                'guest_role_1': '访客静态形象备用图 1。建议与对应 guest_anim 角色设定一致，避免切换割裂。',
-                'guest_role_2': '访客静态形象备用图 2。建议与对应 guest_anim 角色设定一致，避免切换割裂。',
-                'guest_role_3': '访客静态形象备用图 3。建议与对应 guest_anim 角色设定一致，避免切换割裂。',
-                'guest_role_4': '访客静态形象备用图 4。建议与对应 guest_anim 角色设定一致，避免切换割裂。',
-                'guest_role_5': '访客静态形象备用图 5。建议与对应 guest_anim 角色设定一致，避免切换割裂。',
-                'guest_role_6': '访客静态形象备用图 6。建议与对应 guest_anim 角色设定一致，避免切换割裂。'
-            },
-            en: {
-                'office_bg_small': 'Primary room background (active). Use 1280×720 (16:9), keep room structure/perspective to avoid character misalignment.',
-                'office_bg': 'Legacy backup background. Usually not directly active; keep composition aligned with office_bg_small for rollback.',
-                'star-idle-v5': 'Main idle spritesheet. Keep 256×256 frame size and grid layout, or idle animation will break.',
-                'star-working-spritesheet-grid': 'Main working spritesheet (desk state). Keep 300×300 frames; preserve visual center/anchor.',
-                'sync-animation': 'Sync-state asset (currently referenced). Follow 256×256 frame spec to avoid static/jitter sync visuals.',
-                'sync-animation-v3-grid': 'Sync spritesheet (compat resource). Keep 256×256 grid for sync animation replacement.',
-                'error-bug-spritesheet-grid': 'Error-state spritesheet. Keep 220×220 frames; high contrast helps warning readability.',
-                'desk-v3': 'Desk foreground layer. Controls overlap with character; keep ratio and visual anchor stable.',
-                'desk': 'Legacy desk asset (compatibility). Keep size/anchor close to desk-v3 to avoid overlap issues.',
-                'sofa-idle-v3': 'Static sofa asset. Keep 256×256 and transparent background to prevent position drift.',
-                'sofa-shadow-v1': 'Sofa shadow layer. Keep the exact same coordinates as sofa body for grounded feel.',
-                'memo-bg': 'Memo panel background. Reserve readable text area; avoid dense textures behind text.',
-                'plants-spritesheet': 'Random plant sprites. Keep 160×160 frames; updates several plant spots at once.',
-                'posters-spritesheet': 'Random poster sprites. Keep 160×160 frames; prefer consistent style to avoid wall clutter.',
-                'cats-spritesheet': 'Random cat sprites. Keep 160×160 frames; clear silhouette improves recognition.',
-                'coffee-machine-v3-grid': 'Static coffee machine asset. Keep 230×230 size and anchor to avoid drift.',
-                'coffee-machine-shadow-v1': 'Coffee machine shadow layer. Align width/anchor with the machine body for grounded feel.',
-                'serverroom-spritesheet': 'Server-room animation sheet. Keep 180×251 frames; avoid over-flickering lights.',
-                'flowers-bloom-v2': 'Random flower sprites. Keep 128×128 frames; align palette with overall office mood.',
-                'guest_anim_1': 'Guest animation set 1 (32×32 frames). Keep pixel-art style/outline consistent with main cast.',
-                'guest_anim_2': 'Guest animation set 2 (32×32 frames). Keep pixel-art style/outline consistent with main cast.',
-                'guest_anim_3': 'Guest animation set 3 (32×32 frames). Keep pixel-art style/outline consistent with main cast.',
-                'guest_anim_4': 'Guest animation set 4 (32×32 frames). Keep pixel-art style/outline consistent with main cast.',
-                'guest_anim_5': 'Guest animation set 5 (32×32 frames). Keep pixel-art style/outline consistent with main cast.',
-                'guest_anim_6': 'Guest animation set 6 (32×32 frames). Keep pixel-art style/outline consistent with main cast.',
-                'guest_role_1': 'Fallback static guest avatar 1. Keep design aligned with corresponding guest_anim for smooth fallback.',
-                'guest_role_2': 'Fallback static guest avatar 2. Keep design aligned with corresponding guest_anim for smooth fallback.',
-                'guest_role_3': 'Fallback static guest avatar 3. Keep design aligned with corresponding guest_anim for smooth fallback.',
-                'guest_role_4': 'Fallback static guest avatar 4. Keep design aligned with corresponding guest_anim for smooth fallback.',
-                'guest_role_5': 'Fallback static guest avatar 5. Keep design aligned with corresponding guest_anim for smooth fallback.',
-                'guest_role_6': 'Fallback static guest avatar 6. Keep design aligned with corresponding guest_anim for smooth fallback.'
-            },
-            ja: {
                 'office_bg_small': 'メイン背景（現在有効）。1280×720（16:9）推奨。部屋構造と視点を維持し、キャラの位置ズレを防いでください。',
                 'office_bg': '旧背景のバックアップ。通常は直接反映されません。office_bg_small と同構図で保持すると復旧しやすいです。',
                 'star-idle-v5': 'メイン待機スプライトシート。256×256 分割とグリッド構成を維持しないと待機アニメが崩れます。',
@@ -2429,26 +2292,23 @@
                 'coffee-machine-shadow-v1': 'コーヒーマシン影レイヤー。本体と幅・アンカーを揃えると接地感が出ます。',
                 'serverroom-spritesheet': 'サーバールームアニメ素材。180×251 分割を維持し、過度な点滅は避けてください。',
                 'flowers-bloom-v2': '花ランダム素材。128×128 分割を維持し、全体の色調と合わせると馴染みます。',
-                'guest_anim_1': '訪客アニメセット 1（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
-                'guest_anim_2': '訪客アニメセット 2（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
-                'guest_anim_3': '訪客アニメセット 3（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
-                'guest_anim_4': '訪客アニメセット 4（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
-                'guest_anim_5': '訪客アニメセット 5（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
-                'guest_anim_6': '訪客アニメセット 6（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
-                'guest_role_1': '訪客静止フォールバック画像 1。対応する guest_anim とデザインを揃えると切替時に自然です。',
-                'guest_role_2': '訪客静止フォールバック画像 2。対応する guest_anim とデザインを揃えると切替時に自然です。',
-                'guest_role_3': '訪客静止フォールバック画像 3。対応する guest_anim とデザインを揃えると切替時に自然です。',
-                'guest_role_4': '訪客静止フォールバック画像 4。対応する guest_anim とデザインを揃えると切替時に自然です。',
-                'guest_role_5': '訪客静止フォールバック画像 5。対応する guest_anim とデザインを揃えると切替時に自然です。',
-                'guest_role_6': '訪客静止フォールバック画像 6。対応する guest_anim とデザインを揃えると切替時に自然です。'
-            }
-        };
+                'guest_anim_1': 'ゲストアニメセット 1（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
+                'guest_anim_2': 'ゲストアニメセット 2（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
+                'guest_anim_3': 'ゲストアニメセット 3（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
+                'guest_anim_4': 'ゲストアニメセット 4（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
+                'guest_anim_5': 'ゲストアニメセット 5（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
+                'guest_anim_6': 'ゲストアニメセット 6（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
+                'guest_role_1': 'ゲスト静止フォールバック画像 1。対応する guest_anim とデザインを揃えると切替時に自然です。',
+                'guest_role_2': 'ゲスト静止フォールバック画像 2。対応する guest_anim とデザインを揃えると切替時に自然です。',
+                'guest_role_3': 'ゲスト静止フォールバック画像 3。対応する guest_anim とデザインを揃えると切替時に自然です。',
+                'guest_role_4': 'ゲスト静止フォールバック画像 4。対応する guest_anim とデザインを揃えると切替時に自然です。',
+                'guest_role_5': 'ゲスト静止フォールバック画像 5。対応する guest_anim とデザインを揃えると切替時に自然です。',
+                'guest_role_6': 'ゲスト静止フォールバック画像 6。対応する guest_anim とデザインを揃えると切替時に自然です。'
+            };
 
         function getAssetHelpText(path) {
             const stem = toAssetStem(path);
-            const lang = (uiLang || 'zh');
-            const map = ASSET_HELP_TEXT_MAP[lang] || ASSET_HELP_TEXT_MAP.zh;
-            return map[stem] || t('assetHintDefault');
+            return ASSET_HELP_TEXT_MAP[stem] || t('assetHintDefault');
         }
 
         function renderSelectedAssetGuidance(path, inScene = null) {
@@ -2556,7 +2416,7 @@
         }
 
         function mapAssetPathToSprite(path) {
-            // 背景做特殊映射：即使纹理 key 已变成 office_bg_live_xxx，也能稳定定位到背景对象
+            // 背景キーが office_bg_live_xxx でも背景オブジェクトを探す
             if ((path || '').includes('office_bg_small.webp') && officeBgSprite) return officeBgSprite;
 
             const item = sceneAssetItems.find(x => x.path === path && x.ref && x.ref.getBounds);
@@ -2625,7 +2485,7 @@
 
         async function applySavedPositionOverrides() {
             try {
-                // 优先：后端持久化坐标；回退：后端默认坐标；最后：本地内存覆盖
+                // 優先：サーバ保存座標 → 既定座標 → メモリ上書き
                 let serverPositions = {};
                 let serverDefaults = {};
                 try {
@@ -2644,19 +2504,19 @@
                     const texKey = ch?.texture?.key;
                     if (!texKey) continue;
 
-                    // 先尝试资产路径命中（推荐持久化键，优先级最高）
+                    // まずアセットパスで照合（保存キー最優先）
                     const assetPath = resolveAssetPathByTextureKey(texKey);
                     let ov = null;
                     if (assetPath) {
                         ov = serverPositions[assetPath] || serverDefaults[assetPath] || assetPositionOverrides[assetPath];
                     }
 
-                    // 再尝试 textureKey 命中（兼容旧数据）
+                    // 次に textureKey（旧データ互換）
                     if (!ov) {
                         ov = serverPositions[texKey] || serverDefaults[texKey] || assetPositionOverrides[texKey];
                     }
 
-                    // 最后按 stem 模糊匹配（处理 webp/png 或 live key 差异）
+                    // 最後に stem で照合（webp/png / live key 差）
                     if (!ov) {
                         const stem = toAssetStem(assetPath || texKey);
                         const hitKey = Object.keys(serverPositions).find(k => toAssetStem(k) === stem)
@@ -2720,7 +2580,7 @@
         }
 
         function selectAssetInDrawer(path) {
-            // 二次点击同一资产 = 取消选择
+            // 同じアセットを再クリックで選択解除
             if (selectedAssetInfo && selectedAssetInfo.path === path) {
                 clearAssetSelection(true);
                 return;
@@ -2740,7 +2600,7 @@
         function inferSpritesheetFrameMetaByPath(path) {
             const p = (path || '').toLowerCase();
             if (!p) return null;
-            // 优先用文件命名约定推断（不写死具体尺寸）
+            // ファイル名から推定（サイズは固定しない）
             if (p.includes('spritesheet') || p.includes('sprite-sheet') || p.includes('sheet') || p.includes('anim') || p.includes('grid')) {
                 return { w: null, h: null };
             }
@@ -2748,16 +2608,16 @@
         }
 
         function getSpritesheetFrameMeta(item) {
-            // 先看命名是否属于精灵表
+            // 名前がスプライトシートか確認
             const inferred = inferSpritesheetFrameMetaByPath(item?.path || '');
             if (!inferred) return null;
-            // 仅返回“是精灵表”的信号，单帧尺寸后续自动推断
+            // スプライトシート判定のみ。1フレームサイズは後で推定
             return { w: null, h: null, isSheet: true };
         }
 
         function guessThumbFrameSize(fullW, fullH, path = '') {
             const p = (path || '').toLowerCase();
-            // 常见核心资产优先用显式提示（避免误判）
+            // 主要アセットは明示ヒント優先（誤判定避け）
             const hints = [
                 [/star-working-spritesheet-grid\.webp$/, 300, 300],
                 [/star-idle-v5\.(webp|png)$/, 256, 256],
@@ -2770,7 +2630,7 @@
                 if (re.test(p) && fullW % fw === 0 && fullH % fh === 0) return { fw, fh };
             }
 
-            // 通用推断：枚举可整除候选，偏好 cols≈8、帧尺寸适中、近似方形
+            // 割り切れる候補から推定。cols≈8・正方形寄り
             const divisors = (n) => {
                 const arr = [];
                 for (let i = 1; i * i <= n; i++) {
@@ -2822,7 +2682,7 @@
                 const fw = guessed.fw;
                 const fh = guessed.fh;
 
-                // 判断是否可能是精灵表：整图宽高至少是单帧的整数倍，且总帧数>1
+                // 全体が1フレームの整数倍かつ総フレーム>1ならシート
                 const cols = Math.floor(fullW / fw);
                 const rows = Math.floor(fullH / fh);
                 const frames = cols * rows;
@@ -2868,7 +2728,7 @@
             setAssetVisible(p, nextVisible);
             renderAssetDrawerList();
             const out = document.getElementById('asset-upload-result');
-            if (out) out.textContent = nextVisible ? `✅ 已显示：${p}` : `🙈 已隐藏：${p}`;
+            if (out) out.textContent = nextVisible ? `✅ 表示中：${p}` : `🙈 非表示：${p}`;
             if (selectedAssetInfo && selectedAssetInfo.path === p) {
                 if (!nextVisible) clearAssetSelectionUI();
                 else applyScenePreview(p);
@@ -2880,7 +2740,7 @@
             const list = document.getElementById('asset-list');
             if (!list) return;
 
-            // 统一显示后端全部资产（不再区分已加载/全部）
+            // サーバ上の全アセットを表示
             const baseRows = assetListData.map(it => ({ ...it, key: '' }));
 
             const statePriority = [
@@ -2892,12 +2752,12 @@
             const assetRank = (path='') => {
                 const p = (path || '').toLowerCase();
                 const idx = statePriority.findIndex(x => p.endsWith(x));
-                if (idx >= 0) return idx; // 0~3: 四个主状态最前
+                if (idx >= 0) return idx; // 0~3: 4つの主状態を先頭
 
-                // 按钮素材最不重要：统一沉到列表末尾
+                // ボタン素材は末尾へ
                 if (p.includes('/btn-') || p.includes('btn-') || p.includes('button')) return 1000;
 
-                if (p.includes('guest_anim_')) return 999; // guest 动画靠后
+                if (p.includes('guest_anim_')) return 999; // guest アニメは後ろ
                 return 100;
             };
             const rows = baseRows
@@ -2926,13 +2786,13 @@
                     <canvas id="${thumbId}" class="asset-thumb" width="56" height="56"></canvas>
                     <div class="asset-meta">
                         <div class="asset-path">${it.path}</div>
-                        <div class="asset-sub">${displayName} ｜ ${reso}${hidden ? ' ｜ 已隐藏' : ''}</div>
+                        <div class="asset-sub">${displayName} ｜ ${reso}${hidden ? ' ｜ 非表示' : ''}</div>
                     </div>
                     <button class="asset-vis-btn" onclick="toggleAssetVisibility('${(it.path || '').replace(/'/g, "\\'")}', event)">${visEmoji}</button>
                 </div>`;
             }).join('');
 
-            // 先画静态缩略图，再尝试对精灵表做逐帧预览
+            // 静止サムネのあと、シートなら逐次プレビュー
             rows.forEach(it => {
                 const canvas = document.getElementById(`asset-thumb-canvas-${(it.path || '').replace(/[^a-zA-Z0-9]/g, '_')}`);
                 if (!canvas) return;
@@ -2957,7 +2817,7 @@
                 const data = await res.json();
                 assetListData = data.items || [];
 
-                // 场景渲染可能稍晚，做一次延迟抓取
+                // シーン描画が遅い場合の遅延取得
                 buildSceneAssetItems();
                 if (sceneAssetItems.length === 0) {
                     setTimeout(() => {
@@ -2967,15 +2827,15 @@
                 }
 
                 renderAssetDrawerList();
-                if (out) out.textContent = `已加载资产：${assetListData.length} ｜ 场景抓取：${sceneAssetItems.length}`;
+                if (out) out.textContent = `読み込み済み：${assetListData.length} ｜ シーン取得：${sceneAssetItems.length}`;
 
                 if (selectedPath) {
                     updateActiveAssetItem(selectedPath);
                     applyScenePreview(selectedPath);
                 }
             } catch (e) {
-                console.error('加载资产列表失败', e);
-                if (out) out.textContent = '❌ 资产加载失败，请点“刷新”重试';
+                console.error('アセット一覧の読み込みに失敗', e);
+                if (out) out.textContent = '❌ アセット読み込み失敗。「更新」を押して再試行';
             }
         }
 
@@ -3025,7 +2885,7 @@
             if (!body) return;
             body.addEventListener('click', (e) => {
                 if (!assetDrawerOpen || !assetDrawerAuthed) return;
-                // 点击空白处才取消选择；点击控件/资产项不取消
+                // 余白クリックで選択解除。操作/行クリックでは解除しない
                 const keep = e.target.closest('.asset-item, .asset-toolbar, #asset-upload-panel, #asset-move-panel, button, input, textarea, label, canvas');
                 if (keep) return;
                 clearAssetSelection(true);
@@ -3053,31 +2913,31 @@
                 try {
                     scene.load.once('complete', () => {
                         try {
-                            // 替换到新纹理
+                            // 新しいテクスチャへ差し替え
                             if (sprite.setTexture) sprite.setTexture(newKey);
-                            // 同 key 角色（如多个同材质装饰）一起替换
+                            // 同じ key の装飾もまとめて差し替え
                             getSceneChildren().forEach(ch => {
                                 if (ch !== sprite && ch.texture && ch.texture.key === oldKey && ch.setTexture) {
                                     ch.setTexture(newKey);
                                 }
                             });
-                            // 更新背景引用
+                            // 背景参照を更新
                             if (oldKey === 'office_bg' && officeBgSprite && officeBgSprite.texture && officeBgSprite.texture.key === newKey) {
                                 currentOfficeBgTextureKey = newKey;
                             }
-                            // 移除旧纹理，避免内存堆积
+                            // 旧テクスチャを破棄
                             if (oldKey !== newKey && scene.textures.exists(oldKey)) {
                                 scene.textures.remove(oldKey);
                             }
                             resolve(true);
                         } catch (e) {
-                            console.warn('替换场景纹理失败(setTexture):', e);
+                            console.warn('シーンテクスチャ差し替え失敗(setTexture):', e);
                             resolve(false);
                         }
                     });
                     scene.load.once('loaderror', () => resolve(false));
 
-                    // 按扩展名用对应 loader
+                    // 拡張子に応じた loader
                     if (ext === 'json') {
                         resolve(false);
                         return;
@@ -3085,7 +2945,7 @@
                     scene.load.image(newKey, url);
                     scene.load.start();
                 } catch (e) {
-                    console.warn('替换场景纹理失败(load):', e);
+                    console.warn('シーンテクスチャ差し替え失敗(load):', e);
                     resolve(false);
                 }
             });
@@ -3095,8 +2955,8 @@
             const path = (selectedAssetInfo && selectedAssetInfo.path) ? selectedAssetInfo.path : '';
             const fi = document.getElementById('asset-upload-file');
             const out = document.getElementById('asset-upload-result');
-            if (!path) { out.textContent = '请先选中一个资产路径'; return false; }
-            if (!fi.files.length) { return true; } // 允许仅改坐标
+            if (!path) { out.textContent = '先にアセットを選んでください'; return false; }
+            if (!fi.files.length) { return true; } // 座標だけの変更も許可
             const file = fi.files[0];
             const fd = new FormData();
             fd.append('path', path);
@@ -3109,11 +2969,11 @@
 
             if (isSheetTarget) {
                 fd.append('auto_spritesheet', '1');
-                // 全自动：后端识别并切帧
+                // 自動：サーバ側で識別して切る
                 if (isAnimInput) {
                     fd.append('preserve_original', '1');
                 } else {
-                    // 静态图兜底切法
+                    // 静止画のフォールバック分割
                     fd.append('frame_w', '64');
                     fd.append('frame_h', '64');
                     fd.append('preserve_original', '0');
@@ -3121,19 +2981,19 @@
                 fd.append('pixel_art', '1');
             }
 
-            out.textContent = '⏳ 正在上传并替换，请稍候...';
+            out.textContent = '⏳ アップロード中です…';
             const res = await fetch('/assets/upload', { method: 'POST', body: fd });
             const data = await res.json();
             if (!data.ok) {
-                out.textContent = `❌ 更新失败：${data.msg || res.status}`;
+                out.textContent = `❌ 更新に失敗しました：${data.msg || res.status}`;
                 return false;
             }
 
             if (data.converted) {
                 const toType = data.converted.to || 'spritesheet';
-                out.textContent = `✅ 已上传（动图→${toType}）：${data.path} ｜ ${data.converted.frames}帧 ${data.converted.frame_w}x${data.converted.frame_h}`;
+                out.textContent = `✅ アップロード済み（動画→${toType}）：${data.path} ｜ ${data.converted.frames}フレーム ${data.converted.frame_w}x${data.converted.frame_h}`;
             } else {
-                out.textContent = `✅ 已上传：${data.path}`;
+                out.textContent = `✅ アップロード済み：${data.path}`;
             }
             return true;
         }
@@ -3147,11 +3007,11 @@
             if (!okUpload) return;
 
             if (out) {
-                if (hasFile) out.textContent += ' ｜ ✅ 已上传并刷新';
-                else out.textContent = '✅ 已确认并刷新';
+                if (hasFile) out.textContent += ' ｜ ✅ アップロードして更新しました';
+                else out.textContent = '✅ 更新しました';
             }
 
-            // 刷新前关闭侧边栏，行为与地图替换一致
+            // 更新前にサイドバーを閉じる（地図差し替えと同じ）
             assetDrawerOpen = false;
             const drawer = document.getElementById('asset-drawer');
             if (drawer) drawer.classList.remove('open');
@@ -3179,7 +3039,7 @@ function toggleBrokerPanel() {
             const fallbackBox = document.getElementById('game-container');
             const rect = canvasEl?.getBoundingClientRect?.() || fallbackBox?.getBoundingClientRect?.();
 
-            // 1) loading 遮罩
+            // 1) loading オーバーレイ
             const overlay = document.getElementById('room-loading-overlay');
             if (overlay) {
                 if (!rect || !(rect.width > 0 && rect.height > 0)) {
@@ -3195,7 +3055,7 @@ function toggleBrokerPanel() {
                 }
             }
 
-            // 2) detail/status 严格限制在画布内部左下角
+            // 2) detail/status はキャンバス内左下に限定
             const st = document.getElementById('status-text');
             const gameContainer = document.getElementById('game-container');
             if (st && gameContainer) {
@@ -3221,38 +3081,6 @@ function toggleBrokerPanel() {
 
             placeOverlayAndStatusAtCanvasBottomLeft();
             const loadingTexts = {
-                zh: [
-                    '正在打包今天的灵感行李……',
-                    '正在抽取下一站数字坐标……',
-                    '正在查看本次漂流目的地……',
-                    '正在把办公室折叠成随身模式……',
-                    '正在给钳子装上远行 Buff……',
-                    '正在匹配下一段创作气候……',
-                    '正在把时差调成冒险模式……',
-                    '正在接收陌生街区的 Wi‑Fi 心跳……',
-                    '正在试播下一站的海风 BGM……',
-                    '正在加载“也许会爱上”的新房间……',
-                    '正在为未知邻居准备自我介绍……',
-                    '正在解锁下一片数字海域……',
-                    '正在把好奇心调到满格……',
-                    '正在等待旅程投递下一张门牌号……'
-                ],
-                en: [
-                    'Packing today’s luggage of inspiration…',
-                    'Drawing the digital coordinates for the next stop…',
-                    'Checking the destination of this drift…',
-                    'Folding the office into portable mode…',
-                    'Installing a travel buff on the claws…',
-                    'Matching the creative climate for the next chapter…',
-                    'Switching the time zone to adventure mode…',
-                    'Receiving Wi‑Fi heartbeats from an unfamiliar block…',
-                    'Previewing the sea-breeze BGM of the next stop…',
-                    'Loading a new room you might just fall in love with…',
-                    'Preparing an intro for unknown neighbors…',
-                    'Unlocking the next digital sea…',
-                    'Turning curiosity up to max…',
-                    'Waiting for the journey to deliver the next door number…'
-                ],
                 ja: [
                     '今日のひらめき荷物を梱包しています……',
                     '次の目的地のデジタル座標を抽出しています……',
@@ -3270,7 +3098,7 @@ function toggleBrokerPanel() {
                     '旅が次の番地を届けるのを待っています……'
                 ]
             };
-            const steps = loadingTexts[uiLang] || loadingTexts.zh;
+            const steps = loadingTexts.ja;
             const emojis = ['🦞','🦀','🦐','🦑','🐙','🐟','🐠','🐡','🦪','🍣','🍤','🍱','🍲','🍜','🍝','🌊','🐚','🪸'];
 
             roomLoadingIndex = 0;
@@ -3306,7 +3134,7 @@ function toggleBrokerPanel() {
             try { setState('idle', t('moveSuccess').replace('✅ ', '')); } catch (e) {}
         }
 
-        function setWorkingStatus(detail = '工作中') {
+        function setWorkingStatus(detail = '作業中') {
             try { setState('writing', detail); } catch (e) {}
         }
 
@@ -3342,7 +3170,7 @@ function toggleBrokerPanel() {
             const msg = document.getElementById('gemini-config-msg');
             const key = (input?.value || '').trim();
             if (!key) {
-                if (msg) msg.textContent = '请输入有效 API Key';
+                if (msg) msg.textContent = '有効な API Key を入力してください';
                 return;
             }
             try {
@@ -3353,15 +3181,15 @@ function toggleBrokerPanel() {
                 });
                 const data = await res.json();
                 if (!data.ok) {
-                    if (msg) msg.textContent = `保存失败：${data.msg || res.status}`;
+                    if (msg) msg.textContent = `保存に失敗しました：${data.msg || res.status}`;
                     return;
                 }
-                if (msg) msg.textContent = '✅ 已保存，可重新点击搬家/中介';
+                if (msg) msg.textContent = '✅ 保存しました';
                 const box = document.getElementById('asset-gemini-config');
                 if (box) box.style.display = 'none';
                 await ensureGeminiConfigLoaded();
             } catch (e) {
-                if (msg) msg.textContent = `保存失败：${e}`;
+                if (msg) msg.textContent = `保存に失敗：${e}`;
             }
         }
 
@@ -3400,7 +3228,7 @@ function toggleBrokerPanel() {
                 await new Promise(r => setTimeout(r, pollInterval));
                 dots = (dots + 1) % 4;
                 const elapsed = Math.round((Date.now() - startTime) / 1000);
-                out.textContent = progressMsg + '（已等待 ' + elapsed + '秒）' + '.'.repeat(dots);
+                out.textContent = progressMsg + '（待機 ' + elapsed + '秒）' + '.'.repeat(dots);
                 try {
                     const pollRes = await fetch('/assets/generate-rpg-background/poll?task_id=' + encodeURIComponent(taskId));
                     const pollData = await pollRes.json();
@@ -3411,7 +3239,7 @@ function toggleBrokerPanel() {
                     continue;
                 }
             }
-            return { ok: false, msg: '生图超时（超过5分钟），请重试' };
+            return { ok: false, msg: '画像生成がタイムアウトしました（5分超）。再試行してください' };
         }
 
         function _handleGenError(data, out) {
@@ -3420,20 +3248,20 @@ function toggleBrokerPanel() {
                 const box = document.getElementById('asset-gemini-config');
                 if (box) box.style.display = 'block';
             } else if (data.code === 'API_KEY_REVOKED_OR_LEAKED') {
-                out.textContent = '❌ 当前 API Key 已失效/疑似泄露，请更换新 Key 后重试';
+                out.textContent = '❌ 現在の API Key は無効/漏洩の疑いがあります。新しい Key に差し替えて再試行';
                 const box = document.getElementById('asset-gemini-config');
                 if (box) box.style.display = 'block';
             } else if (data.code === 'MODEL_NOT_AVAILABLE') {
-                out.textContent = '❌ 当前模型在此通道不可用，请切换可用模型后重试' + (data.detail ? ('\n\n详情：' + data.detail) : '');
+                out.textContent = '❌ この経路ではそのモデルを使えません。使えるモデルに切り替えて再試行' + (data.detail ? ('\n\n詳細：' + data.detail) : '');
             } else {
-                out.textContent = `❌ 生成失败：${data.msg || 'unknown error'}`;
+                out.textContent = `❌ 生成失敗：${data.msg || 'unknown error'}`;
             }
         }
 
         async function generateCustomRpgBackground() {
             const brokerBtn = document.querySelector('#asset-broker-row .btn-broker');
             flashButtonActive(brokerBtn);
-            setWorkingStatus('正在处理中介装修方案');
+            setWorkingStatus('仲介プランを処理中');
             const out = document.getElementById('asset-move-result') || document.getElementById('asset-upload-result');
             const prompt = (document.getElementById('asset-broker-prompt')?.value || '').trim();
             if (!prompt) {
@@ -3446,7 +3274,7 @@ function toggleBrokerPanel() {
                 const data = await _startAndPollGeneration(
                     { prompt, speed_mode: speedMode },
                     out,
-                    '🏘️ 正在按中介方案生成底图'
+                    '🏘️ 仲介プランで背景を生成中'
                 );
                 if (!data.ok) {
                     _handleGenError(data, out);
@@ -3457,10 +3285,10 @@ function toggleBrokerPanel() {
                 if (ok) {
                     markMoveSuccess(out, brokerBtn);
                 } else {
-                    out.textContent = '✅ 已生成并替换底图（局部刷新失败，可手动刷新页面）';
+                    out.textContent = '✅ 背景を更新しました（再読み込みしてください）';
                 }
             } catch (e) {
-                out.textContent = `❌ 生成失败：${e}`;
+                out.textContent = `❌ 生成に失敗しました：${e}`;
             } finally {
                 hideRoomLoadingOverlay();
             }
@@ -3469,29 +3297,29 @@ function toggleBrokerPanel() {
         async function generateRpgBackground() {
             const moveBtn = document.getElementById('btn-move-house');
             flashButtonActive(moveBtn);
-            setWorkingStatus('正在搬新家');
+            setWorkingStatus('引っ越し中');
             const out = document.getElementById('asset-move-result') || document.getElementById('asset-upload-result');
             showRoomLoadingOverlay();
-            out.textContent = '🧳 正在打包行李，请稍后（约30~120秒）';
+            out.textContent = '🧳 準備中です（30〜120秒）';
             try {
                 const data = await _startAndPollGeneration(
                     { speed_mode: speedMode },
                     out,
-                    '🧳 正在生成新房间'
+                    '🧳 新しい部屋を生成中'
                 );
                 if (!data.ok) {
                     _handleGenError(data, out);
                     return;
                 }
-                out.textContent = '✅ 已生成并替换底图，正在刷新房间...';
+                out.textContent = '✅ 背景を更新しました。部屋を更新中...';
                 const ok = await refreshOfficeBackgroundOnly();
                 if (ok) {
                     markMoveSuccess(out, moveBtn);
                 } else {
-                    out.textContent = '✅ 已生成并替换底图（局部刷新失败，可手动刷新页面）';
+                    out.textContent = '✅ 背景を更新しました（再読み込みしてください）';
                 }
             } catch (e) {
-                out.textContent = `❌ 生成失败：${e}`;
+                out.textContent = `❌ 生成に失敗しました：${e}`;
             } finally {
                 hideRoomLoadingOverlay();
             }
@@ -3502,32 +3330,32 @@ function toggleBrokerPanel() {
             flashButtonActive(homeBtn);
             const out = document.getElementById('asset-move-result') || document.getElementById('asset-upload-result');
 
-            const confirmMsg = '⚠️ 回老家会覆盖当前自定义房间背景（可从 bg-history 恢复历史图）。\n确定继续吗？';
+            const confirmMsg = '⚠️ 実家に戻すと今の背景を上書きします。続けますか？';
             if (!window.confirm(confirmMsg)) {
-                out.textContent = '已取消回老家';
+                out.textContent = 'キャンセルしました';
                 return;
             }
 
-            setWorkingStatus('正在回老家');
-            // 点击即刻显示遮罩，先于任何网络调用
+            setWorkingStatus('実家に戻しています');
+            // 通信より先にオーバーレイを出す
             showRoomLoadingOverlay();
-            out.textContent = '🏡 正在回老家（恢复初始底图）...';
+            out.textContent = '🏡 初期の背景に戻しています...';
             try {
                 const res = await fetch('/assets/restore-reference-background', { method: 'POST' });
                 const data = await res.json();
                 if (!data.ok) {
-                    out.textContent = `❌ 恢复失败：${data.msg || res.status}`;
+                    out.textContent = `❌ 復元に失敗しました：${data.msg || res.status}`;
                     return;
                 }
-                out.textContent = '✅ 已恢复初始底图';
+                out.textContent = '✅ 初期背景に戻しました';
                 const ok = await refreshOfficeBackgroundOnly();
                 if (ok) {
                     markMoveSuccess(out, homeBtn);
                 } else {
-                    out.textContent = '✅ 已恢复初始底图（局部刷新失败，可手动刷新页面）';
+                    out.textContent = '✅ 初期背景に戻しました（部分更新失敗。ページを手動更新可）';
                 }
             } catch (e) {
-                out.textContent = `❌ 恢复失败：${e}`;
+                out.textContent = `❌ 復元失敗：${e}`;
             } finally {
                 hideRoomLoadingOverlay();
             }
@@ -3538,31 +3366,31 @@ function toggleBrokerPanel() {
             flashButtonActive(btn);
             const out = document.getElementById('asset-move-result') || document.getElementById('asset-upload-result');
 
-            const confirmMsg = '⚠️ 将回退到最近一次生成的房间背景，确定继续吗？';
+            const confirmMsg = '⚠️ ひとつ前の背景に戻します。続けますか？';
             if (!window.confirm(confirmMsg)) {
-                out.textContent = '已取消回退';
+                out.textContent = 'キャンセルしました';
                 return;
             }
 
-            setWorkingStatus('正在回退到上一次背景');
+            setWorkingStatus('ひとつ前の背景へ戻しています');
             showRoomLoadingOverlay();
-            out.textContent = '↩️ 正在回退到最近一次生成底图...';
+            out.textContent = '↩️ ひとつ前の背景へ戻しています...';
             try {
                 const res = await fetch('/assets/restore-last-generated-background', { method: 'POST' });
                 const data = await res.json();
                 if (!data.ok) {
-                    out.textContent = `❌ 回退失败：${data.msg || res.status}`;
+                    out.textContent = `❌ 戻すのに失敗しました：${data.msg || res.status}`;
                     return;
                 }
                 const ok = await refreshOfficeBackgroundOnly();
                 if (ok) {
-                    out.textContent = '✅ 已回退到上一次背景';
+                    out.textContent = '✅ ひとつ前の背景に戻しました';
                 } else {
-                    out.textContent = '✅ 已回退到上一次背景（局部刷新失败，可手动刷新页面）';
+                    out.textContent = '✅ ひとつ前の背景に戻しました（部分更新失敗。ページを手動更新可）';
                 }
-                try { setState('idle', '已回退到上一次背景'); } catch (e) {}
+                try { setState('idle', 'ひとつ前の背景に戻しました'); } catch (e) {}
             } catch (e) {
-                out.textContent = `❌ 回退失败：${e}`;
+                out.textContent = `❌ 戻すのに失敗：${e}`;
             } finally {
                 hideRoomLoadingOverlay();
             }
@@ -3574,7 +3402,7 @@ function toggleBrokerPanel() {
             if (!ct.includes('application/json')) {
                 const txt = await res.text();
                 const brief = (txt || '').replace(/\s+/g, ' ').slice(0, 120);
-                throw new Error(`接口未返回 JSON（${res.status}）: ${brief || 'empty response'}`);
+                throw new Error(`JSONが返りません（${res.status}）: ${brief || 'empty response'}`);
             }
             return await res.json();
         }
@@ -3584,7 +3412,7 @@ function toggleBrokerPanel() {
             if (!box) return;
             const now = Date.now();
             if (!force && homeFavoritesCache.length > 0 && (now - homeFavoritesLoadedAt) < 30000) {
-                // 使用缓存，避免频繁请求
+                // キャッシュして連続リクエストを避ける
             } else {
                 try {
                     const data = await fetchJsonSafe('/assets/home-favorites/list', { cache: 'no-store' });
@@ -3594,7 +3422,7 @@ function toggleBrokerPanel() {
                     }
                 } catch (e) {
                     const out = document.getElementById('asset-move-result') || document.getElementById('asset-upload-result');
-                    if (out) out.textContent = `❌ 收藏列表加载失败：${e.message || e}`;
+                    if (out) out.textContent = `❌ 保存一覧の読み込みに失敗しました：${e.message || e}`;
                 }
             }
 
@@ -3623,13 +3451,13 @@ function toggleBrokerPanel() {
             try {
                 const data = await fetchJsonSafe('/assets/home-favorites/save-current', { method: 'POST' });
                 if (!data.ok) {
-                    out.textContent = `❌ 收藏失败：${data.msg || 'unknown error'}`;
+                    out.textContent = `❌ 保存に失敗しました：${data.msg || 'unknown error'}`;
                     return;
                 }
                 out.textContent = t('homeFavSaved');
                 await renderHomeFavorites(true);
             } catch (e) {
-                out.textContent = `❌ 收藏失败：${e.message || e}`;
+                out.textContent = `❌ 保存に失敗しました：${e.message || e}`;
             }
         }
 
@@ -3637,7 +3465,7 @@ function toggleBrokerPanel() {
             const out = document.getElementById('asset-move-result') || document.getElementById('asset-upload-result');
             if (!id) return;
             showRoomLoadingOverlay();
-            setWorkingStatus('正在替换收藏地图');
+            setWorkingStatus('保存した家を適用中');
             try {
                 const data = await fetchJsonSafe('/assets/home-favorites/apply', {
                     method: 'POST',
@@ -3645,14 +3473,14 @@ function toggleBrokerPanel() {
                     body: JSON.stringify({ id })
                 });
                 if (!data.ok) {
-                    out.textContent = `❌ 替换失败：${data.msg || 'unknown error'}`;
+                    out.textContent = `❌ 適用に失敗しました：${data.msg || 'unknown error'}`;
                     return;
                 }
                 const ok = await refreshOfficeBackgroundOnly();
-                out.textContent = ok ? t('homeFavApplied') : `${t('homeFavApplied')}（局部刷新失败，可手动刷新页面）`;
-                try { setState('idle', '已应用收藏地图'); } catch (e) {}
+                out.textContent = ok ? t('homeFavApplied') : `${t('homeFavApplied')}（部分更新失敗。ページを手動更新可）`;
+                try { setState('idle', '待機中'); } catch (e) {}
             } catch (e) {
-                out.textContent = `❌ 替换失败：${e.message || e}`;
+                out.textContent = `❌ 適用に失敗しました：${e.message || e}`;
             } finally {
                 hideRoomLoadingOverlay();
             }
@@ -3661,7 +3489,7 @@ function toggleBrokerPanel() {
         async function deleteHomeFavorite(id) {
             const out = document.getElementById('asset-move-result') || document.getElementById('asset-upload-result');
             if (!id) return;
-            if (!window.confirm('确定删除这个收藏吗？删除后不可恢复。')) return;
+            if (!window.confirm('この保存を削除しますか？元に戻せません。')) return;
             try {
                 const data = await fetchJsonSafe('/assets/home-favorites/delete', {
                     method: 'POST',
@@ -3669,13 +3497,13 @@ function toggleBrokerPanel() {
                     body: JSON.stringify({ id })
                 });
                 if (!data.ok) {
-                    out.textContent = `❌ 删除失败：${data.msg || 'unknown error'}`;
+                    out.textContent = `❌ 削除失敗：${data.msg || 'unknown error'}`;
                     return;
                 }
                 out.textContent = t('homeFavDeleted');
                 await renderHomeFavorites(true);
             } catch (e) {
-                out.textContent = `❌ 删除失败：${e.message || e}`;
+                out.textContent = `❌ 削除失敗：${e.message || e}`;
             }
         }
 
@@ -3683,10 +3511,10 @@ function toggleBrokerPanel() {
             const out = document.getElementById('asset-upload-result');
             const path = selectedAssetInfo && selectedAssetInfo.path;
             if (!path) {
-                if (out) out.textContent = '请先选择一个资产';
+                if (out) out.textContent = '先にアセットを選んでください';
                 return;
             }
-            if (!window.confirm(`⚠️ 确定将 ${path} 重置为默认资产吗？`)) return;
+            if (!window.confirm(`⚠️ ${path} をデフォルト素材に戻しますか？`)) return;
             try {
                 const res = await fetch('/assets/restore-default', {
                     method: 'POST',
@@ -3695,13 +3523,13 @@ function toggleBrokerPanel() {
                 });
                 const data = await res.json();
                 if (!data.ok) {
-                    if (out) out.textContent = `❌ 重置失败：${data.msg || res.status}`;
+                    if (out) out.textContent = `❌ リセット失敗：${data.msg || res.status}`;
                     return;
                 }
                 await refreshSceneObjectByAssetPath(path);
-                if (out) out.textContent = `✅ 已重置为默认资产：${path}`;
+                if (out) out.textContent = `✅ デフォルト素材に戻しました：${path}`;
             } catch (e) {
-                if (out) out.textContent = `❌ 重置失败：${e}`;
+                if (out) out.textContent = `❌ リセット失敗：${e}`;
             }
         }
 
@@ -3709,10 +3537,10 @@ function toggleBrokerPanel() {
             const out = document.getElementById('asset-upload-result');
             const path = selectedAssetInfo && selectedAssetInfo.path;
             if (!path) {
-                if (out) out.textContent = '请先选择一个资产';
+                if (out) out.textContent = '先にアセットを選んでください';
                 return;
             }
-            if (!window.confirm(`⚠️ 确定将 ${path} 回退到上一版吗？`)) return;
+            if (!window.confirm(`⚠️ ${path} を前の版に戻しますか？`)) return;
             try {
                 const res = await fetch('/assets/restore-prev', {
                     method: 'POST',
@@ -3721,17 +3549,17 @@ function toggleBrokerPanel() {
                 });
                 const data = await res.json();
                 if (!data.ok) {
-                    if (out) out.textContent = `❌ 回退失败：${data.msg || res.status}`;
+                    if (out) out.textContent = `❌ 戻すのに失敗：${data.msg || res.status}`;
                     return;
                 }
                 await refreshSceneObjectByAssetPath(path);
-                if (out) out.textContent = `✅ 已回退到上一版：${path}`;
+                if (out) out.textContent = `✅ 前の版に戻しました：${path}`;
             } catch (e) {
-                if (out) out.textContent = `❌ 回退失败：${e}`;
+                if (out) out.textContent = `❌ 戻すのに失敗：${e}`;
             }
         }
 
-        // 记录 body scroll 位置，drawer 关闭时恢复
+        // body スクロール位置を記録し、ドロワー閉鎖時に戻す
         let _drawerScrollY = 0;
 
         async function toggleAssetDrawer(force) {
@@ -3741,7 +3569,7 @@ function toggleBrokerPanel() {
             assetDrawerOpen = next;
             drawer.classList.toggle('open', next);
             if (backdrop) backdrop.classList.toggle('open', next);
-            // 移动端 body 锁定：打开时冻结滚动位置，关闭时恢复
+            // モバイル：開いている間はスクロール位置を固定
             if (next) {
                 _drawerScrollY = window.scrollY;
                 document.body.style.top = `-${_drawerScrollY}px`;
@@ -3780,7 +3608,7 @@ function toggleBrokerPanel() {
             }
         }
 
-        // Guest Agent 离开房间
+        // ゲストが部屋を出る
         function removeGuestSpriteByName(name) {
             const target = guestAgents.find(a => (a.name || '') === name);
             if (target && guestSprites[target.agentId]) {
@@ -3801,7 +3629,7 @@ function toggleBrokerPanel() {
                 body: JSON.stringify({ agentId, name })
             }).then(response => response.json()).then(data => {
                 if (data.ok) {
-                    // 优先按 agentId 清理，避免重名误伤
+                    // agentId 優先で消す（同名の誤削除を避ける）
                     if (agentId && guestSprites[agentId]) {
                         guestSprites[agentId].sprite.destroy();
                         guestSprites[agentId].nameText.destroy();
@@ -3812,20 +3640,20 @@ function toggleBrokerPanel() {
                         delete guestBubbles[agentId];
                     }
                     fetchGuestAgents();
-                    alert((name || agentId) + ' 已离开房间');
+                    alert((name || agentId) + ' は部屋を出ました');
                 } else {
-                    // demo agent 没在后端也允许本地隐藏
-                    if (DEMO_MODE && (name === '尼卡' || name === '水星')) {
+                    // demo がサーバになくてもローカルで隠せる
+                    if (DEMO_MODE && (name === 'ニカ' || name === 'マーキュリー')) {
                         hiddenDemoNames.add(name);
                         removeGuestSpriteByName(name);
                         renderGuestAgentList();
-                        alert(name + ' 已离开房间（demo）');
+                        alert(name + ' は部屋を出ました（demo）');
                         return;
                     }
-                    alert('离开失败：' + (data.msg || '未知错误'));
+                    alert('退出に失敗：' + (data.msg || '不明なエラー'));
                 }
             }).catch(error => {
-                alert('请求失败：' + error);
+                alert('リクエスト失敗：' + error);
             });
         }
 
@@ -3837,12 +3665,12 @@ function toggleBrokerPanel() {
             }).then(response => response.json()).then(data => {
                 if (data.ok) {
                     fetchGuestAgents();
-                    alert('已批准该访客接入');
+                    alert('訪問者を承認しました');
                 } else {
-                    alert('批准失败：' + (data.msg || '未知错误'));
+                    alert('承認に失敗：' + (data.msg || '不明なエラー'));
                 }
             }).catch(error => {
-                alert('请求失败：' + error);
+                alert('リクエスト失敗：' + error);
             });
         }
 
@@ -3854,12 +3682,12 @@ function toggleBrokerPanel() {
             }).then(response => response.json()).then(data => {
                 if (data.ok) {
                     fetchGuestAgents();
-                    alert('已拒绝该访客');
+                    alert('訪問者を却下しました');
                 } else {
-                    alert('拒绝失败：' + (data.msg || '未知错误'));
+                    alert('拒否に失敗：' + (data.msg || '不明なエラー'));
                 }
             }).catch(error => {
-                alert('请求失败：' + error);
+                alert('リクエスト失敗：' + error);
             });
         }
 
@@ -3867,8 +3695,8 @@ function toggleBrokerPanel() {
             if (!DEMO_MODE) return;
             if (!Array.isArray(window.__demoVisitors) || window.__demoVisitors.length === 0) {
                 window.__demoVisitors = [
-                    { agentId: 'demo_nika', name: '尼卡', authStatus: 'approved', state: 'writing', bubbleText: '我在工作中', isDemo: true, updated_at: new Date().toISOString() },
-                    { agentId: 'demo_mercury', name: '水星', authStatus: 'approved', state: 'idle', bubbleText: '我去休息区躺一下', isDemo: true, updated_at: new Date().toISOString() }
+                    { agentId: 'demo_nika', name: 'ニカ', authStatus: 'approved', state: 'writing', bubbleText: '作業中です', isDemo: true, updated_at: new Date().toISOString() },
+                    { agentId: 'demo_mercury', name: 'マーキュリー', authStatus: 'approved', state: 'idle', bubbleText: '休憩スペースで横になります', isDemo: true, updated_at: new Date().toISOString() }
                 ];
             }
         }
@@ -3915,7 +3743,7 @@ function toggleBrokerPanel() {
                 const stateText = stateMap[state] || state;
                 const subtitle = `${statusText} · ${stateText}`;
 
-                const pendingActions = `<button onclick="alert('交换 skill 功能开发中')">交换skill</button><button class="leave-btn" onclick="leaveGuestAgent('${agent.agentId}','${name}')">离开房间</button>`;
+                const pendingActions = `<button onclick="alert('スキル交換は未実装')">スキル交換</button><button class="leave-btn" onclick="leaveGuestAgent('${agent.agentId}','${name}')">部屋を出る</button>`;
 
                 return `
                   <div class="guest-agent-item" data-name="${name}">
@@ -3932,10 +3760,10 @@ function toggleBrokerPanel() {
         }
 
         function getAreaRect(area) {
-            // 区域坐标（海辛提供，左上-右下；这里的 x/y 作为 sprite 底部锚点坐标来用）
-            // 休息区域范围（511,262）（841,621）
-            // 工作区域范围（190,526）（380,683）
-            // error 区域范围（932,275）（1109,327）
+            // 区域座標（左上-右下。x/y はスプライト下端アンカー）
+            // 休憩エリア（511,262）（841,621）
+            // 作業エリア（190,526）（380,683）
+            // エラーエリア（932,275）（1109,327）
             const rects = {
                 breakroom: { x1: 511, y1: 262, x2: 841, y2: 621 },
                 writing:   { x1: 190, y1: 526, x2: 380, y2: 683 },
@@ -3953,7 +3781,7 @@ function toggleBrokerPanel() {
         }
 
         function getAreaPoint(area, idx) {
-            // 非 demo 访客：仍用固定点位，避免每次轮询都抖动。
+            // Non-demo guests keep fixed spots.
             const map = {
                 breakroom: [
                     { x: 511, y: 262 },
@@ -4000,7 +3828,7 @@ function toggleBrokerPanel() {
                 const id = agent.agentId;
                 seenIds.add(id);
 
-                const isDemo = !!agent.isDemo || (DEMO_MODE && (id === 'demo_nika' || id === 'demo_mercury' || agent.name === '尼卡' || agent.name === '水星'));
+                const isDemo = !!agent.isDemo || (DEMO_MODE && (id === 'demo_nika' || id === 'demo_mercury' || agent.name === 'ニカ' || agent.name === 'マーキュリー'));
                 const area = agent.area || (agent.state === 'error' ? 'error' : (agent.state === 'idle' ? 'breakroom' : 'writing'));
 
                 const idx = area === 'breakroom' ? idxBreak++ : area === 'error' ? idxError++ : idxWrite++;
@@ -4009,20 +3837,20 @@ function toggleBrokerPanel() {
                     : getAreaPoint(area, idx);
 
                 if (!guestSprites[id]) {
-                    // 优先用图标：demo visitor 有专门映射
+                    // アイコン優先：demo visitor は専用マップ
                     let sprite;
-                    const isDemoNika = DEMO_MODE && (agent.agentId === 'demo_nika' || agent.name === '尼卡');
-                    const isDemoMercury = DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星');
+                    const isDemoNika = DEMO_MODE && (agent.agentId === 'demo_nika' || agent.name === 'ニカ');
+                    const isDemoMercury = DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === 'マーキュリー');
                     
                     if (isDemoNika || isDemoMercury) {
-                        // 统一使用动态像素角色，避免依赖已删除的 demo 静态图
+                        // 動的ピクセルキャラを使う（削除済み demo 静止画に依存しない）
                         const animKey = 'guest_anim_1';
                         const f = 0;
                         sprite = game.add.sprite(p.x, p.y, animKey, f).setOrigin(0.5, 1).setScale(1.1);
                         if (sprite.anims && sprite.anims.play) sprite.anims.play(animKey, true);
                     } else {
-                        // 非 demo 访客：优先用动画精灵（guest_anim_x），其次静态图，兜底星星
-                        // 先确定角色索引（1-6）
+                        // Non-demo guests: animated sprite, then static, then star.
+                        // キャラインデックス（1-6）を決める
                         let animIdx = agent.avatar
                             ? parseInt((agent.avatar.match(/_(\d+)$/) || [])[1] || '0', 10)
                             : 0;
@@ -4056,12 +3884,12 @@ function toggleBrokerPanel() {
                         }
                     }
                     sprite.setDepth(2600);
-                    if (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星')) {
+                    if (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === 'マーキュリー')) {
                         sprite.y = sprite.y + 10;
                     }
 
-                    // demo 水星下移 10px（仅 demo_mercury）
-                    const yOffset = (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星')) ? 10 : 0;
+                    // demo マーキュリーは 10px 下げる（demo_mercury のみ）
+                    const yOffset = (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === 'マーキュリー')) ? 10 : 0;
 
                     const nameTextY = isDemo ? ((p.y + yOffset) - 80) : ((p.y + yOffset) - 120);
                     const nameText = game.add.text(p.x, nameTextY, agent.name || '訪問者', {
@@ -4076,9 +3904,9 @@ function toggleBrokerPanel() {
                     guestSprites[id] = { sprite, nameText };
                 } else {
                     const g = guestSprites[id];
-                    const yOffset = (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星')) ? 10 : 0;
+                    const yOffset = (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === 'マーキュリー')) ? 10 : 0;
 
-                    // demo：平滑移动（避免闪现）；非 demo：保持稳定位置（避免轮询抖动）
+                    // demo は滑らかに移動。非demoは位置を安定（ポーリング揺れ避け）
                     if (isDemo) {
                         // kill previous tweens for this id
                         if (guestTweens[id] && guestTweens[id].move) {
@@ -4088,7 +3916,7 @@ function toggleBrokerPanel() {
                             guestTweens[id].name.stop();
                         }
 
-                        const duration = 2000 + Math.floor(Math.random() * 1000); // 2~3s 走路感
+                        const duration = 2000 + Math.floor(Math.random() * 1000); // 2~3s 歩き感
                         const ease = 'Sine.easeInOut';
 
                         const moveTween = game.tweens.add({
@@ -4117,7 +3945,7 @@ function toggleBrokerPanel() {
                 }
             });
 
-            // 删除消失的 agent + 清理其气泡/tween
+            // 消えた agent とバブル/tween を片付ける
             Object.keys(guestSprites).forEach(id => {
                 if (!seenIds.has(id)) {
                     guestSprites[id].sprite.destroy();
@@ -4144,18 +3972,18 @@ function toggleBrokerPanel() {
             const id = ids[Math.floor(Math.random() * ids.length)];
             const g = guestSprites[id];
 
-            // demo 气泡：优先展示与状态对应的内容，便于验证“状态→区域→气泡”链路
+            // demo バブル：状態に対応する文を出す（状態→区域→バブル）
             const demoVisitor = (DEMO_MODE && window.__demoVisitors)
                 ? (window.__demoVisitors.find(v => v.agentId === id) || window.__demoVisitors.find(v => v.name === (g.nameText && g.nameText.text)))
                 : null;
 
             const statusThoughtsMap = {
                 idle: ['休憩中', '次の指示を待っている', '充電中'],
-                writing: ['我在工作区处理任务', '正在整理文档与执行中', '工作区专注推进中'],
-                researching: ['我在调研模式，搜集信息', '正在查资料和验证线索', '研究中，稍后同步结论'],
-                executing: ['执行中，正在跑流程', '我在工作区推进任务', '正在把计划落地执行'],
-                syncing: ['同步中，马上更新状态', '正在同步进度到系统', '数据同步中请稍候'],
-                error: ['我在 bug 区排查问题', '检测到异常，正在修复', '报警中，先定位再处理']
+                writing: ['作業中です', 'デスクで進めています', '集中して処理中'],
+                researching: ['調査中です', '情報を集めています', '手がかりを確認中'],
+                executing: ['実行中です', '手順を進めています', '計画を実行中'],
+                syncing: ['同期中です', '状態を更新しています', '少々お待ちください'],
+                error: ['不具合を確認中', '異常を直しています', '原因を切り分け中']
             };
             const agentState = (guestAgents.find(a => a.agentId === id) || {}).state || 'idle';
             const thoughts = statusThoughtsMap[agentState] || statusThoughtsMap.idle;
@@ -4167,7 +3995,7 @@ function toggleBrokerPanel() {
             }
 
             const bx = g.sprite.x;
-            // 气泡位置：demo 维持原逻辑；真实访客放在“名字上方”，避免压角色也避免压名字
+            // Bubble above the name for real guests.
             const isDemoGuest = (demoVisitor && demoVisitor.isDemo) || (id === 'demo_nika' || id === 'demo_mercury');
             const nameH = (g.nameText && g.nameText.height) ? g.nameText.height : 16;
             const by = isDemoGuest ? (g.sprite.y - 90) : ((g.nameText ? g.nameText.y : (g.sprite.y - 150)) - (nameH / 2) - 22);
@@ -4179,7 +4007,7 @@ function toggleBrokerPanel() {
             bubble.setDepth(2700);
             guestBubbles[id] = bubble;
 
-            // 让气泡跟随 sprite 锚点（用于 demo 平滑移动时也保持贴合）
+            // バブルをスプライトアンカーに追従
             bubble.__followAgentId = id;
 
             setTimeout(() => {
@@ -4194,7 +4022,7 @@ function toggleBrokerPanel() {
             if (!DEMO_MODE) return;
             ensureDemoVisitors();
 
-            // 按海辛需求：每 8 秒切换一次状态
+            // 8秒ごとに状態を切り替える
             window.__demoNextAt = window.__demoNextAt || 0;
             const now = Date.now();
             if (now < window.__demoNextAt) return;
@@ -4202,22 +4030,6 @@ function toggleBrokerPanel() {
 
             const states = ['idle', 'writing', 'researching', 'executing', 'syncing', 'error'];
             const bubbleTextMapByLang = {
-                zh: {
-                idle: '我去休息区躺一下',
-                writing: '我在工作中',
-                researching: '我在调研中',
-                executing: '我在执行任务',
-                syncing: '我在同步状态',
-                error: '出错了！我去报警区'
-                },
-                en: {
-                    idle: 'Taking a break in the lounge.',
-                    writing: 'I am working now.',
-                    researching: 'I am researching now.',
-                    executing: 'I am executing tasks.',
-                    syncing: 'I am syncing status.',
-                    error: 'Something broke! Heading to alert zone.'
-                },
                 ja: {
                     idle: '休憩エリアでひと休み。',
                     writing: '作業中です。',
@@ -4227,9 +4039,9 @@ function toggleBrokerPanel() {
                     error: 'エラー発生！アラートエリアへ。'
                 }
             };
-            const bubbleTextMap = bubbleTextMapByLang[uiLang] || bubbleTextMapByLang.zh;
+            const bubbleTextMap = bubbleTextMapByLang.ja;
 
-            // 确保两位 demo 角色不会总是同一个状态（增加可观测性）
+            // 2体の demo が同じ状態に固まらないようにする
             const pickJs = (exclude) => {
                 let s = states[Math.floor(Math.random() * states.length)];
                 let tries = 0;
@@ -4244,7 +4056,7 @@ function toggleBrokerPanel() {
             const cur0 = current[0] ? (current[0].state || 'idle') : 'idle';
 
             const next0 = pickJs(cur0);
-            const next1 = pickJs(next0); // 尽量不同
+            const next1 = pickJs(next0); // できるだけ別状態
             const nextStates = [next0, next1];
 
             const prevVisitors = current.map((v) => ({ ...v }));
@@ -4258,10 +4070,10 @@ function toggleBrokerPanel() {
                 };
             });
 
-            // 状态切换时：每一位 demo 都立即冒泡（强制），用于清晰验证链路
+            // 状態切替時：各 demo をすぐバブル表示
             try {
                 if (typeof game !== 'undefined' && game) {
-                    // 找出状态实际变了的 demo visitor，给他们强制冒泡
+                    // 状態が変わった demo に強制バブル
                     const prevById = {};
                     prevVisitors.forEach(v => { prevById[v.agentId] = v; });
                     const newVisitors = window.__demoVisitors || [];
@@ -4269,7 +4081,7 @@ function toggleBrokerPanel() {
                         const prev = prevById[agent.agentId];
                         const changed = !prev || prev.state !== agent.state;
                         if (changed) {
-                            // 直接冒泡
+                            // すぐバブル
                             if (guestSprites[agent.agentId]) {
                                 const g = guestSprites[agent.agentId];
                                 const text = agent.bubbleText || '';
@@ -4297,26 +4109,26 @@ function toggleBrokerPanel() {
                         }
                     });
                 }
-            } catch (e) { console.error('强制冒泡失败:', e); }
+            } catch (e) { console.error('強制バブル失敗:', e); }
         }
 
         function fetchGuestAgents() {
-            // demo 随机状态先更新（不依赖后端）
+            // demo のランダム状態を先に更新（サーバ非依存）
             maybeRandomizeDemoVisitors();
 
             return fetch('/agents?t=' + Date.now(), { cache: 'no-store' })
                 .then(response => response.json())
                 .then(data => {
-                    // 无论后端返回是否为数组，demo=1 都应保证本地 demo 访客可见
+                    // Keep demo visitors visible when demo=1.
                     guestAgents = Array.isArray(data) ? data : [];
 
-                    // 新访客检测：触发 Star 欢迎气泡（只欢迎真实访客，不欢迎 demo）
+                    // Welcome only real guests, not demo.
                     try {
                         const merged = getMergedVisitors();
                         const currentIds = new Set((merged || []).filter(a => !a.isMain && !a.isDemo).map(a => a.agentId));
 
                         if (!guestWelcomeInitialized) {
-                            // 首次初始化不欢迎，避免刷新页面就刷屏
+                            // 初回は歓迎しない（リロードで埋まらない）
                             lastSeenGuestIds = currentIds;
                             guestWelcomeInitialized = true;
                         } else {
@@ -4324,24 +4136,22 @@ function toggleBrokerPanel() {
                             currentIds.forEach(id => { if (!lastSeenGuestIds.has(id)) newIds.push(id); });
 
                             if (newIds.length > 0) {
-                                // 只欢迎第一个新来的（避免同一时刻多人加入刷屏）
+                                // 最初の1人だけ歓迎
                                 const newAgent = (merged || []).find(a => a.agentId === newIds[0]);
                                 if (newAgent && newAgent.name) {
-                                    // 临时将 currentState 视为 writing 以允许 showBubble 展示
+                                    // 一時的に writing 扱いでバブルを出す
                                     const oldState = currentState;
                                     currentState = 'writing';
-                                    // 临时更换 bubble 文案
+                                    // 一時的にバブル文を差し替え
                                     const lang = uiLang;
                                     const welcomeTexts = {
-                                        zh: [`欢迎 ${newAgent.name} 来到办公室～`,`Hi ${newAgent.name}，一起开工吧`,`${newAgent.name} 已加入，欢迎！`],
-                                        en: [`Welcome ${newAgent.name} to the office!`,`Hi ${newAgent.name}, let’s build something.`,`${newAgent.name} just joined — welcome!`],
                                         ja: [`${newAgent.name} さん、オフィスへようこそ！`,`Hi ${newAgent.name}、一緒に進めよう。`,`${newAgent.name} さんが参加しました、歓迎！`]
                                     };
-                                    const langPack = BUBBLE_TEXTS[lang] || BUBBLE_TEXTS.ja;
+                                    const langPack = BUBBLE_TEXTS.ja;
                                     const oldTexts = Array.isArray(langPack.writing) ? [...langPack.writing] : [];
-                                    langPack.writing = welcomeTexts[lang] || welcomeTexts.zh;
+                                    langPack.writing = welcomeTexts.ja;
                                     showBubble();
-                                    // 还原
+                                    // 元に戻す
                                     langPack.writing = oldTexts;
                                     currentState = oldState;
                                 }
@@ -4355,8 +4165,8 @@ function toggleBrokerPanel() {
                     renderGuestAgentsInScene();
                 })
                 .catch(error => {
-                    console.error('拉取访客列表失败:', error);
-                    // 即使拉取失败，demo 也要能渲染
+                    console.error('guest list fetch failed:', error);
+                    // 取得失敗でも demo は描画する
                     if (DEMO_MODE) {
                         renderGuestAgentList();
                         renderGuestAgentsInScene();
@@ -4364,9 +4174,9 @@ function toggleBrokerPanel() {
                 });
         }
 
-        // 初始化：先检测 WebP 支持，再启动游戏
+        // 初期化：WebP確認のあとゲーム開始
         async function initGame() {
-            // 检测 WebP 支持
+            // WebP 対応を確認
             try {
                 supportsWebP = await checkWebPSupport();
             } catch (e) {
@@ -4377,25 +4187,25 @@ function toggleBrokerPanel() {
                 }
             }
 
-            console.log('WebP 支持:', supportsWebP);
+            console.log('WebP support:', supportsWebP);
             applyLanguage();
             updateSpeedModeUI();
 
 
-            // 直接启动 Phaser，避免首屏被额外接口阻塞
+            // Phaser をすぐ起動（初回を他APIで止めない）
 
             new Phaser.Game(config);
 
-            // 非关键初始化延后到首屏之后，提升首开速度
+            // 非必須の初期化は初回描画のあと
             setTimeout(async () => {
-                // 动态探测 flowers 精灵表帧规格（避免写死 65x65 导致显示比例异常）
+                // flowers フレーム寸法を動的に測る
                 try {
                     const res = await fetch('/assets/list?t=' + Date.now(), { cache: 'no-store' });
                     const data = await res.json();
                     if (data && data.ok && Array.isArray(data.items)) {
                         const flowerItem = data.items.find(it => (it.path || '').toLowerCase().includes('flowers-bloom-v2'));
                         if (flowerItem && Number(flowerItem.width) > 0 && Number(flowerItem.height) > 0) {
-                            // 固定规则：花朵单帧 128x128，4x4
+                            // 花は 1フレーム 128x128、4x4
                             FLOWERS_FRAME_W = 128;
                             FLOWERS_FRAME_H = 128;
                             FLOWERS_FRAME_COLS = 4;
@@ -4403,7 +4213,7 @@ function toggleBrokerPanel() {
                         }
                     }
                 } catch (e) {
-                    console.warn('flowers 规格探测失败，使用默认 65x65', e);
+                    console.warn('flowers 寸法の測定失敗。既定 65x65', e);
                 }
 
                 // Only fetch /assets/positions and /assets/defaults when user is authed,
@@ -4419,17 +4229,17 @@ function toggleBrokerPanel() {
         }
 
         function preload() {
-            // 获取加载界面元素
+            // 読み込み画面の要素
             loadingOverlay = document.getElementById('loading-overlay');
             loadingProgressBar = document.getElementById('loading-progress-bar');
             loadingText = document.getElementById('loading-text');
             loadingProgressContainer = document.getElementById('loading-progress-container');
             
-            // 设置资源总数（全部首屏加载：装饰也第一时间出现）
+            // 全アセットを初回読み込み（装飾も含む）
             totalAssets = 15;
             loadedAssets = 0;
             
-            // 加载进度监听
+            // 読み込み進捗
             this.load.on('filecomplete', () => {
                 updateLoadingProgress();
             });
@@ -4457,7 +4267,7 @@ function toggleBrokerPanel() {
             // Error / bug animation: 180x180, 96 frames (repacked grid)
             this.load.spritesheet('error_bug', '/static/error-bug-spritesheet-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 220, frameHeight: 220 });
 
-            // 运行时 Gemini 配置（用于搬家/中介生图）
+            // 実行時 Gemini 設定（引っ越し/仲介の画像生成）
             this.geminiConfig = { hasKey: false, model: 'gemini-3.1-flash-image-preview' };
 
             // Cat spritesheet: 160x160, 4x4=16 cats
@@ -4466,14 +4276,14 @@ function toggleBrokerPanel() {
             // Desk
             // Star working animation: repacked to grid to avoid WebGL max texture size limits
             // NOTE: prefer WebP for size, PNG fallback
-            // 动态替换后按最新素材识别：当前 writing 素材为 300x300 单帧
+            // 差し替え後は最新素材。writing は 300x300 1フレーム
             this.load.spritesheet('star_working', '/static/star-working-spritesheet-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 300, frameHeight: 300 });
 
-            // Sync state animation (256x256, 多帧): 非同步显示首帧，同步从第2帧循环
+            // 同期アニメ (256x256, 複数フレーム): 非同期は先頭、同期は2フレーム目から
             this.load.spritesheet('sync_anim', '/static/sync-animation-v3-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
 
             // Memo background image
-            // memo 底图固定走 png，避免某些端 webp 透明通道异常导致“底图丢失”
+            // メモ背景は png 固定（webp 透過欠け対策）
             this.load.image('memo_bg', '/static/memo-bg.webp?v={{VERSION_TIMESTAMP}}');
             // Desk v2 (webp only)
             this.load.image('desk_v2', '/static/desk-v3.webp?v={{VERSION_TIMESTAMP}}');
@@ -4501,11 +4311,11 @@ function toggleBrokerPanel() {
             sofa = this.add.sprite(IDLE_SOFA_ANCHOR.x, IDLE_SOFA_ANCHOR.y, 'sofa_idle').setOrigin(0.5);
             sofa.setDepth(10);
             areas = {
-                door: { x: 640, y: 550 }, // 墙的门（偏下 1/3 位置）
-                writing: { x: 320, y: 360 }, // 左 1/3 中间（办公桌）
-                researching: { x: 320, y: 360 }, // 左 1/3 中间（研究也在办公区
-                error: { x: 1066, y: 180 }, // 右 1/3 上 1/2（服务器区
-                breakroom: { x: IDLE_SOFA_ANCHOR.x, y: IDLE_SOFA_ANCHOR.y } // 与 sofa-idle-v3 同中心锚点
+                door: { x: 640, y: 550 }, // 壁のドア（下 1/3）
+                writing: { x: 320, y: 360 },
+                researching: { x: 320, y: 360 }, // 左 1/3 中央（調査も執務エリア
+                error: { x: 1066, y: 180 }, // 右 1/3 上半分（サーバ区画
+                breakroom: { x: IDLE_SOFA_ANCHOR.x, y: IDLE_SOFA_ANCHOR.y } // sofa-idle-v3 と同じ中心
             };
 
             // Star idle animation
@@ -4521,7 +4331,7 @@ function toggleBrokerPanel() {
             });
 
 
-            // 创建 6 个访客角色的循环 idle 动画（8帧循环）
+            // Six guest idle loops (8 frames).
             for (let i = 1; i <= 6; i++) {
                 this.anims.create({
                     key: `guest_anim_${i}_idle`,
@@ -4544,7 +4354,7 @@ function toggleBrokerPanel() {
             sofa.anims.stop();
             sofa.setTexture('sofa_idle');
 
-            // 加像素风小牌匾：海辛小龙虾的办公室
+            // ピクセル看板
             const plaqueX = config.width / 2;
             const plaqueY = config.height - 36;
             const plaqueBg = game.add.rectangle(plaqueX, plaqueY, 420, 44, 0x5d4037);
@@ -4560,7 +4370,7 @@ function toggleBrokerPanel() {
                 wordWrap: { width: 400 },
                 align: 'center'
             }).setOrigin(0.5);
-            // 牌匾两边加个小装饰（跟随牌匾居中）
+            // 看板左右の飾り（中央寄せ）
             game.add.text(plaqueX - 190, plaqueY, '⭐', { fontFamily: 'ArkPixel, monospace', fontSize: '20px' }).setOrigin(0.5);
             game.add.text(plaqueX + 190, plaqueY, '⭐', { fontFamily: 'ArkPixel, monospace', fontSize: '20px' }).setOrigin(0.5);
             window.officePlaqueText = plaqueText;
@@ -4662,7 +4472,7 @@ function toggleBrokerPanel() {
             });
             serverroom = this.add.sprite(1021, 142, 'serverroom', 0).setOrigin(0.5);
             serverroom.setDepth(2);
-            // 默认 idle: 静止第0帧
+            // 既定 idle: 0フレーム静止
             serverroom.anims.stop();
             serverroom.setFrame(0);
 
@@ -4708,7 +4518,7 @@ function toggleBrokerPanel() {
             });
 
             // Random flower pot at (310,390), default scale 0.8 (top layer)
-            const flowerFrameCount = Math.max(1, FLOWERS_FRAME_COLS * FLOWERS_FRAME_ROWS); // 动态帧数
+            const flowerFrameCount = Math.max(1, FLOWERS_FRAME_COLS * FLOWERS_FRAME_ROWS); // 動的フレーム数
             const randomFlowerFrame = Math.floor(Math.random() * flowerFrameCount);
             const flower = this.add.sprite(310, 390, 'flowers', randomFlowerFrame).setOrigin(0.5);
             flower.setScale(0.8);
@@ -4724,7 +4534,7 @@ function toggleBrokerPanel() {
             // Star working at desk (217,333)
             this.anims.create({
                 key: 'star_working',
-                // 38 帧（0~37），避免沿用旧 192 帧导致疯狂闪烁
+                // 38フレーム（0~37）。旧192だと点滅する
                 frames: this.anims.generateFrameNumbers('star_working', { start: 0, end: 37 }),
                 frameRate: 12,
                 repeat: -1
@@ -4757,7 +4567,7 @@ function toggleBrokerPanel() {
             const syncFrameTotal = Number(this.textures.get('sync_anim')?.frameTotal || 0);
             const syncFrameStart = 1;
             const syncFrameEnd = Math.max(0, syncFrameTotal - 2);
-            // 仅在确实存在可播放帧（>=1）时才创建同步动画，避免单帧素材触发播放异常
+            // 再生フレームが1以上のときだけ同期アニメを作る
             syncAnimPlayable = syncFrameTotal >= 3 && syncFrameEnd >= syncFrameStart;
             if (this.anims.exists('sync_anim')) {
                 this.anims.remove('sync_anim');
@@ -4787,7 +4597,7 @@ function toggleBrokerPanel() {
             coordsDisplay = document.getElementById('coords-display');
             coordsToggle = document.getElementById('coords-toggle');
 
-            // guest agent 将由 /agents 动态拉取并渲染到右侧访客列表
+            // Guest list is loaded from /agents.
             coordsToggle.addEventListener('click', () => {
                 showCoords = !showCoords;
                 coordsOverlay.style.display = showCoords ? 'block' : 'none';
@@ -4795,8 +4605,8 @@ function toggleBrokerPanel() {
                 coordsToggle.style.background = showCoords ? '#e94560' : '#333';
             });
 
-            // 允许手机端“拖动/滑动”来移动视野（本质：移动 Phaser Camera）
-            // iPhone 等触屏设备默认开启；桌面端默认关闭（可手动开）。
+            // スマホはドラッグで視野移動（Phaser Camera）
+            // タッチ端末は既定オン。デスクトップはオフ（手動可）。
             const panToggle = document.getElementById('pan-toggle');
             const isTouchDevice = IS_TOUCH_DEVICE;
             let panEnabled = false;
@@ -4820,21 +4630,21 @@ function toggleBrokerPanel() {
                 camera.scrollY = clamp(camera.scrollY, 0, maxScrollY());
             }
 
-            // 手机上：锁定“办公室画布高度 = 2/3 区域高度”，
-            // 让世界坐标在竖向恰好看满（不需要上下拖），只保留横向拖动浏览左右。
-            // 记录初始是否已手动平移（避免 resize 时把用户拖好的位置重置）
+            // スマホ：オフィスキャンバス高 = 領域の 2/3。
+            // 縦は画面内に収める。左右だけドラッグ。
+            // 手動パン済みなら resize で位置を戻さない
             let hasManuallyPanned = false;
             function applyMobileCameraFit() {
                 if (!isTouchDevice) return;
                 const h = Math.max(1, camera.height);
                 const w = Math.max(1, camera.width);
 
-                // 关键：先按高度 fit，再看是否需要按宽度微调，
-                // 保证既不会让画面歪，又能左右拖到最左最右边缘不被裁。
+                // 高さフィットのあと、必要なら幅を微調整。
+                // 歪ませず、左右端までドラッグできるようにする。
                 const fitHeightZoom = h / MAP_H;
                 const candidateZoom = fitHeightZoom;
 
-                // 按 candidateZoom 计算：viewport 在世界坐标里的宽高
+                // candidateZoom でワールド内の表示幅高を計算
                 const viewW = w / candidateZoom;
                 const maxX = Math.max(0, MAP_W - viewW);
 
@@ -4842,7 +4652,7 @@ function toggleBrokerPanel() {
                 camera.scrollX = Math.min(camera.scrollX, maxX);
                 camera.scrollY = 0;
 
-                // 仅在未手动平移过时才居中（避免把用户拖好的位置冲掉）
+                // 手動パン前だけ中央寄せ
                 if (!hasManuallyPanned) {
                     camera.centerOn(MAP_W / 2, MAP_H / 2);
                 }
@@ -4851,7 +4661,7 @@ function toggleBrokerPanel() {
             }
             applyMobileCameraFit();
 
-            // 手机端旋转屏幕/地址栏伸缩时，重算 zoom + 夹紧 camera
+            // 回転/アドレスバー変化で zoom と camera を再計算
             if (isTouchDevice && game.scale) {
                 game.scale.on('resize', () => {
                     applyMobileCameraFit();
@@ -4880,19 +4690,19 @@ function toggleBrokerPanel() {
                 panToggle.addEventListener('click', () => setPanEnabled(!panEnabled));
             }
 
-            // 手机端默认关闭拖动画面：由左上角“移动视野”开关显式开启
+            // スマホの画面ドラッグは既定オフ。左上スイッチでオン
             if (isTouchDevice) {
                 setPanEnabled(false);
             }
 
-            // iOS/Safari 手势策略：
-            // - 保留垂直滚动（让页面能下滑看三个面板）
-            // - 水平方向拖动时才阻止默认行为，并转为 camera 横向平移
-            // 说明：iOS 对 pointer + touch-action 支持存在机型差异，所以这里加一套原生 touch 兜底。
+            // iOS/Safari ジェスチャ：
+            // - 縦スクロールは残す（下の3パネルを見る）
+            // - 横ドラッグだけ既定動作を止め、camera 横移動へ
+            // iOS は機種差があるので native touch も足す。
             const canvasEl = game.canvas;
             let touchPan = null; // {x,y,sx,sy,lock:'x'|'y'|null}
             if (canvasEl) {
-                // 手机端允许页面自然滚动，避免“不能滑动”
+                // スマホはページ縦スクロールを許可
                 canvasEl.style.touchAction = 'auto';
 
                 canvasEl.addEventListener('touchstart', (e) => {
@@ -4913,12 +4723,12 @@ function toggleBrokerPanel() {
                     }
 
                     if (touchPan.lock === 'x') {
-                        // 横向拖动交给办公室视野；阻止浏览器默认滚动
+                        // 横ドラッグはオフィス視野。ブラウザ既定スクロールは止める
                         e.preventDefault();
                         hasManuallyPanned = true;
                         camera.scrollX = clamp(touchPan.sx - dx, 0, maxScrollX());
                     }
-                    // lock==='y' 时不阻止默认，交给页面纵向滚动
+                    // lock==='y' ならページ縦スクロールに任せる
                 }, { passive: false });
 
                 const clearTouchPan = () => { touchPan = null; };
@@ -4945,17 +4755,17 @@ function toggleBrokerPanel() {
                 const dx = pointer.x - panStart.x;
                 const dy = pointer.y - panStart.y;
 
-                // 手机端优先“横向拖动看办公室”，纵向手势留给页面滚动看下方面板。
+                // スマホは横でオフィス、縦は下パネルへ。
                 if (isTouchDevice && Math.abs(dy) > Math.abs(dx)) {
                     return;
                 }
 
-                // 手指向右拖，视野跟着向右看：camera scroll 向左减小（反向）
+                // 指を右へ → 視野も右。camera scroll は左へ（逆）
                 const newX = panStart.sx - dx;
                 hasManuallyPanned = true;
                 camera.scrollX = clamp(newX, 0, maxScrollX());
 
-                // 桌面端保留自由二维拖动
+                // デスクトップは自由な2Dドラッグ
                 if (!isTouchDevice) {
                     const newY = panStart.sy - dy;
                     camera.scrollY = clamp(newY, 0, maxScrollY());
@@ -4974,7 +4784,7 @@ function toggleBrokerPanel() {
                 coordsOverlay.style.top = (pointer.y + 18) + 'px';
             });
 
-            // 加载昨日 memo
+            // 昨日のメモを読む
             loadMemo();
 
             fetchStatus();
@@ -4985,7 +4795,7 @@ function toggleBrokerPanel() {
             if (time - lastFetch > FETCH_INTERVAL) { fetchStatus(); lastFetch = time; }
             if (time - lastGuestAgentsFetch > GUEST_AGENTS_FETCH_INTERVAL) { fetchGuestAgents(); lastGuestAgentsFetch = time; }
 
-            // 兜底：非 idle 时确保机房动画在播，idle 时静止
+            // idle 以外は機房アニメ再生。idle は静止
             const effectiveStateForServer = pendingDesiredState || currentState;
             if (serverroom) {
                 if (effectiveStateForServer === 'idle') {
@@ -5000,14 +4810,14 @@ function toggleBrokerPanel() {
                 }
             }
 
-            // error 状态：显示 bug 动画，并在两点之间来回移动
+            // error：バグアニメ。2点間の往復は無効化済み
             if (window.errorBug) {
                 if (effectiveStateForServer === 'error') {
                     window.errorBug.setVisible(true);
                     if (!window.errorBug.anims.isPlaying || window.errorBug.anims.currentAnim?.key !== 'error_bug') {
                         window.errorBug.anims.play('error_bug', true);
                     }
-                    // 固定在原地（按需求取消 error 移动路径）
+                    // その場に固定（error の移動はしない）
                     window.errorBug.x = 1007;
                     window.errorBug.y = 221;
                 } else {
@@ -5032,18 +4842,18 @@ function toggleBrokerPanel() {
                 }
             }
 
-            // 冒气泡
+            // バブルを出す
             if (time - lastBubble > BUBBLE_INTERVAL) {
                 showBubble();
                 lastBubble = time;
             }
-            // 猫的气泡（频率低）
+            // 猫のバブル（低頻度）
             if (time - lastCatBubble > CAT_BUBBLE_INTERVAL) {
                 showCatBubble();
                 lastCatBubble = time;
             }
 
-            // 打字机效果
+            // タイプライター
             if (typewriterIndex < typewriterTarget.length && time - lastTypewriter > TYPEWRITER_DELAY) {
                 typewriterText += typewriterTarget[typewriterIndex];
                 statusText.textContent = typewriterText;
@@ -5051,13 +4861,13 @@ function toggleBrokerPanel() {
                 lastTypewriter = time;
             }
 
-            // 移动 + 小踱步
+            // 移動＋小歩
             moveStar(time);
 
-            // guest 随机想法泡泡
+            // guest の思いつきバブル
             maybeShowGuestBubble(time);
 
-            // demo 平滑移动时：让气泡每帧跟随角色锚点（避免 tween 时气泡滞留在旧位置）
+            // demo 移動中はバブルを毎フレーム追従
             try {
                 Object.keys(guestBubbles).forEach(id => {
                     const b = guestBubbles[id];
@@ -5076,7 +4886,7 @@ function toggleBrokerPanel() {
                 });
             } catch (e) {}
 
-            // guest 列表会定时刷新
+            // guest 一覧は定期更新
         }
 
         function normalizeState(s) {
@@ -5181,7 +4991,7 @@ function toggleBrokerPanel() {
                         const changed = (pendingDesiredState === null) && (nextState !== currentState);
                         const rawDetail = String(data.detail || '').trim();
                         const nextLine = overlayLine(nextState, rawDetail);
-                        // 不论 changed 与否，都按服务端最新状态强制一次视觉同步，避免动画卡旧状态
+                        // サーバ最新状態で見た目を同期（古いアニメに張り付かない）
                         pendingDesiredState = null;
                         if (currentState !== nextState) {
                             currentState = nextState;
@@ -5219,7 +5029,7 @@ function toggleBrokerPanel() {
             const stateInfo = STATES[effectiveState] || STATES.idle;
             const baseTarget = areas[stateInfo.area] || areas.breakroom;
 
-            // idle 时锁定位置（不走任何移动路径）
+            // idle のときは位置固定（移動しない）
             if (effectiveState === 'idle') {
                 if (star && star.visible) {
                     star.setPosition(IDLE_SOFA_ANCHOR.x, IDLE_SOFA_ANCHOR.y);
@@ -5333,7 +5143,7 @@ function toggleBrokerPanel() {
         function showBubble() {
             if (bubble) { bubble.destroy(); bubble = null; }
             const texts = getBubbleTextsByState(currentState);
-            if (currentState === 'idle') return; // idle 不显示气泡（可按需开启）
+            if (currentState === 'idle') return; // idle はバブルなし
 
             // Bubble anchor should follow current visible character:
             // - syncing: syncAnimSprite
@@ -5357,7 +5167,7 @@ function toggleBrokerPanel() {
             const bubbleOffsetY = (currentState === 'writing') ? 85 : 70;
             const bubbleY = anchorY - bubbleOffsetY;
 
-            // 只做手机端稍微调大一点，避免发糊
+            // スマホだけ少し大きく（ボケ防止）
             const isTouch = IS_TOUCH_DEVICE;
             const fontSize = isTouch ? 14 : 12;
             const bg = game.add.rectangle(anchorX, bubbleY, text.length * 10 + 20, 28, 0xffffff, 0.95);
@@ -5383,9 +5193,9 @@ function toggleBrokerPanel() {
             setTimeout(() => { if (window.catBubble) { window.catBubble.destroy(); window.catBubble = null; } }, 4000);
         }
 
-        // 假 Agent 气泡逻辑已移除，统一以真实 /agents 数据为准
+        // 仮 Agent バブルは廃止。/agents の実データだけ
 
-        // 启动游戏
+        // ゲーム開始
         initGame();
     </script>
 </body>

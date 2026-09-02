@@ -1353,11 +1353,25 @@ def set_state_endpoint():
             patch_teammate(state, data["teammate"])
         if isinstance(data.get("cursor"), dict):
             patch_cursor_agent(state, data["cursor"])
+        queued = None
         if isinstance(data.get("instruction"), dict):
-            queue_instruction(state, data["instruction"])
+            queued = queue_instruction(state, data["instruction"])
+            if queued is None:
+                return jsonify({"status": "error", "msg": "指示を書けませんでした（部屋と本文が必要です）"}), 400
         state["updated_at"] = datetime.now().isoformat()
         save_state(state)
-        return jsonify({"status": "ok", "board": public_board(state)})
+        board = public_board(state)
+        resp = {"status": "ok", "board": board}
+        if queued:
+            ack = f"「{queued['assignee_name']}」に渡しました（未実行）"
+            resp["msg"] = ack
+            resp["queuedInstruction"] = {
+                "room": queued["room"],
+                "assignee_name": queued["assignee_name"],
+                "body": queued["body"],
+                "timestamp": queued["timestamp"],
+            }
+        return jsonify(resp)
     except Exception as e:
         return jsonify({"status": "error", "msg": str(e)}), 500
 

@@ -478,6 +478,7 @@ def queue_instruction(state: dict, payload: dict) -> dict | None:
     if room not in GROK_ROOM_NAMES or not text:
         return None
     assignee = ROOM_ASSIGNEES[room]
+    now = datetime.now().isoformat()
     item = {
         "id": str(payload.get("id") or f"q-{int(datetime.now().timestamp() * 1000)}"),
         "room": room,
@@ -488,7 +489,8 @@ def queue_instruction(state: dict, payload: dict) -> dict | None:
         "queued": True,
         "executed": False,
         "source": "local",
-        "created_at": datetime.now().isoformat(),
+        "created_at": now,
+        "timestamp": now,
     }
     rows = state.setdefault("queuedInstructions", [])
     if not isinstance(rows, list):
@@ -496,10 +498,7 @@ def queue_instruction(state: dict, payload: dict) -> dict | None:
         state["queuedInstructions"] = rows
     if not any(r.get("id") == item["id"] for r in rows if isinstance(r, dict)):
         rows.append(item)
-        try:
-            append_instruction_outbox(item)
-        except Exception:
-            pass
+        append_instruction_outbox(item)
     return item
 
 
