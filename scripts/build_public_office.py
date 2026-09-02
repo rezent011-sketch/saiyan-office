@@ -18,7 +18,10 @@ from office_board import public_board  # noqa: E402
 DEST = ROOT / "public-office"
 FRONTEND = ROOT / "frontend"
 DOMAIN = "saiyan-ai-virtual-office.surge.sh"
-API_ORIGIN = os.environ.get("PUBLIC_OFFICE_API_ORIGIN", "").strip().rstrip("/")
+API_ORIGIN = os.environ.get(
+    "PUBLIC_OFFICE_API_ORIGIN",
+    "https://saiyan-ai-virtual-office.rust-sauce.workers.dev",
+).strip().rstrip("/")
 SKIP_NAMES = {
     "electron-standalone.html",
     "join.html",
