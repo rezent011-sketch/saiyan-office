@@ -55,6 +55,15 @@ def main() -> int:
     outbox = client.get("/outbox.json").get_json()
     if not any(isinstance(r, dict) and r.get("body") == "test" for r in outbox.get("queuedInstructions") or []):
         fail(f"GET /outbox.json {outbox}")
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from build_public_office import sanitize_public_html  # noqa: E402
+
+    sample = "await fetch('/set_state', { method: 'POST' })\nreturn fetch('/status', { cache: 'no-store' })"
+    rewritten = sanitize_public_html(sample)
+    if "fetch('https://saiyan-ai-virtual-office.rust-sauce.workers.dev/set_state'" not in rewritten:
+        fail("public HTML rewrite must use rust-sauce workers set_state URL")
+    if "fetch('/set_state'" in rewritten or "fetch('/status'" in rewritten:
+        fail("public HTML rewrite left relative office fetches")
     print("PASS public office /set_state queue")
     return 0
 

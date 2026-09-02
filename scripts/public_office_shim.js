@@ -12,7 +12,9 @@
         '新規顧客開拓': '新規顧客開拓Bot'
     };
     const STORE = 'saiyan-office-public-queued-instructions';
-    const API_ORIGIN = String(self.__PUBLIC_OFFICE_API_ORIGIN || '').replace(/\/$/, '');
+    const API_ORIGIN = String(
+        self.__PUBLIC_OFFICE_API_ORIGIN || 'https://saiyan-ai-virtual-office.rust-sauce.workers.dev'
+    ).replace(/\/$/, '');
     const QUEUE_URL = String(self.__PUBLIC_OFFICE_QUEUE_URL || 'https://raw.githubusercontent.com/rezent011-sketch/saiyan-office/cursor/grok-cursor-office-board-6913/public-queue/queue.json');
     const jsonHeaders = { 'Content-Type': 'application/json' };
     async function loadRemoteQueued() {
