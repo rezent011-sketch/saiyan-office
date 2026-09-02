@@ -1308,7 +1308,7 @@
                     <select id="instruction-room" aria-label="desk"></select>
                     <input id="instruction-text" type="text" maxlength="200" autocomplete="off" placeholder="デスクへの指示を書く" />
                     <button type="submit" id="instruction-send">送る</button>
-                    <div id="office-instruction-hint">投稿・広告・課金はしません。送信は部屋の担当への配送待ち（未実行）です。</div>
+                    <div id="office-instruction-hint">投稿・広告・課金はしません。送信はその部屋の担当に渡します（未実行）。</div>
                 </form>
                 <div id="office-buckets">
                     <section class="office-bucket" data-bucket="動いている">
@@ -1349,7 +1349,7 @@
                 <button id="btn-state-writing" onclick="setState('writing','作業中')">作業</button>
                 <button id="btn-state-syncing" onclick="setState('syncing','同期中')">同期</button>
                 <button id="btn-state-error" onclick="setState('error','警報')">警報</button>
-                <button id="btn-open-drawer" onclick="toggleAssetDrawer()">装修房间</button>
+                <button id="btn-open-drawer" onclick="toggleAssetDrawer()">部屋を編集</button>
             </div>
         </div>
 
@@ -1367,19 +1367,19 @@
     <div id="room-loading-overlay" aria-live="polite" aria-busy="true">
         <div class="room-loading-inner">
             <div id="room-loading-emoji">🦞</div>
-            <div id="room-loading-text">正在打包虾头……</div>
+            <div id="room-loading-text">部屋を読み込み中…</div>
         </div>
     </div>
 
     <div id="asset-drawer-backdrop" onclick="toggleAssetDrawer(false)"></div>
     <aside id="asset-drawer">
         <div id="asset-drawer-header">
-            <span>装修房间 · 资产侧边栏</span>
-            <button id="btn-close-drawer" onclick="toggleAssetDrawer(false)">关闭</button>
+            <span>部屋編集・アセットサイドバー</span>
+            <button id="btn-close-drawer" onclick="toggleAssetDrawer(false)">閉じる</button>
         </div>
         <div id="asset-drawer-body">
             <div id="asset-auth-gate" class="asset-preview-box">
-                <div class="asset-preview-title">请输入装修验证码</div>
+                <div class="asset-preview-title">編集パスコードを入力</div>
                 <div class="asset-toolbar">
                     <input id="asset-pass-input" type="password" placeholder="输入验证码" />
                     <button onclick="unlockAssetDrawer()">验证</button>
@@ -1459,10 +1459,10 @@
         <div id="coords-display">X: 0 | Y: 0</div>
     </div>
     <button id="coords-toggle" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 12px); right:12px; z-index:999999; padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">
-        显示坐标
+        座標表示
     </button>
     <button id="pan-toggle" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 12px); left:12px; z-index:999999; padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">
-        移动视野
+        視点移動
     </button>
     <div id="lang-toggle-group" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 52px); left:12px; z-index:1000002; display:flex; gap:2px; align-items:center;">
         <button id="lang-btn-en" onclick="setUILanguage('en')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">EN</button>
@@ -1475,54 +1475,6 @@
         let uiLang = localStorage.getItem('uiLang') || 'ja';
         if (uiLang === 'zh') uiLang = 'ja';
         const I18N = {
-            zh: {
-                controlTitle: 'エージェント状態',
-                btnIdle: '待機', btnWork: '作業', btnSync: '同期', btnError: '警報', btnDecor: '部屋を編集',
-                drawerTitle: '装修房间 · 资产侧边栏', drawerClose: '关闭',
-                authTitle: '请输入装修验证码', authPlaceholder: '输入验证码', authVerify: '验证', authDefaultPassHint: '默认密码：1234（可随时让我帮你改，建议改成强密码）',
-                drawerVisibilityTip: '可见性：点击条目右侧眼睛按钮切换该资产显示',
-                hideDrawer: '👁 隐藏侧边栏', showDrawer: '👁 显示侧边栏',
-                assetHide: '隐藏', assetShow: '显示',
-                resetToDefault: '重置为默认资产', restorePrevAsset: '用上一版',
-                btnMove: '📦 搬新家', btnHome: '🐚 回老家', btnHomeLast: '↩️ 回上一个家', btnHomeFavorite: '⭐ 收藏这个家', btnBroker: '🤝 找中介', btnDIY: '🪚 自己装', btnBrokerGo: '听中介的',
-                homeFavTitle: '🏠 收藏的家', homeFavEmpty: '还没有收藏，先点“⭐ 收藏这个家”', homeFavApply: '替换到当前地图', homeFavDelete: '删除', homeFavSaved: '✅ 已收藏当前地图', homeFavApplied: '✅ 已替换为收藏地图', homeFavDeleted: '🗑️ 已删除收藏',
-                brokerHint: '你会给龙虾推荐什么样的房子',
-                brokerPromptPh: '例如：故宫主题、莫奈风格、地牢主题、兵马俑主题……',
-                brokerNeedPrompt: '请先输入中介方案描述',
-                brokerGenerating: '🏘️ 正在按中介方案生成底图，请稍候（约20-90秒）...',
-                brokerDone: '✅ 已按中介方案生成并替换底图，正在刷新房间...',
-                moveSuccess: '✅ 搬家成功！',
-                brokerMissingKey: '❌ 生图失败：缺少 GEMINI API Key，请在下方填写并保存后重试',
-                geminiPanelTitle: '🔐 API 设置（可折叠）', geminiHint: '可选：填写你的生图 API Key（留空不影响基础功能）', geminiApiDoc: '📘 如何申请 Google API Key', geminiInputPh: '粘贴 GEMINI_API_KEY（不会回显）', geminiSaveKey: '保存 Key', geminiMaskNoKey: '当前状态：未配置 Key', geminiMaskHasKey: '当前已配置：',
-                speedModeLabel: '生成模式', speedFast: '🍌2', speedQuality: '🍌Pro',
-                searchPlaceholder: '搜索资产名（如 desk / sofa / star）', loaded: '已加载', allAssets: '全部资产',
-                chooseImage: '上传素材', confirmUpload: '确认刷新', resetToDefault: '重置默认', restorePrevAsset: '恢复上版', uploadPending: '待上传', uploadTarget: '目标',
-                assetHintNotInScene: '当前场景未检测到此对象，仍可替换文件（刷新后生效）',
-                assetHintDefault: '通用素材：建议保持原图尺寸、透明通道与视觉重心一致，避免错位或失真',
-                showCoords: '显示坐标', hideCoords: '隐藏坐标', moveView: '移动视野', lockView: '锁定视野',
-                memoTitle: '昨日の作業ログ', guestTitle: '仲間リスト', officeTitle: 'Saiyan Office 🐉',
-                loadingOffice: 'Saiyan Officeを読み込み中...',
-                officeBoardTitle: 'デスク＝Grok部屋 / 作業＝Cursor',
-                officeBoardSource: '実況ボード（デスク＝Grok部屋 / 作業＝Cursor）',
-                officeDeskKind: 'デスク',
-                officeWorkKind: 'Cursor作業',
-                officeSample: 'サンプル',
-                officeNoLink: 'リンク未設定（state.json の url を書いてください）',
-                officeEmptyBucket: 'なし',
-                memoEmpty: '昨日の日記はまだない',
-                memoLoading: '読み込み中...',
-                memoLoadFail: '読み込みに失敗しました',
-                guestEmpty: '訪問者はいない',
-                guestLoading: '読み込み中...',
-                officeLiveDesk: 'デスク（実在）',
-                officeSampleWork: 'Cursor作業',
-                officeQueued: '指示（キュー・未実行）',
-                instructionSend: '送る',
-                instructionPlaceholder: 'デスクへの指示を書く',
-                instructionHint: '投稿・広告・課金はしません。送信は部屋の担当への配送待ち（未実行）です。',
-                instructionNeedText: '指示を書いてから送ってください',
-                instructionQueued: '部屋の担当へ配送待ちとしてキューに入れました（未実行）'
-            },
             en: {
                 controlTitle: 'Star Status',
                 btnIdle: 'Idle', btnWork: 'Work', btnSync: 'Sync', btnError: 'Alert', btnDecor: 'Decorate Room',
@@ -1569,7 +1521,7 @@
                 instructionPlaceholder: 'Write an instruction for a desk',
                 instructionHint: 'No posting, ads, or billing. Send queues delivery to that room\'s specialist (not executed).',
                 instructionNeedText: 'Write an instruction first',
-                instructionQueued: 'Queued for delivery to that room\'s specialist (not executed)'
+                instructionQueued: 'Handed to that room\'s assignee (not executed)'
             },
             ja: {
                 controlTitle: 'エージェント状態',
@@ -1615,17 +1567,15 @@
                 officeQueued: '指示（キュー・未実行）',
                 instructionSend: '送る',
                 instructionPlaceholder: 'デスクへの指示を書く',
-                instructionHint: '投稿・広告・課金はしません。送信は部屋の担当への配送待ち（未実行）です。',
+                instructionHint: '投稿・広告・課金はしません。送信はその部屋の担当に渡します（未実行）。',
                 instructionNeedText: '指示を書いてから送ってください',
-                instructionQueued: '部屋の担当へ配送待ちとしてキューに入れました（未実行）'
+                instructionQueued: 'この部屋の担当に渡しました（未実行）'
             }
         };
 
         function t(key) {
-            const pack = (uiLang === 'zh') ? I18N.ja : ((I18N[uiLang] && I18N[uiLang][key]) ? I18N[uiLang] : I18N.ja);
-            const val = (pack && pack[key]) || (I18N.ja && I18N.ja[key]) || key;
-            if (/待命|暂无|暫無|访客|訪客/.test(String(val))) return (I18N.ja && I18N.ja[key]) || '待機中';
-            return val;
+            const pack = (uiLang === 'en' && I18N.en) ? I18N.en : I18N.ja;
+            return (pack && pack[key]) || (I18N.ja && I18N.ja[key]) || key;
         }
         function renderBootLoadingText(percent) {
             const loadingEl = document.getElementById('loading-text');
@@ -1886,27 +1836,15 @@
             syncing: { name: '同期中', area: 'writing' },
             error: { name: '警報', area: 'error' }
         };
-        const BANNED_OVERLAY = /待命|修行中|暂无|暫無|访客|訪客|日記|日记/;
         function overlayLine(stateKey, detail) {
             const safeName = (STATES[stateKey] && STATES[stateKey].name) || '待機中';
             const raw = String(detail || '').trim();
-            const leftover = !raw
-                || BANNED_OVERLAY.test(raw)
-                || (/[\u4e00-\u9fff]/.test(raw) && !/[\u3040-\u30ff]/.test(raw));
+            const leftover = !raw || (/[\u4e00-\u9fff]/.test(raw) && !/[\u3040-\u30ff]/.test(raw));
             if (leftover || raw === safeName) return safeName;
             return safeName + ' ' + raw;
         }
 
         const BUBBLE_TEXTS = {
-            zh: {
-                idle: ['待機中：耳はピン。','ここにいるよ、いつでも開始OK。','まず机を整えよう。','ふー、頭に風を通す。','今日も上品に高効率で。','待つのは、より正確な一撃のため。','コーヒーも発想もまだ温かい。','裏側でそっとバフ中。','状態：静心 / 充電。','猫より：ゆっくりでも大丈夫。'],
-                writing: ['进入专注模式：勿扰','先把关键路径跑通','我来把复杂变简单','把 bug 关进笼子里','写到一半，先保存','把每一步都做成可回滚','今天的进度，明天的底气','先收敛，再发散','让系统变得更可解释','稳住，我们能赢'],
-                researching: ['我在挖证据链','让我把信息熬成结论','找到了：关键在这里','先把变量控制住','我在查：它为什么会这样','把直觉写成验证','先定位，再优化','别急，先画因果图'],
-                executing: ['执行中：不要眨眼','把任务切成小块逐个击破','开始跑 pipeline','一键推进：走你','让结果自己说话','先做最小可行，再做最美版本'],
-                syncing: ['同步中：把今天锁进云里','备份不是仪式，是安全感','写入中…别断电','把变更交给时间戳','云端对齐：咔哒','同步完成前先别乱动','把未来的自己从灾难里救出来','多一份备份，少一份后悔'],
-                error: ['警报响了：先别慌','我闻到 bug 的味道了','先复现，再谈修复','把日志给我，我会说人话','错误不是敌人，是线索','把影响面圈起来','先止血，再手术','我在：马上定位根因','别怕，这种我见多了','报警中：让问题自己现形'],
-                cat: ['喵~','咕噜咕噜…','尾巴摇一摇','晒太阳最开心','有人来看我啦','我是这个办公室的吉祥物','伸个懒腰','今天的罐罐准备好了吗','呼噜呼噜','这个位置视野最好']
-            },
             en: {
                 idle: ['On standby: ears up.','I’m here, ready to roll.','Let’s tidy the desk first.','Taking a quick brain breeze.','Efficient and elegant, as always.','Waiting for a more precise strike.','Coffee is warm, ideas too.','Giving you a quiet backstage buff.','Status: calm / charging.','Cat says: no rush, we’re good.'],
                 writing: ['Focus mode on: do not disturb.','Let’s clear the critical path first.','I’ll make the complex simple.','Putting bugs in a cage.','Save first, then continue.','Every step should be rollback-safe.','Today’s progress is tomorrow’s confidence.','Converge first, then diverge.','Making the system more explainable.','Steady—this is winnable.'],
@@ -2064,7 +2002,7 @@
 
         function openCursorWork(openUrl) {
             const url = String(openUrl || '').trim();
-            if (url.startsWith(CURSOR_AGENTS_HOME)) {
+            if (url.startsWith(CURSOR_AGENTS_HOME) || (url.startsWith('https://github.com/') && url.includes('/pull/'))) {
                 window.open(url, '_blank', 'noopener,noreferrer');
                 return;
             }
@@ -2134,6 +2072,7 @@
                     hasUrl,
                     sample: false,
                     eta,
+                    assignee: room.assignee || (data.roomAssignees || {})[room.name] || '',
                     mates,
                     meta: ''
                 });
@@ -2192,7 +2131,8 @@
                     if (item.kind === 'desk') {
                         const cls = item.hasUrl ? 'office-chip' : 'office-chip no-link';
                         const nameAttr = escapeHtml(item.name).replace(/'/g, '&#39;');
-                        return `<button type="button" class="${cls}" onclick="openGrokDesk('${nameAttr}')"><span class="kind live">${escapeHtml(t('officeLiveDesk'))}</span>${escapeHtml(item.name)}${title}${mates}${item.eta ? `<span class="meta">${escapeHtml(item.eta)}</span>` : ''}</button>`;
+                        const assignee = item.assignee ? `<span class="mates">担当 ${escapeHtml(item.assignee)}</span>` : '';
+                        return `<button type="button" class="${cls}" onclick="openGrokDesk('${nameAttr}')"><span class="kind live">${escapeHtml(t('officeLiveDesk'))}</span>${escapeHtml(item.name)}${title}${assignee}${mates}${item.eta ? `<span class="meta">${escapeHtml(item.eta)}</span>` : ''}</button>`;
                     }
                     const openUrl = escapeHtml(item.openUrl).replace(/'/g, '&#39;');
                     return `<button type="button" class="office-chip" onclick="openCursorWork('${openUrl}')"><span class="kind">${escapeHtml(t('officeWorkKind'))}</span>${escapeHtml(item.name)}${title}${meta}</button>`;
@@ -2237,7 +2177,9 @@
             } catch (e) {
                 renderOfficeBoard(window.__officeBoardData || {});
             }
-            showOfficeBoardToast(t('instructionQueued'));
+            const assignees = (window.__officeBoardData && window.__officeBoardData.roomAssignees) || {};
+            const assignee = assignees[room] || '';
+            showOfficeBoardToast(assignee ? `「${assignee}」に渡しました（未実行）` : t('instructionQueued'));
         }
 
         const instructionForm = document.getElementById('office-instruction');
@@ -4395,7 +4337,7 @@ function toggleBrokerPanel() {
                                         en: [`Welcome ${newAgent.name} to the office!`,`Hi ${newAgent.name}, let’s build something.`,`${newAgent.name} just joined — welcome!`],
                                         ja: [`${newAgent.name} さん、オフィスへようこそ！`,`Hi ${newAgent.name}、一緒に進めよう。`,`${newAgent.name} さんが参加しました、歓迎！`]
                                     };
-                                    const langPack = BUBBLE_TEXTS[lang] || BUBBLE_TEXTS.zh;
+                                    const langPack = BUBBLE_TEXTS[lang] || BUBBLE_TEXTS.ja;
                                     const oldTexts = Array.isArray(langPack.writing) ? [...langPack.writing] : [];
                                     langPack.writing = welcomeTexts[lang] || welcomeTexts.zh;
                                     showBubble();
@@ -4566,7 +4508,7 @@ function toggleBrokerPanel() {
                 breakroom: { x: IDLE_SOFA_ANCHOR.x, y: IDLE_SOFA_ANCHOR.y } // 与 sofa-idle-v3 同中心锚点
             };
 
-            // 创建 Star 角色待命动画（每次先移除旧定义，确保不复用历史动画）
+            // Star idle animation
             const starIdleFrameMax = Math.max(0, (this.textures.get('star_idle')?.frameTotal || 1) - 1);
             if (this.anims.exists('star_idle')) {
                 this.anims.remove('star_idle');
@@ -5384,7 +5326,7 @@ function toggleBrokerPanel() {
         }
 
         function getBubbleTextsByState(stateKey) {
-            const langPack = BUBBLE_TEXTS[uiLang] || BUBBLE_TEXTS.zh;
+            const langPack = BUBBLE_TEXTS[uiLang] || BUBBLE_TEXTS.ja;
             return langPack[stateKey] || langPack.idle || [];
         }
 

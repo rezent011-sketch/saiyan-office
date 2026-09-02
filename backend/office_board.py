@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -18,15 +17,32 @@ STATUS_BUCKETS = ("動いている", "許可待ち", "できたまま")
 
 GROK_ROOM_NAMES = (
     "司令塔",
+    "AIバーチャルオフィス",
+    "広告運用",
+    "海外EC",
+    "新規事業会議",
     "Xマーケティング自動化",
     "動画生成",
-    "広告運用",
-    "AIバーチャルオフィス",
+    "コンサル管理",
+    "新規顧客開拓",
 )
+
+ROOM_ASSIGNEES = {
+    "司令塔": "メインAI社員",
+    "AIバーチャルオフィス": "開発担当Bot2",
+    "広告運用": "広告運用Bot",
+    "海外EC": "開発担当Bot",
+    "新規事業会議": "新規事業Bot",
+    "Xマーケティング自動化": "Xマーケティング担当Bot",
+    "動画生成": "動画生成担当Bot",
+    "コンサル管理": "コンサル管理Bot",
+    "新規顧客開拓": "新規顧客開拓Bot",
+}
 
 TEAMMATE_NAMES = (
     "メインAI社員",
     "開発担当Bot",
+    "開発担当Bot2",
     "UTAGE・LINE担当Bot",
     "TikTok LIVE切り抜きBot",
     "クラウド環境構築Bot",
@@ -42,20 +58,61 @@ TEAMMATE_NAMES = (
 CURSOR_AGENTS_HOME = "https://cursor.com/agents"
 ETA_LABEL = "分・時間の見込み"
 LIVE_API_NOTE = "実況ボード（デスク＝Grok部屋 / 作業＝Cursor）"
-OUTBOX_FILE = Path(
-    os.environ.get(
-        "STAR_OFFICE_OUTBOX",
-        str(Path(__file__).resolve().parent.parent / "outbox" / "instructions.jsonl"),
-    )
-)
 
-# JSON-backed live Cursor work. Do not invent extras or ETAs.
+# Real Cursor cloud agents / PRs only. Do not invent extras or ETAs.
 LIVE_CURSOR_JOBS = (
-    {"name": "オフィス実況化", "status": "動いている"},
-    {"name": "切り抜きタイトル直し", "status": "動いている"},
-    {"name": "海外EC（Origin待ち）", "status": "許可待ち"},
-    {"name": "LP空き直し", "status": "できたまま"},
-    {"name": "著名人写真", "status": "できたまま"},
+    {
+        "name": "Grok rooms + Cursor status on saiyan-office",
+        "status": "動いている",
+        "id": "bc-3356893b-3dfd-4261-92d1-fd6004956913",
+        "url": "https://cursor.com/agents/bc-3356893b-3dfd-4261-92d1-fd6004956913",
+        "prUrl": "https://github.com/rezent011-sketch/saiyan-office/pull/1",
+    },
+    {
+        "name": "Empty English omamori catalog",
+        "status": "動いている",
+        "id": "bc-7cad7c8d-aff9-4dd4-8432-73430ad181d1",
+        "url": "https://cursor.com/agents/bc-7cad7c8d-aff9-4dd4-8432-73430ad181d1",
+    },
+    {
+        "name": "saiyan-office merge (人がmergeするまで。このPRをmergeしない)",
+        "status": "許可待ち",
+        "prUrl": "https://github.com/rezent011-sketch/saiyan-office/pull/1",
+    },
+    {
+        "name": "saiyan-office GitHub Pages (権限は翔斗さん側。Pages設定は触らない)",
+        "status": "許可待ち",
+        "prUrl": "https://github.com/rezent011-sketch/saiyan-office/pull/1",
+    },
+    {
+        "name": "Fix LP badges, proofs, celebrity collabs",
+        "status": "できたまま",
+        "prUrl": "https://github.com/rezent011-sketch/skillengine-line-tokuten-lp/pull/3",
+    },
+    {
+        "name": "Tighten LP proof-card layout gaps",
+        "status": "できたまま",
+        "prUrl": "https://github.com/rezent011-sketch/skillengine-line-tokuten-lp/pull/5",
+    },
+    {
+        "name": "Enable GitHub Pages on LP main",
+        "status": "できたまま",
+    },
+    {
+        "name": "Fix 50社 badge alignment",
+        "status": "できたまま",
+        "prUrl": "https://github.com/rezent011-sketch/skillengine-line-tokuten-lp/pull/2",
+    },
+    {
+        "name": "Add Skill Engine LP image assets",
+        "status": "できたまま",
+        "prUrl": "https://github.com/rezent011-sketch/skillengine-line-tokuten-lp/pull/1",
+    },
+    {
+        "name": "Rebuild Gagalot LP",
+        "status": "できたまま",
+        "prUrl": "https://github.com/rezent011-sketch/gagalot-line-tokuten-lp/pull/1",
+    },
 )
 LIVE_CURSOR_NAMES = tuple(job["name"] for job in LIVE_CURSOR_JOBS)
 
@@ -66,6 +123,11 @@ SAMPLE_CURSOR_NAMES = {
     "表示確認",
     "許可待ちの例",
     "完了した作業の例",
+    "オフィス実況化",
+    "切り抜きタイトル直し",
+    "海外EC（Origin待ち）",
+    "LP空き直し",
+    "著名人写真",
 }
 SAMPLE_CURSOR_MARKERS = (
     "サンプル",
@@ -76,37 +138,24 @@ SAMPLE_CURSOR_MARKERS = (
     "ローカルJSONの許可待ち表示",
     "できたままの表示確認",
 )
-LEGACY_DETAIL_MARKERS = (
-    "修行中",
-    "待命",
-    "暫無",
-    "暂无",
-    "訪客",
-    "访客",
-)
 
 _TEAMMATE_ROOMS = {
     "メインAI社員": "司令塔",
-    "開発担当Bot": "AIバーチャルオフィス",
+    "開発担当Bot": "海外EC",
+    "開発担当Bot2": "AIバーチャルオフィス",
     "UTAGE・LINE担当Bot": "AIバーチャルオフィス",
     "TikTok LIVE切り抜きBot": "動画生成",
     "クラウド環境構築Bot": "AIバーチャルオフィス",
     "広告運用Bot": "広告運用",
     "動画生成担当Bot": "動画生成",
     "Xマーケティング担当Bot": "Xマーケティング自動化",
-    "コンサル管理Bot": "司令塔",
-    "新規事業Bot": "司令塔",
-    "新規顧客開拓Bot": "司令塔",
+    "コンサル管理Bot": "コンサル管理",
+    "新規事業Bot": "新規事業会議",
+    "新規顧客開拓Bot": "新規顧客開拓",
     "コンテンツ生成社員": "動画生成",
 }
 
-_ROOM_DEFAULT_STATUS = {
-    "司令塔": "動いている",
-    "Xマーケティング自動化": "動いている",
-    "動画生成": "できたまま",
-    "広告運用": "許可待ち",
-    "AIバーチャルオフィス": "動いている",
-}
+_ROOM_DEFAULT_STATUS = {name: "動いている" for name in GROK_ROOM_NAMES}
 
 _LIFECYCLE_TO_BUCKET = {
     "running": "動いている",
@@ -154,9 +203,22 @@ def normalize_lifecycle(value: Any, bucket: str | None = None) -> str:
     return ""
 
 
+def _is_cursor_url(url: str) -> bool:
+    return url.startswith(CURSOR_AGENTS_HOME)
+
+
+def _is_github_pr_url(url: str) -> bool:
+    return url.startswith("https://github.com/") and "/pull/" in url
+
+
 def cursor_open_url(agent: dict) -> str:
     url = str(agent.get("url") or "").strip()
-    if url.startswith(CURSOR_AGENTS_HOME):
+    if _is_cursor_url(url):
+        return url
+    pr = str(agent.get("prUrl") or agent.get("pr_url") or "").strip()
+    if _is_github_pr_url(pr):
+        return pr
+    if _is_github_pr_url(url):
         return url
     return CURSOR_AGENTS_HOME
 
@@ -179,18 +241,23 @@ def eta_display(item: dict) -> str:
     return ""
 
 
+def room_assignee(name: str) -> str:
+    return ROOM_ASSIGNEES.get(name, "")
+
+
 def default_rooms() -> list[dict]:
     rooms = []
     for name in GROK_ROOM_NAMES:
+        assignee = ROOM_ASSIGNEES[name]
+        extra = [mate for mate, room in _TEAMMATE_ROOMS.items() if room == name and mate != assignee]
         rooms.append({
             "id": name,
             "name": name,
             "kind": "desk",
             "status": _ROOM_DEFAULT_STATUS[name],
             "url": "",
-            "teammates": [
-                mate for mate, room in _TEAMMATE_ROOMS.items() if room == name
-            ],
+            "assignee": assignee,
+            "teammates": [assignee, *extra],
         })
     return rooms
 
@@ -203,14 +270,13 @@ def default_teammates() -> list[dict]:
             "id": name,
             "name": name,
             "room": room,
-            "status": _ROOM_DEFAULT_STATUS.get(room, "できたまま"),
+            "status": _ROOM_DEFAULT_STATUS.get(room, "動いている"),
         })
     return rows
 
 
 def default_cursor_agents() -> list[dict]:
-    """JSON-backed live Cursor jobs (not samples, no invented ETAs)."""
-    return [_sanitize_cursor_agent({**job, "sample": False}) for job in LIVE_CURSOR_JOBS]
+    return [_sanitize_cursor_agent(dict(job)) for job in LIVE_CURSOR_JOBS]
 
 
 def is_sample_cursor_job(raw: Any) -> bool:
@@ -227,13 +293,18 @@ def is_sample_cursor_job(raw: Any) -> bool:
     return any(marker in blob for marker in SAMPLE_CURSOR_MARKERS)
 
 
+def _detail_is_legacy_idle(text: str) -> bool:
+    if not text or text in {".", "...", "smoke-check", "idle"}:
+        return True
+    # Old Desktop state.json used these leftover idle strings.
+    return any(ord(ch) >= 0x4E00 and ord(ch) <= 0x9FFF for ch in text) and not any(
+        "\u3040" <= ch <= "\u30ff" for ch in text
+    )
+
+
 def sanitize_public_detail(detail: Any, fallback: str = "待機中") -> str:
     text = str(detail or "").strip()
-    if not text or text in {".", "...", "smoke-check"}:
-        return fallback
-    if any(marker in text for marker in LEGACY_DETAIL_MARKERS):
-        return fallback
-    if re.search(r"[\u4e00-\u9fff]", text) and not re.search(r"[\u3040-\u30ff]", text):
+    if _detail_is_legacy_idle(text):
         return fallback
     return text
 
@@ -247,15 +318,12 @@ def append_instruction_outbox(item: dict) -> Path:
         )
     )
     path.parent.mkdir(parents=True, exist_ok=True)
+    room = str(item.get("room") or "").strip()
     row = {
-        "id": item.get("id"),
-        "room": item.get("room"),
-        "text": item.get("text"),
-        "timestamp": item.get("created_at") or datetime.now().isoformat(),
-        "queued": True,
-        "executed": False,
-        "delivery": "queued",
-        "note": "部屋の担当へ配送待ち（未実行）",
+        "room": room,
+        "assignee_name": item.get("assignee_name") or room_assignee(room),
+        "body": item.get("body") or item.get("text") or "",
+        "timestamp": item.get("timestamp") or item.get("created_at") or datetime.now().isoformat(),
     }
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
@@ -276,17 +344,23 @@ def _index_by_name(rows: list[dict], names: tuple[str, ...]) -> dict[str, dict]:
 def _sanitize_room(name: str, raw: dict | None) -> dict:
     src = raw if isinstance(raw, dict) else {}
     url = str(src.get("url") or "").strip()
+    assignee = ROOM_ASSIGNEES[name]
     teammates = src.get("teammates")
     if not isinstance(teammates, list):
         teammates = [mate for mate, room in _TEAMMATE_ROOMS.items() if room == name]
     else:
         teammates = [str(t).strip() for t in teammates if str(t).strip() in TEAMMATE_NAMES]
+    if assignee not in teammates:
+        teammates = [assignee, *teammates]
+    else:
+        teammates = [assignee, *[t for t in teammates if t != assignee]]
     return {
         "id": name,
         "name": name,
         "kind": "desk",
-        "status": normalize_bucket(src.get("status"), src.get("lifecycle")),
+        "status": normalize_bucket(src.get("status"), src.get("lifecycle")) if src else _ROOM_DEFAULT_STATUS[name],
         "url": url,
+        "assignee": assignee,
         "teammates": teammates,
     }
 
@@ -314,17 +388,23 @@ def _sanitize_cursor_agent(raw: dict) -> dict | None:
     bucket = normalize_bucket(raw.get("status"), raw.get("lifecycle"))
     lifecycle = normalize_lifecycle(raw.get("lifecycle"), bucket)
     url = str(raw.get("url") or "").strip()
-    if url and not url.startswith(CURSOR_AGENTS_HOME):
+    pr_url = str(raw.get("prUrl") or raw.get("pr_url") or "").strip()
+    if url and not _is_cursor_url(url):
+        if _is_github_pr_url(url) and not pr_url:
+            pr_url = url
         url = ""
+    if pr_url and not _is_github_pr_url(pr_url):
+        pr_url = ""
     row = {
         "name": name,
         "title": title,
         "status": bucket,
         "lifecycle": lifecycle,
         "branch": str(raw.get("branch") or "").strip(),
-        "prUrl": str(raw.get("prUrl") or raw.get("pr_url") or "").strip(),
+        "prUrl": pr_url,
         "url": url,
-        "sample": bool(raw.get("sample")) or name.startswith("サンプル"),
+        "id": str(raw.get("id") or "").strip(),
+        "sample": False,
     }
     if ETA_LABEL in raw:
         row[ETA_LABEL] = raw.get(ETA_LABEL)
@@ -332,67 +412,53 @@ def _sanitize_cursor_agent(raw: dict) -> dict | None:
 
 
 def ensure_office_board(state: dict) -> bool:
-    """Fill canonical rooms/teammates/sample Cursor rows if missing. Returns True if mutated."""
+    """Force canonical rooms/teammates/real Cursor jobs. Returns True if mutated."""
     if not isinstance(state, dict):
         return False
     changed = False
 
-    if state.get("dataSource") not in {"local", "local-demo"}:
+    if state.get("dataSource") != "local":
         state["dataSource"] = "local"
         changed = True
 
-    if "liveCursorApi" not in state:
+    if state.get("liveCursorApi") is not False:
         state["liveCursorApi"] = False
         changed = True
 
     rooms_in = state.get("grokRooms")
-    if not isinstance(rooms_in, list):
-        state["grokRooms"] = default_rooms()
+    by_name = _index_by_name(rooms_in, GROK_ROOM_NAMES) if isinstance(rooms_in, list) else {}
+    cleaned_rooms = [_sanitize_room(name, by_name.get(name)) for name in GROK_ROOM_NAMES]
+    if cleaned_rooms != rooms_in:
+        state["grokRooms"] = cleaned_rooms
         changed = True
-    else:
-        by_name = _index_by_name(rooms_in, GROK_ROOM_NAMES)
-        cleaned = [_sanitize_room(name, by_name.get(name)) for name in GROK_ROOM_NAMES]
-        if cleaned != rooms_in:
-            state["grokRooms"] = cleaned
-            changed = True
 
     mates_in = state.get("teammates")
-    if not isinstance(mates_in, list):
-        state["teammates"] = default_teammates()
+    by_mate = _index_by_name(mates_in, TEAMMATE_NAMES) if isinstance(mates_in, list) else {}
+    cleaned_mates = [_sanitize_teammate(name, by_mate.get(name)) for name in TEAMMATE_NAMES]
+    if cleaned_mates != mates_in:
+        state["teammates"] = cleaned_mates
         changed = True
-    else:
-        by_name = _index_by_name(mates_in, TEAMMATE_NAMES)
-        cleaned = [_sanitize_teammate(name, by_name.get(name)) for name in TEAMMATE_NAMES]
-        if cleaned != mates_in:
-            state["teammates"] = cleaned
-            changed = True
 
     agents_in = state.get("cursorAgents")
-    cleaned = []
-    seen = set()
+    existing_by_name = {}
     if isinstance(agents_in, list):
         for raw in agents_in:
             if is_sample_cursor_job(raw):
-                changed = True
                 continue
-            row = _sanitize_cursor_agent(raw)
-            if not row or row.get("sample"):
-                changed = True
-                continue
-            row["sample"] = False
-            cleaned.append(row)
-            seen.add(row["name"])
-    else:
-        changed = True
+            name = str((raw or {}).get("name") or "").strip()
+            if name in LIVE_CURSOR_NAMES:
+                existing_by_name[name] = raw
+    cleaned_agents = []
     for job in LIVE_CURSOR_JOBS:
-        if job["name"] in seen:
-            continue
-        row = _sanitize_cursor_agent({**job, "sample": False})
+        src = dict(job)
+        prev = existing_by_name.get(job["name"])
+        if isinstance(prev, dict) and ETA_LABEL in prev:
+            src[ETA_LABEL] = prev.get(ETA_LABEL)
+        row = _sanitize_cursor_agent(src)
         if row:
-            cleaned.append(row)
-            changed = True
-    if not isinstance(agents_in, list) or cleaned != agents_in:
-        state["cursorAgents"] = cleaned
+            cleaned_agents.append(row)
+    if cleaned_agents != agents_in:
+        state["cursorAgents"] = cleaned_agents
         changed = True
 
     if not isinstance(state.get("queuedInstructions"), list):
@@ -403,18 +469,21 @@ def ensure_office_board(state: dict) -> bool:
 
 
 def queue_instruction(state: dict, payload: dict) -> dict | None:
-    """Store a desk instruction locally. Never executes posting/ads/billing."""
+    """Store a desk instruction locally. Never executes posting/ads/billing/merge/Pages."""
     ensure_office_board(state)
     if not isinstance(payload, dict):
         return None
     room = str(payload.get("room") or "").strip()
-    text = str(payload.get("text") or "").strip()
+    text = str(payload.get("text") or payload.get("body") or "").strip()
     if room not in GROK_ROOM_NAMES or not text:
         return None
+    assignee = ROOM_ASSIGNEES[room]
     item = {
         "id": str(payload.get("id") or f"q-{int(datetime.now().timestamp() * 1000)}"),
         "room": room,
+        "assignee_name": assignee,
         "text": text[:200],
+        "body": text[:200],
         "status": "許可待ち",
         "queued": True,
         "executed": False,
@@ -449,6 +518,10 @@ def patch_room(state: dict, payload: dict) -> bool:
                 room["teammates"] = [
                     str(t).strip() for t in payload["teammates"] if str(t).strip() in TEAMMATE_NAMES
                 ]
+                assignee = ROOM_ASSIGNEES[name]
+                if assignee not in room["teammates"]:
+                    room["teammates"] = [assignee, *room["teammates"]]
+            room["assignee"] = ROOM_ASSIGNEES[name]
             return True
     return False
 
@@ -473,23 +546,16 @@ def patch_teammate(state: dict, payload: dict) -> bool:
 def patch_cursor_agent(state: dict, payload: dict) -> bool:
     ensure_office_board(state)
     name = str(payload.get("name") or "").strip()
-    title = str(payload.get("title") or "").strip()
-    if not name and not title:
-        return False
-    if is_sample_cursor_job(payload) and name not in LIVE_CURSOR_NAMES:
+    if name not in LIVE_CURSOR_NAMES:
         return False
     agents = state["cursorAgents"]
     target = next((a for a in agents if a.get("name") == name), None)
     if target is None:
-        row = _sanitize_cursor_agent(payload)
-        if not row:
-            return False
-        agents.append(row)
-        return True
+        return False
     merged = dict(target)
-    merged.update({k: v for k, v in payload.items() if v is not None})
+    merged.update({k: v for k, v in payload.items() if v is not None and k != "sample"})
     cleaned = _sanitize_cursor_agent(merged)
-    if not cleaned:
+    if not cleaned or cleaned["name"] not in LIVE_CURSOR_NAMES:
         return False
     target.clear()
     target.update(cleaned)
@@ -502,12 +568,13 @@ def public_board(state: dict) -> dict:
     for room in state.get("grokRooms", []):
         rooms.append({
             **room,
+            "assignee": room.get("assignee") or room_assignee(room.get("name")),
             "eta": eta_display(room),
         })
     teammates = list(state.get("teammates", []))
     agents = []
     for agent in state.get("cursorAgents", []):
-        if is_sample_cursor_job(agent):
+        if is_sample_cursor_job(agent) or agent.get("name") not in LIVE_CURSOR_NAMES:
             continue
         agents.append({
             **agent,
@@ -516,7 +583,7 @@ def public_board(state: dict) -> dict:
             "eta": eta_display(agent),
         })
     return {
-        "dataSource": state.get("dataSource", "local"),
+        "dataSource": "local",
         "liveCursorApi": False,
         "buckets": list(STATUS_BUCKETS),
         "grokRooms": rooms,
@@ -524,4 +591,5 @@ def public_board(state: dict) -> dict:
         "cursorAgents": agents,
         "queuedInstructions": list(state.get("queuedInstructions") or []),
         "liveApiNote": LIVE_API_NOTE,
+        "roomAssignees": dict(ROOM_ASSIGNEES),
     }

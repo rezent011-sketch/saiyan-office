@@ -9,8 +9,7 @@
   python3 set_state.py room 司令塔 動いている
   python3 set_state.py room 広告運用 許可待ち
   python3 set_state.py teammate メインAI社員 動いている
-  python3 set_state.py cursor "オフィス実況化" running
-  python3 set_state.py cursor "LP空き直し" finished
+  python3 set_state.py cursor "Empty English omamori catalog" running
 """
 
 import json
@@ -90,7 +89,8 @@ def usage() -> None:
     print("  python set_state.py researching \"ナメック星で調査中...\"")
     print("  python set_state.py room 司令塔 動いている")
     print("  python set_state.py teammate 広告運用Bot 許可待ち 広告運用")
-    print("  python set_state.py cursor \"オフィス実況化\" 動いている")
+    print("  python set_state.py cursor \"Empty English omamori catalog\" 動いている")
+    print("  python set_state.py instruct 司令塔 \"状況をまとめて\"")
     print("\n部屋の url は渡したときだけ書き込みます（未指定なら空のまま。URLは捏造しません）。")
     print(f"Cursor のクリック先は {CURSOR_AGENTS_HOME} （または state に既にある cursor.com/agents/…）。")
     print("分・時間の見込みは state.json にその文言があるときだけ表示します。見積もりしません。")

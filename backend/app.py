@@ -272,16 +272,13 @@ if not os.path.exists(STATE_FILE):
 ensure_electron_standalone_snapshot()
 
 
-# Do not cache index.html in-process. Safari reloads must pick up office-board copy fixes
-# without requiring a backend restart (this is why 暂无昨日日记 / 待命 lingered).
+# Never cache index.html in-process. Always read frontend/index.html from disk.
 _INDEX_HTML_CACHE = None
 
 
 @app.route("/", methods=["GET"])
 def index():
     """Serve the pixel office UI from disk every request."""
-    # 默认禁用页面打开即换背景，避免首屏慢
-    # 如需启用，可配置 AUTO_ROTATE_HOME_ON_PAGE_OPEN=1
     _maybe_apply_random_home_favorite()
 
     with open(FRONTEND_INDEX_FILE, "r", encoding="utf-8") as f:
@@ -290,6 +287,9 @@ def index():
     resp = make_response(html)
     resp.headers["Content-Type"] = "text/html; charset=utf-8"
     resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    resp.headers["X-Office-UI"] = "ja-disk-20260902"
     return resp
 
 

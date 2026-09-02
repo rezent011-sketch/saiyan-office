@@ -91,7 +91,18 @@ def main() -> int:
         failures.append(f"GET /status buckets mismatch, got={buckets}")
     else:
         print("  OK  /status buckets")
-    expected_jobs = {"オフィス実況化", "切り抜きタイトル直し", "海外EC（Origin待ち）", "LP空き直し", "著名人写真"}
+    expected_jobs = {
+        "Grok rooms + Cursor status on saiyan-office",
+        "Empty English omamori catalog",
+        "saiyan-office merge (人がmergeするまで。このPRをmergeしない)",
+        "saiyan-office GitHub Pages (権限は翔斗さん側。Pages設定は触らない)",
+        "Fix LP badges, proofs, celebrity collabs",
+        "Tighten LP proof-card layout gaps",
+        "Enable GitHub Pages on LP main",
+        "Fix 50社 badge alignment",
+        "Add Skill Engine LP image assets",
+        "Rebuild Gagalot LP",
+    }
     if not isinstance(agents, list):
         failures.append("GET /status cursorAgents missing")
     elif any(a.get("sample") or str(a.get("name") or "").startswith("サンプル") for a in agents if isinstance(a, dict)):
@@ -110,6 +121,11 @@ def main() -> int:
         "ライブAPI未接続",
         "idle: { name: '待命'",
         "[待命]",
+        "zh-CN",
+        "lang-btn-cn",
+        "Star 的像素办公室",
+        "修行中",
+        "待命",
     )
     if code == 200:
         for token_s in banned:

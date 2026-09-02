@@ -14,13 +14,13 @@
 | 許可待ち | 許可や開始待ち |
 | できたまま | 終わったまま残っている |
 
-- **デスク = Grok 部屋**（実名のみ）: 司令塔 / Xマーケティング自動化 / 動画生成 / 広告運用 / AIバーチャルオフィス
+- **デスク = Grok 部屋**（実名のみ）: 司令塔 / AIバーチャルオフィス / 広告運用 / 海外EC / 新規事業会議 / Xマーケティング自動化 / 動画生成 / コンサル管理 / 新規顧客開拓
 - デスクをクリックすると、`state.json` の `url` があればその部屋へ飛びます。空なら飛びません（URL は捏造しません）。
 - **動いている作業 = Cursor Cloud Agent**。クリック先は [cursor.com/agents](https://cursor.com/agents)。ローカルデータに `https://cursor.com/agents/bc-…` があるときだけその URL を使います。
 - Cursor 作業は `state.json` の実作業だけを出します。サンプル行（表示確認 / 許可待ちの例 / 完了した作業の例）は出しません。
 - **分・時間の見込み** は、その文言が `state.json` に書いてあるときだけ表示します。見積もりしません。
 
-社員（実名のみ）: メインAI社員, 開発担当Bot, UTAGE・LINE担当Bot, TikTok LIVE切り抜きBot, クラウド環境構築Bot, 広告運用Bot, 動画生成担当Bot, Xマーケティング担当Bot, コンサル管理Bot, 新規事業Bot, 新規顧客開拓Bot, コンテンツ生成社員
+社員（実名のみ）: メインAI社員, 開発担当Bot, 開発担当Bot2, UTAGE・LINE担当Bot, TikTok LIVE切り抜きBot, クラウド環境構築Bot, 広告運用Bot, 動画生成担当Bot, Xマーケティング担当Bot, コンサル管理Bot, 新規事業Bot, 新規顧客開拓Bot, コンテンツ生成社員。指示の担当は部屋ごとに固定（例: 司令塔→メインAI社員、AIバーチャルオフィス→開発担当Bot2）。
 
 投稿・広告・課金・決済・自動承認・支出の機能はありません。
 
@@ -42,8 +42,7 @@ python3 set_state.py executing "パイプライン実行中..."
 python3 set_state.py room 司令塔 動いている
 python3 set_state.py room 広告運用 許可待ち
 python3 set_state.py teammate メインAI社員 動いている
-python3 set_state.py cursor "オフィス実況化" 動いている
-python3 set_state.py cursor "LP空き直し" できたまま
+python3 set_state.py cursor "Empty English omamori catalog" 動いている
 python3 set_state.py instruct 司令塔 "状況をまとめて"
 ```
 
