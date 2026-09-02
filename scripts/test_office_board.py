@@ -22,6 +22,7 @@ from office_board import (  # noqa: E402
     patch_cursor_agent,
     patch_room,
     public_board,
+    queue_instruction,
 )
 
 
@@ -82,6 +83,10 @@ def main() -> int:
     board = public_board(state)
     assert board["liveCursorApi"] is False
     assert board["buckets"] == list(STATUS_BUCKETS)
+    assert queue_instruction(state, {"room": "架空", "text": "no"}) is None
+    queued = queue_instruction(state, {"room": "司令塔", "text": "状況をまとめて"})
+    assert queued and queued["executed"] is False and queued["status"] == "許可待ち"
+    assert any(q["text"] == "状況をまとめて" for q in public_board(state)["queuedInstructions"])
     print("OK office_board")
     return 0
 

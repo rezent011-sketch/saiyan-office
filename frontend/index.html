@@ -269,6 +269,34 @@
             font-size: 11px;
             z-index: 41;
         }
+        #office-instruction {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 8px 8px 0;
+            align-items: center;
+        }
+        #office-instruction select,
+        #office-instruction input,
+        #office-instruction button {
+            font-family: inherit;
+            font-size: 12px;
+            background: #3a3f4f;
+            color: #fff;
+            border: 2px solid #555;
+            padding: 6px 8px;
+        }
+        #office-instruction input { flex: 1 1 180px; min-width: 140px; }
+        #office-instruction button { background: #5d4037; border-color: #ffd700; color: #ffd700; cursor: pointer; }
+        #office-instruction-hint {
+            width: 100%;
+            color: #94a3b8;
+            font-size: 10px;
+            padding: 0 8px 4px;
+        }
+        .office-chip.queued { border-color: #f59e0b; }
+        .kind.live { color: #86efac; }
+        .kind.sample { color: #fdba74; }
         /* 状态控制栏 */
         #control-bar {
             position: relative;
@@ -960,9 +988,8 @@
             position: relative;
             width: 460px;
             height: 300px;
-            background-image: url('/static/memo-bg.webp');
-            background-size: cover;
-            background-position: center;
+            background-color: #141722;
+            background-image: none;
             border: 4px solid #0e1119;
             border-radius: 0;
             padding: 14px 16px;
@@ -1020,7 +1047,7 @@
             background-color: #111827;
         }
         #memo-title {
-            color: #1a1b2f;
+            color: #ffd700;
             font-size: 16px;
             font-weight: bold;
             margin-bottom: 6px;
@@ -1028,7 +1055,7 @@
             letter-spacing: 1px;
             flex-shrink: 0;
             position: relative;
-            top: 15px;
+            top: 0;
         }
         #memo-date {
             color: #888;
@@ -1037,11 +1064,11 @@
             text-align: right;
             flex-shrink: 0;
             position: relative;
-            left: -40px; /* move date left by 40px */
-            top: -10px;
+            left: 0;
+            top: 0;
         }
         #memo-content {
-            color: #3b3b32;
+            color: #e5e7eb;
             font-size: 12px;
             line-height: 1.8;
             white-space: pre-wrap;
@@ -1050,8 +1077,8 @@
             flex-grow: 1;
             padding-right: 4px;
             position: relative;
-            left: 100px; /* move content right by 100px */
-            top: -10px;
+            left: 0;
+            top: 0;
         }
         #memo-content::-webkit-scrollbar {
             width: 6px;
@@ -1064,7 +1091,7 @@
             border-radius: 3px;
         }
         #memo-placeholder {
-            color: #666;
+            color: #cbd5e1;
             font-style: italic;
             text-align: center;
             padding: 20px 0;
@@ -1270,13 +1297,19 @@
     
     <div id="main-stage">
         <div id="game-container">
-            <div id="game-skeleton"><div class="hint">正在进入像素办公室…</div></div>
-            <div id="status-text">加载中...</div>
+            <div id="game-skeleton"><div class="hint">Saiyan Officeに入っています…</div></div>
+            <div id="status-text">読み込み中...</div>
             <div id="office-board" aria-label="Grok rooms and Cursor agents">
                 <div id="office-board-header">
                     <span id="office-board-title">デスク＝Grok部屋 / 作業＝Cursor</span>
-                    <span id="office-board-source">ローカルJSON（ライブAPI未接続）</span>
+                    <span id="office-board-source">Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor行はサンプル。</span>
                 </div>
+                <form id="office-instruction">
+                    <select id="instruction-room" aria-label="desk"></select>
+                    <input id="instruction-text" type="text" maxlength="200" autocomplete="off" placeholder="デスクへの指示を書く" />
+                    <button type="submit" id="instruction-send">送る</button>
+                    <div id="office-instruction-hint">投稿・広告・課金はしません。送信はローカル待ち行列（未実行）です。</div>
+                </form>
                 <div id="office-buckets">
                     <section class="office-bucket" data-bucket="動いている">
                         <div class="office-bucket-title">動いている</div>
@@ -1303,7 +1336,7 @@
             <div id="memo-date"></div>
             <div class="memo-decoration">─ ─ ─ ─ ─</div>
             <div id="memo-content">
-                <div id="memo-placeholder">加载中...</div>
+                <div id="memo-placeholder">昨日の日記はまだない</div>
             </div>
             <div class="memo-decoration">─ ─ ─ ─ ─</div>
         </div>
@@ -1324,7 +1357,7 @@
         <div id="guest-agent-panel">
             <div id="guest-agent-panel-title">访 客 列 表</div>
             <div id="guest-agent-list">
-                <div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">正在加载访客...</div>
+                <div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">訪問者はいない</div>
             </div>
             </div>
         </div>
@@ -1440,7 +1473,7 @@
     <script src="/static/vendor/phaser-3.80.1.min.js?v={{VERSION_TIMESTAMP}}"></script>
     <script>
         // 简易中英文切换
-        let uiLang = localStorage.getItem('uiLang') || 'en';
+        let uiLang = localStorage.getItem('uiLang') || 'ja';
         const I18N = {
             zh: {
                 controlTitle: 'Star 状态',
@@ -1475,7 +1508,20 @@
                 officeWorkKind: 'Cursor作業',
                 officeSample: 'サンプル',
                 officeNoLink: 'リンク未設定（state.json の url を書いてください）',
-                officeEmptyBucket: 'なし'
+                officeEmptyBucket: 'なし',
+                memoEmpty: '昨日の日記はまだない',
+                memoLoading: '読み込み中...',
+                memoLoadFail: '読み込みに失敗しました',
+                guestEmpty: '訪問者はいない',
+                guestLoading: '読み込み中...',
+                officeLiveDesk: 'デスク（実在）',
+                officeSampleWork: 'Cursor作業',
+                officeQueued: '指示（キュー・未実行）',
+                instructionSend: '送る',
+                instructionPlaceholder: 'デスクへの指示を書く',
+                instructionHint: '投稿・広告・課金はしません。送信はローカル待ち行列（未実行）です。',
+                instructionNeedText: '指示を書いてから送ってください',
+                instructionQueued: '待ち行列に入れました（未実行）'
             },
             en: {
                 controlTitle: 'Star Status',
@@ -1505,12 +1551,25 @@
                 memoTitle: 'YESTERDAY NOTES', guestTitle: 'VISITOR LIST', officeTitle: 'Haixin Lobster Office',
                 loadingOffice: 'Loading Star’s pixel office...',
                 officeBoardTitle: 'Desks = Grok rooms / Work = Cursor',
-                officeBoardSource: 'Local JSON (no live API)',
+                officeBoardSource: 'No live Cursor/Grok API. Desks are real rooms. Cursor rows are samples.',
                 officeDeskKind: 'DESK',
                 officeWorkKind: 'CURSOR',
                 officeSample: 'SAMPLE',
                 officeNoLink: 'No room URL in state.json (not invented)',
-                officeEmptyBucket: 'empty'
+                officeEmptyBucket: 'empty',
+                memoEmpty: '昨日の日記はまだない',
+                memoLoading: 'Loading...',
+                memoLoadFail: 'Failed to load',
+                guestEmpty: '訪問者はいない',
+                guestLoading: 'Loading...',
+                officeLiveDesk: 'DESK (live name)',
+                officeSampleWork: 'Cursor work',
+                officeQueued: 'Instruction (queued, not run)',
+                instructionSend: 'Send',
+                instructionPlaceholder: 'Write an instruction for a desk',
+                instructionHint: 'No posting, ads, or billing. Send only queues locally (not executed).',
+                instructionNeedText: 'Write an instruction first',
+                instructionQueued: 'Queued locally (not executed)'
             },
             ja: {
                 controlTitle: 'エージェント状態',
@@ -1540,16 +1599,29 @@
                 memoTitle: '昨日の作業ログ', guestTitle: '仲間リスト', officeTitle: 'Saiyan Office 🐉',
                 loadingOffice: 'Saiyan Officeを読み込み中...',
                 officeBoardTitle: 'デスク＝Grok部屋 / 作業＝Cursor',
-                officeBoardSource: 'ローカルJSON（ライブAPI未接続）',
+                officeBoardSource: 'Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor行はサンプル。',
                 officeDeskKind: 'デスク',
                 officeWorkKind: 'Cursor作業',
                 officeSample: 'サンプル',
+                memoEmpty: '昨日の日記はまだない',
+                memoLoading: '読み込み中...',
+                memoLoadFail: '読み込みに失敗しました',
+                guestEmpty: '訪問者はいない',
+                guestLoading: '読み込み中...',
                 officeNoLink: 'リンク未設定（state.json の url を書いてください）',
-                officeEmptyBucket: 'なし'
+                officeEmptyBucket: 'なし',
+                officeLiveDesk: 'デスク（実在）',
+                officeSampleWork: 'Cursor作業',
+                officeQueued: '指示（キュー・未実行）',
+                instructionSend: '送る',
+                instructionPlaceholder: 'デスクへの指示を書く',
+                instructionHint: '投稿・広告・課金はしません。送信はローカル待ち行列（未実行）です。',
+                instructionNeedText: '指示を書いてから送ってください',
+                instructionQueued: '待ち行列に入れました（未実行）'
             }
         };
 
-        function t(key) { return (I18N[uiLang] && I18N[uiLang][key]) || key; }
+        function t(key) { return (I18N[uiLang] && I18N[uiLang][key]) || (I18N.ja && I18N.ja[key]) || key; }
         function renderBootLoadingText(percent) {
             const loadingEl = document.getElementById('loading-text');
             if (!loadingEl) return;
@@ -1561,8 +1633,14 @@
         function ensureMemoBgVisible() {
             const panel = document.getElementById('memo-panel');
             if (!panel) return;
-            panel.style.backgroundImage = "url('/static/memo-bg.webp?v={{VERSION_TIMESTAMP}}')";
-            panel.classList.remove('no-bg');
+            panel.style.backgroundImage = 'none';
+            panel.classList.add('no-bg');
+        }
+
+        function setMemoPlaceholder(key) {
+            const memoContent = document.getElementById('memo-content');
+            if (!memoContent) return;
+            memoContent.innerHTML = `<div id="memo-placeholder">${t(key)}</div>`;
         }
 
         function applyLanguage() {
@@ -1632,8 +1710,16 @@
             if (guestTitle) guestTitle.textContent = t('guestTitle');
             setText('office-board-title', 'officeBoardTitle');
             setText('office-board-source', 'officeBoardSource');
+            setText('instruction-send', 'instructionSend');
+            setText('office-instruction-hint', 'instructionHint');
+            setPh('instruction-text', 'instructionPlaceholder');
+            const memoPh = document.getElementById('memo-placeholder');
+            if (memoPh) memoPh.textContent = t('memoEmpty');
             if (window.__officeBoardData) {
                 renderOfficeBoard(window.__officeBoardData);
+            }
+            if (typeof renderGuestAgentList === 'function' && typeof guestAgents !== 'undefined') {
+                renderGuestAgentList();
             }
             const plaqueTitle = (typeof window.officeNameFromServer !== 'undefined' && window.officeNameFromServer) || t('officeTitle');
             if (window.officePlaqueText && window.officePlaqueText.setText) {
@@ -1735,11 +1821,11 @@
                     memoDate.textContent = data.date || '';
                     memoContent.innerHTML = data.memo.replace(/\n/g, '<br>');
                 } else {
-                    memoContent.innerHTML = '<div id="memo-placeholder">暂无昨日日记</div>';
+                    setMemoPlaceholder('memoEmpty');
                 }
             } catch (e) {
-                console.error('加载 memo 失败:', e);
-                memoContent.innerHTML = '<div id="memo-placeholder">加载失败</div>';
+                console.error('memo load failed', e);
+                setMemoPlaceholder('memoLoadFail');
             }
         }
 
@@ -1972,11 +2058,47 @@
         }
         window.openCursorWork = openCursorWork;
 
+        const INSTRUCTION_STORE = 'saiyan-office-queued-instructions';
+
+        function loadLocalInstructions() {
+            try {
+                const raw = JSON.parse(localStorage.getItem(INSTRUCTION_STORE) || '[]');
+                return Array.isArray(raw) ? raw : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveLocalInstructions(rows) {
+            localStorage.setItem(INSTRUCTION_STORE, JSON.stringify(rows.slice(-40)));
+        }
+
+        function mergeInstructions(serverRows) {
+            const byId = {};
+            [...loadLocalInstructions(), ...(Array.isArray(serverRows) ? serverRows : [])].forEach((row) => {
+                if (!row || !row.room || !row.text) return;
+                const id = row.id || `${row.room}:${row.created_at || row.text}`;
+                byId[id] = { ...row, id, queued: true, executed: false, status: '許可待ち' };
+            });
+            return Object.values(byId);
+        }
+
+        function fillInstructionRooms(rooms) {
+            const sel = document.getElementById('instruction-room');
+            if (!sel) return;
+            const names = (rooms || []).map((r) => r.name).filter(Boolean);
+            const current = sel.value;
+            sel.innerHTML = names.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+            if (current && names.includes(current)) sel.value = current;
+        }
+
         function renderOfficeBoard(data) {
             window.__officeBoardData = data || {};
             const rooms = Array.isArray(data && data.grokRooms) ? data.grokRooms : [];
             const agents = Array.isArray(data && data.cursorAgents) ? data.cursorAgents : [];
             const teammates = Array.isArray(data && data.teammates) ? data.teammates : [];
+            const queued = mergeInstructions(data && data.queuedInstructions);
+            fillInstructionRooms(rooms);
             const grouped = { '動いている': [], '許可待ち': [], 'できたまま': [] };
 
             rooms.forEach((room) => {
@@ -1990,7 +2112,7 @@
                     kind: 'desk',
                     name: room.name,
                     hasUrl,
-                    sample: !!room.sample,
+                    sample: false,
                     eta,
                     mates,
                     meta: ''
@@ -2002,6 +2124,7 @@
                 const life = String(agent.lifecycle || '').trim().toLowerCase();
                 const lifeLabel = (life === 'running' || life === 'finished') ? life : '';
                 const bits = [];
+                if (agent.sample) bits.push(t('officeSample'));
                 if (lifeLabel) bits.push(lifeLabel);
                 if (agent.branch) bits.push(agent.branch);
                 if (agent.prUrl) bits.push(agent.prUrl);
@@ -2019,6 +2142,17 @@
                 });
             });
 
+            queued.forEach((row) => {
+                grouped['許可待ち'].push({
+                    kind: 'queued',
+                    name: row.room,
+                    title: row.text,
+                    sample: false,
+                    meta: t('officeQueued'),
+                    mates: []
+                });
+            });
+
             OFFICE_BUCKETS.forEach((bucket) => {
                 const host = document.getElementById(OFFICE_BUCKET_IDS[bucket]);
                 if (!host) return;
@@ -2028,7 +2162,9 @@
                     return;
                 }
                 host.innerHTML = items.map((item) => {
-                    const kind = item.kind === 'desk' ? t('officeDeskKind') : t('officeWorkKind');
+                    if (item.kind === 'queued') {
+                        return `<div class="office-chip queued no-link"><span class="kind">${escapeHtml(t('officeQueued'))}</span>${escapeHtml(item.name)}<span class="meta">${escapeHtml(item.title)}</span></div>`;
+                    }
                     const sample = item.sample ? `<span class="sample-badge">${escapeHtml(t('officeSample'))}</span>` : '';
                     const title = item.title && item.title !== item.name
                         ? `<span class="meta">${escapeHtml(item.title)}</span>` : '';
@@ -2038,12 +2174,57 @@
                     if (item.kind === 'desk') {
                         const cls = item.hasUrl ? 'office-chip' : 'office-chip no-link';
                         const nameAttr = escapeHtml(item.name).replace(/'/g, '&#39;');
-                        return `<button type="button" class="${cls}" onclick="openGrokDesk('${nameAttr}')"><span class="kind">${escapeHtml(kind)}</span>${escapeHtml(item.name)}${sample}${title}${mates}</button>`;
+                        return `<button type="button" class="${cls}" onclick="openGrokDesk('${nameAttr}')"><span class="kind live">${escapeHtml(t('officeLiveDesk'))}</span>${escapeHtml(item.name)}${title}${mates}${item.eta ? `<span class="meta">${escapeHtml(item.eta)}</span>` : ''}</button>`;
                     }
                     const openUrl = escapeHtml(item.openUrl).replace(/'/g, '&#39;');
-                    return `<button type="button" class="office-chip" onclick="openCursorWork('${openUrl}')"><span class="kind">${escapeHtml(kind)}</span>${escapeHtml(item.name)}${sample}${title}${meta}</button>`;
+                    return `<button type="button" class="office-chip" onclick="openCursorWork('${openUrl}')"><span class="kind sample">${escapeHtml(t('officeSampleWork'))}</span>${escapeHtml(item.name)}${sample}${title}${meta}</button>`;
                 }).join('');
             });
+        }
+
+        async function sendOfficeInstruction(event) {
+            if (event) event.preventDefault();
+            const room = (document.getElementById('instruction-room')?.value || '').trim();
+            const text = (document.getElementById('instruction-text')?.value || '').trim();
+            if (!room || !text) {
+                showOfficeBoardToast(t('instructionNeedText'));
+                return;
+            }
+            const row = {
+                id: `local-${Date.now()}`,
+                room,
+                text,
+                status: '許可待ち',
+                queued: true,
+                executed: false,
+                source: 'local',
+                created_at: new Date().toISOString()
+            };
+            const local = loadLocalInstructions();
+            local.push(row);
+            saveLocalInstructions(local);
+            const input = document.getElementById('instruction-text');
+            if (input) input.value = '';
+            try {
+                const res = await fetch('/set_state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instruction: { room, text, id: row.id } })
+                });
+                if (res.ok) {
+                    await fetchStatus();
+                } else {
+                    renderOfficeBoard(window.__officeBoardData || {});
+                }
+            } catch (e) {
+                renderOfficeBoard(window.__officeBoardData || {});
+            }
+            showOfficeBoardToast(t('instructionQueued'));
+        }
+
+        const instructionForm = document.getElementById('office-instruction');
+        if (instructionForm) {
+            instructionForm.addEventListener('submit', sendOfficeInstruction);
         }
 
         // 状态控制栏函数（用于测试）
@@ -3747,7 +3928,7 @@ function toggleBrokerPanel() {
 
             const visitors = getMergedVisitors();
             if (visitors.length === 0) {
-                list.innerHTML = '<div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">暂无访客</div>';
+                list.innerHTML = `<div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">${t('guestEmpty')}</div>`;
                 return;
             }
 

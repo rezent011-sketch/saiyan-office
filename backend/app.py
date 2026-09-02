@@ -33,6 +33,7 @@ from office_board import (
     patch_room,
     patch_teammate,
     public_board,
+    queue_instruction,
 )
 
 try:
@@ -1297,7 +1298,7 @@ def get_yesterday_memo():
         else:
             return jsonify({
                 "success": False,
-                "msg": "没有找到昨日日记"
+                "msg": "昨日の日記はまだない"
             })
     except Exception as e:
         return jsonify({
@@ -1326,6 +1327,8 @@ def set_state_endpoint():
             patch_teammate(state, data["teammate"])
         if isinstance(data.get("cursor"), dict):
             patch_cursor_agent(state, data["cursor"])
+        if isinstance(data.get("instruction"), dict):
+            queue_instruction(state, data["instruction"])
         state["updated_at"] = datetime.now().isoformat()
         save_state(state)
         return jsonify({"status": "ok", "board": public_board(state)})

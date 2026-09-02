@@ -44,6 +44,7 @@ python3 set_state.py room 広告運用 許可待ち
 python3 set_state.py teammate メインAI社員 動いている
 python3 set_state.py cursor "サンプル: 表示確認" running
 python3 set_state.py cursor "サンプル: 完了した作業の例" finished
+python3 set_state.py instruct 司令塔 "状況をまとめて"
 ```
 
 部屋 URL を書くときだけ渡してください（未指定なら空のままです）:

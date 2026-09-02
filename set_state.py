@@ -32,6 +32,7 @@ from office_board import (  # noqa: E402
     patch_cursor_agent,
     patch_room,
     patch_teammate,
+    queue_instruction,
 )
 
 STATE_FILE = os.environ.get(
@@ -83,6 +84,7 @@ def usage() -> None:
     print(f"    部屋: {', '.join(GROK_ROOM_NAMES)}")
     print("  python set_state.py teammate <名前> <動いている|許可待ち|できたまま> [部屋名]")
     print("  python set_state.py cursor <名前> <running|finished|動いている|許可待ち|できたまま> [branch] [pr_url]")
+    print("  python set_state.py instruct <部屋名> <指示文>")
     print("\n使用例:")
     print("  python set_state.py idle")
     print("  python set_state.py researching \"ナメック星で調査中...\"")
@@ -151,6 +153,18 @@ def main(argv: list[str]) -> int:
             return 1
         save_state(state)
         print(f"Cursor作業を更新しました: {argv[2]} -> {bucket}")
+        return 0
+
+    if verb == "instruct":
+        if len(argv) < 4:
+            usage()
+            return 1
+        item = queue_instruction(state, {"room": argv[2], "text": argv[3]})
+        if not item:
+            print("指示をキューに入れられませんでした（実在の部屋名と本文が必要）")
+            return 1
+        save_state(state)
+        print(f"指示を待ち行列に入れました（未実行）: {argv[2]} / {argv[3]}")
         return 0
 
     state_name = verb

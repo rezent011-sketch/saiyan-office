@@ -7,6 +7,7 @@ text already exists in the local state data.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 STATUS_BUCKETS = ("動いている", "許可待ち", "できたまま")
@@ -315,7 +316,39 @@ def ensure_office_board(state: dict) -> bool:
             state["cursorAgents"] = cleaned
             changed = True
 
+    if not isinstance(state.get("queuedInstructions"), list):
+        state["queuedInstructions"] = []
+        changed = True
+
     return changed
+
+
+def queue_instruction(state: dict, payload: dict) -> dict | None:
+    """Store a desk instruction locally. Never executes posting/ads/billing."""
+    ensure_office_board(state)
+    if not isinstance(payload, dict):
+        return None
+    room = str(payload.get("room") or "").strip()
+    text = str(payload.get("text") or "").strip()
+    if room not in GROK_ROOM_NAMES or not text:
+        return None
+    item = {
+        "id": str(payload.get("id") or f"q-{int(datetime.now().timestamp() * 1000)}"),
+        "room": room,
+        "text": text[:200],
+        "status": "許可待ち",
+        "queued": True,
+        "executed": False,
+        "source": "local",
+        "created_at": datetime.now().isoformat(),
+    }
+    rows = state.setdefault("queuedInstructions", [])
+    if not isinstance(rows, list):
+        rows = []
+        state["queuedInstructions"] = rows
+    if not any(r.get("id") == item["id"] for r in rows if isinstance(r, dict)):
+        rows.append(item)
+    return item
 
 
 def patch_room(state: dict, payload: dict) -> bool:
@@ -401,4 +434,6 @@ def public_board(state: dict) -> dict:
         "grokRooms": rooms,
         "teammates": teammates,
         "cursorAgents": agents,
+        "queuedInstructions": list(state.get("queuedInstructions") or []),
+        "liveApiNote": "Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor行はサンプル。",
     }

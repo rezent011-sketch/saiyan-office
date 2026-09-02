@@ -66,7 +66,7 @@ async function loadMemo() {
       memoDate.textContent = data.date || '';
       memoContent.innerHTML = data.memo.replace(/\n/g, '<br>');
     } else {
-      memoContent.innerHTML = '<div id="memo-placeholder">暂无昨日日记</div>';
+      memoContent.innerHTML = '<div id="memo-placeholder">昨日の日記はまだない</div>';
     }
   } catch (e) {
     console.error('加载 memo 失败:', e);

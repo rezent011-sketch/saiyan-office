@@ -143,6 +143,27 @@
       font-size: 11px;
       z-index: 4;
     }
+    #office-instruction {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 8px 0;
+      align-items: center;
+    }
+    #office-instruction select,
+    #office-instruction input,
+    #office-instruction button {
+      font-family: inherit;
+      font-size: 12px;
+      background: #3a3f4f;
+      color: #fff;
+      border: 2px solid #555;
+      padding: 6px 8px;
+    }
+    #office-instruction input { flex: 1 1 180px; min-width: 140px; }
+    #office-instruction button { background: #5d4037; border-color: #ffd700; color: #ffd700; cursor: pointer; }
+    #office-instruction-hint { width: 100%; color: #94a3b8; font-size: 10px; }
+    .office-chip.queued { border-color: #f59e0b; }
     @media (max-width: 800px) {
       #office-buckets { grid-template-columns: 1fr; }
       #office-board { max-height: 58%; }
@@ -158,8 +179,14 @@
     <div id="office-board">
       <div id="office-board-header">
         <span>デスク＝Grok部屋 / 作業＝Cursor</span>
-        <span id="office-board-source">サンプルデータ</span>
+        <span id="office-board-source">Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor行はサンプル。</span>
       </div>
+      <form id="office-instruction">
+        <select id="instruction-room" aria-label="desk"></select>
+        <input id="instruction-text" type="text" maxlength="200" autocomplete="off" placeholder="デスクへの指示を書く" />
+        <button type="submit">送る</button>
+        <div id="office-instruction-hint">投稿・広告・課金はしません。送信はローカル待ち行列（未実行）です。</div>
+      </form>
       <div id="office-buckets">
         <section class="office-bucket" data-bucket="動いている">
           <div class="office-bucket-title">動いている</div>
@@ -238,9 +265,21 @@
       }
       window.location.href = href;
     }
+    const STORE = 'saiyan-office-queued-instructions';
+    function loadQueued() {
+      try { const rows = JSON.parse(localStorage.getItem(STORE) || '[]'); return Array.isArray(rows) ? rows : []; }
+      catch (e) { return []; }
+    }
     function render(data) {
       const rooms = Array.isArray(data.grokRooms) ? data.grokRooms : FALLBACK.grokRooms;
       const agents = Array.isArray(data.cursorAgents) ? data.cursorAgents : FALLBACK.cursorAgents;
+      const queued = loadQueued();
+      const roomSel = document.getElementById('instruction-room');
+      if (roomSel) {
+        const cur = roomSel.value;
+        roomSel.innerHTML = rooms.map((r) => `<option value="${escapeHtml(r.name)}">${escapeHtml(r.name)}</option>`).join('');
+        if (cur) roomSel.value = cur;
+      }
       const deskRow = document.getElementById('desk-row');
       deskRow.innerHTML = rooms.map((room) => {
         const url = String(room.url || '').trim();
@@ -258,6 +297,9 @@
       agents.forEach((agent) => {
         grouped[bucketOf(agent)].push({ kind: 'cursor', agent });
       });
+      queued.forEach((row) => {
+        grouped['許可待ち'].push({ kind: 'queued', row });
+      });
       BUCKETS.forEach((name) => {
         const host = document.getElementById(BUCKET_IDS[name]);
         const items = grouped[name];
@@ -266,12 +308,15 @@
           return;
         }
         host.innerHTML = items.map((item) => {
+          if (item.kind === 'queued') {
+            return `<div class="office-chip queued no-link"><span class="kind">指示（キュー・未実行）</span>${escapeHtml(item.row.room)}<span class="meta">${escapeHtml(item.row.text)}</span></div>`;
+          }
           if (item.kind === 'desk') {
             const room = item.room;
             const url = String(room.url || '').trim();
             const mates = (room.teammates || []).join(' / ');
             const eta = etaText(room);
-            return `<button type="button" class="office-chip${url ? '' : ' no-link'}" data-room="${escapeHtml(room.name)}" data-url="${escapeHtml(url)}"><span class="kind">デスク</span>${escapeHtml(room.name)}${eta ? `<span class="meta">${escapeHtml(eta)}</span>` : ''}${mates ? `<span class="mates">${escapeHtml(mates)}</span>` : ''}</button>`;
+            return `<button type="button" class="office-chip${url ? '' : ' no-link'}" data-room="${escapeHtml(room.name)}" data-url="${escapeHtml(url)}"><span class="kind">デスク（実在）</span>${escapeHtml(room.name)}${eta ? `<span class="meta">${escapeHtml(eta)}</span>` : ''}${mates ? `<span class="mates">${escapeHtml(mates)}</span>` : ''}</button>`;
           }
           const agent = item.agent;
           const href = escapeHtml(cursorHref(agent));
@@ -293,10 +338,23 @@
       });
     }
 
+    window.__previewData = FALLBACK;
     fetch('./state.json', { cache: 'no-store' })
       .then((r) => r.ok ? r.json() : FALLBACK)
       .catch(() => FALLBACK)
-      .then(render);
+      .then((data) => { window.__previewData = data; render(data); });
+    document.getElementById('office-instruction').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const room = (document.getElementById('instruction-room').value || '').trim();
+      const text = (document.getElementById('instruction-text').value || '').trim();
+      if (!room || !text) { showToast('指示を書いてから送ってください'); return; }
+      const rows = loadQueued();
+      rows.push({ id: 'local-' + Date.now(), room, text, status: '許可待ち', queued: true, executed: false });
+      localStorage.setItem(STORE, JSON.stringify(rows.slice(-40)));
+      document.getElementById('instruction-text').value = '';
+      render(window.__previewData || FALLBACK);
+      showToast('待ち行列に入れました（未実行）');
+    });
   </script>
 </body>
 </html>
