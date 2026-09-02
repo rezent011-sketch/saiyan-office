@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(gh pr merge *)",
+      "Bash(gh api *pages*)",
+      "Read(.env)",
+      "Read(.env.*)"
+    ]
+  }
+}
