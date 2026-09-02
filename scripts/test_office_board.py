@@ -193,6 +193,15 @@ def main() -> int:
     shim = (ROOT / "scripts" / "public_office_shim.js").read_text(encoding="utf-8")
     if "「' + assignee + '」に渡しました（未実行）" not in shim or "開発担当Bot2" not in shim:
         fail("public office shim must queue instructions to room assignees")
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from build_public_office import sanitize_public_html  # noqa: E402
+
+    public_html = sanitize_public_html(html)
+    if "司令塔" not in public_html or "動いている" not in public_html or "AIバーチャルオフィス" not in public_html:
+        fail("public HTML lost the live office board")
+    for token in ("ロブスター", "Gemini APIキー", "GEMINI APIキー", "GEMINI_API_KEY"):
+        if token in public_html:
+            fail(f"public HTML still ships {token!r}")
     build = (ROOT / "scripts" / "build_public_office.py").read_text(encoding="utf-8")
     if "saiyan-ai-virtual-office.surge.sh" not in build:
         fail("public office must publish to a named surge.sh domain")
