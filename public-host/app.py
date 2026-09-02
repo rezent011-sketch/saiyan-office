@@ -17,18 +17,22 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from office_board import public_board, queue_instruction  # noqa: E402
 
-QUEUE_PATH = Path(os.environ.get("PUBLIC_OFFICE_QUEUE", str(ROOT / "public-queue" / "queue.json")))
 PUBLIC_DIR = Path(os.environ.get("PUBLIC_OFFICE_DIR", str(ROOT / "public-office")))
 SURGE_ORIGIN = os.environ.get("PUBLIC_OFFICE_SURGE", "https://saiyan-ai-virtual-office.surge.sh")
+
+
+def queue_path() -> Path:
+    return Path(os.environ.get("PUBLIC_OFFICE_QUEUE", str(ROOT / "public-queue" / "queue.json")))
 
 app = Flask(__name__)
 
 
 def _load_queue_state() -> dict:
     state: dict = {"queuedInstructions": []}
-    if QUEUE_PATH.is_file():
+    path = queue_path()
+    if path.is_file():
         try:
-            data = json.loads(QUEUE_PATH.read_text(encoding="utf-8"))
+            data = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(data, dict):
                 state = data
             elif isinstance(data, list):
@@ -41,7 +45,8 @@ def _load_queue_state() -> dict:
 
 
 def _save_queue_state(state: dict) -> None:
-    QUEUE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    dest = queue_path()
+    dest.parent.mkdir(parents=True, exist_ok=True)
     rows = state.get("queuedInstructions") or []
     if not isinstance(rows, list):
         rows = []
@@ -50,7 +55,7 @@ def _save_queue_state(state: dict) -> None:
         "updated_at": datetime.now().isoformat(),
     }
     text = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
-    QUEUE_PATH.write_text(text, encoding="utf-8")
+    dest.write_text(text, encoding="utf-8")
     token = (os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or "").strip()
     if not token:
         return
@@ -58,9 +63,9 @@ def _save_queue_state(state: dict) -> None:
     import urllib.request
 
     repo = os.environ.get("GITHUB_REPO", "rezent011-sketch/saiyan-office")
-    path = os.environ.get("GITHUB_QUEUE_PATH", "public-queue/queue.json")
+    remote_path = os.environ.get("GITHUB_QUEUE_PATH", "public-queue/queue.json")
     branch = os.environ.get("GITHUB_BRANCH", "cursor/grok-cursor-office-board-6913")
-    api = f"https://api.github.com/repos/{repo}/contents/{path}"
+    api = f"https://api.github.com/repos/{repo}/contents/{remote_path}"
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
@@ -196,8 +201,8 @@ def main() -> int:
 
     if not (PUBLIC_DIR / "index.html").is_file():
         build_public()
-    QUEUE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    if not QUEUE_PATH.is_file():
+    queue_path().parent.mkdir(parents=True, exist_ok=True)
+    if not queue_path().is_file():
         _save_queue_state({"queuedInstructions": []})
     host = os.environ.get("PUBLIC_OFFICE_HOST", "0.0.0.0")
     port = int(os.environ.get("PORT") or os.environ.get("PUBLIC_OFFICE_PORT") or "8080")

@@ -4,14 +4,16 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+os.environ["PUBLIC_OFFICE_QUEUE"] = str(ROOT / "outbox" / "test-public-queue.json")
 sys.path.insert(0, str(ROOT / "backend"))
 sys.path.insert(0, str(ROOT / "public-host"))
 
-from app import QUEUE_PATH, app, _save_queue_state  # noqa: E402
+from app import app, queue_path, _save_queue_state  # noqa: E402
 
 
 def fail(msg: str) -> None:
@@ -19,7 +21,7 @@ def fail(msg: str) -> None:
 
 
 def main() -> int:
-    QUEUE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    queue_path().parent.mkdir(parents=True, exist_ok=True)
     _save_queue_state({"queuedInstructions": []})
     client = app.test_client()
 
