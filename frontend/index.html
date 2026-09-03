@@ -6,6 +6,7 @@
     <meta name="office-ui" content="ja-staff-bind-20260902e">
     <!-- STAFF_BIND_FIX_20260902E: 海外EC binds only to 開発担当Bot; idle desks are 待機中 -->
     <!-- NO_OVERLAY_CARDS_20260903: no gold staff cards over the Phaser floor; status only on the bottom board -->
+    <!-- STAFF_REST_WORK_20260903: on-duty staff animate at desks; 待機中 rest on the sofa lounge -->
     <title>AIバーチャルオフィス</title>
     <style>
         @font-face {
@@ -2003,6 +2004,14 @@
             { x: 170, y: 530 }, { x: 390, y: 530 }, { x: 610, y: 530 }, { x: 860, y: 530 },
             { x: 1080, y: 530 }
         ];
+        // Existing pixel sofa / breakroom (IDLE_SOFA_ANCHOR). Idle staff leave the desks.
+        const STAFF_REST_POINTS = [
+            { x: 748, y: 248 }, { x: 798, y: 236 }, { x: 848, y: 248 },
+            { x: 728, y: 278 }, { x: 798, y: 268 }, { x: 868, y: 278 },
+            { x: 738, y: 308 }, { x: 798, y: 300 }, { x: 858, y: 308 },
+            { x: 708, y: 338 }, { x: 778, y: 334 }, { x: 838, y: 338 },
+            { x: 888, y: 324 }
+        ];
         const CURSOR_AGENTS_HOME = 'https://cursor.com/agents';
         const ETA_LABEL = '分・時間の見込み';
         let officeBoardToastTimer = null;
@@ -2213,6 +2222,12 @@
             return { state: '待機中', task: '', room: staff.room, eta: '' };
         }
 
+        function staffIsOnDuty(view) {
+            if (!view) return false;
+            if (view.state === '動いている') return true;
+            return view.state === '許可待ち' && !!String(view.task || '').trim();
+        }
+
         function renderStaffFloor(data) {
             const host = document.getElementById('staff-floor');
             if (host) host.innerHTML = '';
@@ -2221,6 +2236,145 @@
 
         function staffFloorNameplate(staff) {
             return [staff.name, staff.room].filter(Boolean).join('\n');
+        }
+
+        function syncStaffLabel(entry) {
+            if (!entry || !entry.label || !entry.label.active || !entry.sprite) return;
+            const lift = entry.onDuty ? 118 : 64;
+            entry.label.setText(staffFloorNameplate(entry.staff));
+            entry.label.setPosition(entry.sprite.x, entry.sprite.y - lift);
+        }
+
+        function stopStaffTween(entry, key) {
+            if (entry[key] && entry[key].stop) entry[key].stop();
+            entry[key] = null;
+        }
+
+        function startStaffFidget(entry, onDuty, idx, dest) {
+            stopStaffTween(entry, 'fidgetTween');
+            const sprite = entry.sprite;
+            if (!sprite || !game || !game.tweens) return;
+            const pattern = idx % 3;
+            if (onDuty) {
+                if (pattern === 0) {
+                    entry.fidgetTween = game.tweens.add({
+                        targets: sprite,
+                        y: dest.y - 6,
+                        duration: 210 + (idx % 5) * 35,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut',
+                        onUpdate: () => syncStaffLabel(entry)
+                    });
+                } else if (pattern === 1) {
+                    entry.fidgetTween = game.tweens.add({
+                        targets: sprite,
+                        x: dest.x + 10,
+                        duration: 420 + (idx % 4) * 50,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut',
+                        onUpdate: () => syncStaffLabel(entry)
+                    });
+                } else {
+                    entry.fidgetTween = game.tweens.add({
+                        targets: sprite,
+                        scaleX: 3.55,
+                        scaleY: 3.2,
+                        duration: 160 + (idx % 3) * 20,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut',
+                        onUpdate: () => syncStaffLabel(entry)
+                    });
+                }
+                return;
+            }
+            entry.fidgetTween = game.tweens.add({
+                targets: sprite,
+                scaleX: sprite.scaleX * 1.05,
+                scaleY: sprite.scaleY * 0.92,
+                duration: 980 + (idx % 6) * 60,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut',
+                onUpdate: () => syncStaffLabel(entry)
+            });
+        }
+
+        function playStaffAnim(sprite, idx, onDuty) {
+            if (!sprite || !sprite.anims || !game) return;
+            const animIdx = (idx % 6) + 1;
+            const workKey = `guest_anim_${animIdx}_work`;
+            const restKey = `guest_anim_${animIdx}_rest`;
+            const idleKey = `guest_anim_${animIdx}_idle`;
+            const key = onDuty
+                ? (game.anims.exists(workKey) ? workKey : idleKey)
+                : (game.anims.exists(restKey) ? restKey : idleKey);
+            if (!game.anims.exists(key)) return;
+            const current = sprite.anims.currentAnim && sprite.anims.currentAnim.key;
+            if (current !== key) sprite.anims.play(key, true);
+        }
+
+        function applyStaffFloorPose(data) {
+            const sprites = window.staffDeskSprites;
+            if (!Array.isArray(sprites) || !game) return;
+            const queued = mergeInstructions(data && data.queuedInstructions);
+            let restSlot = 0;
+            sprites.forEach((entry, idx) => {
+                if (!entry || !entry.staff || !entry.sprite) return;
+                const view = staffDeskView(entry.staff, data || {}, queued.pending, queued.delivered);
+                const onDuty = staffIsOnDuty(view);
+                const desk = STAFF_DESK_POINTS[idx] || { x: 200, y: 250 };
+                const rest = STAFF_REST_POINTS[restSlot % STAFF_REST_POINTS.length] || desk;
+                if (!onDuty) restSlot += 1;
+                const dest = onDuty ? desk : rest;
+                const poseKey = `${onDuty ? 'work' : 'rest'}:${view.state}:${view.task || ''}`;
+                if (entry.poseKey === poseKey) {
+                    syncStaffLabel(entry);
+                    return;
+                }
+                entry.poseKey = poseKey;
+                entry.onDuty = onDuty;
+                playStaffAnim(entry.sprite, idx, onDuty);
+                if (onDuty) {
+                    entry.sprite.setAngle(0);
+                    entry.sprite.setAlpha(1);
+                    entry.sprite.setScale(3.4);
+                    entry.sprite.setFlipX(idx % 2 === 1);
+                } else {
+                    const lie = (idx % 3) === 0;
+                    entry.sprite.setScale(lie ? 2.05 : 2.35);
+                    entry.sprite.setAngle(lie ? 76 : ((idx % 2) ? -10 : 8));
+                    entry.sprite.setAlpha(0.96);
+                    entry.sprite.setFlipX(idx % 2 === 0);
+                }
+                stopStaffTween(entry, 'moveTween');
+                stopStaffTween(entry, 'fidgetTween');
+                const arrive = () => {
+                    if (!entry.sprite) return;
+                    entry.sprite.x = dest.x;
+                    entry.sprite.y = dest.y;
+                    startStaffFidget(entry, onDuty, idx, dest);
+                    syncStaffLabel(entry);
+                };
+                const dx = Math.abs(entry.sprite.x - dest.x);
+                const dy = Math.abs(entry.sprite.y - dest.y);
+                if (dx > 8 || dy > 8) {
+                    entry.moveTween = game.tweens.add({
+                        targets: entry.sprite,
+                        x: dest.x,
+                        y: dest.y,
+                        duration: 640 + (idx % 5) * 70,
+                        ease: 'Sine.easeInOut',
+                        onUpdate: () => syncStaffLabel(entry),
+                        onComplete: arrive
+                    });
+                } else {
+                    arrive();
+                }
+                syncStaffLabel(entry);
+            });
         }
 
         function updatePhaserStaffLabels(data) {
@@ -2240,11 +2394,9 @@
                         wordWrap: { width: 200 }
                     }).setOrigin(0.5, 1);
                     entry.label.setDepth(1260);
-                } else {
-                    entry.label.setText(lines);
-                    entry.label.setPosition(entry.sprite.x, entry.sprite.y - 118);
                 }
             });
+            applyStaffFloorPose(data || {});
         }
 
         function renderOfficeBoard(data) {
@@ -4575,12 +4727,25 @@ function toggleBrokerPanel() {
             });
 
 
-            // Six guest idle loops (8 frames).
+            // Guest loops: rest (slow nap), idle, and faster desk work.
             for (let i = 1; i <= 6; i++) {
                 this.anims.create({
                     key: `guest_anim_${i}_idle`,
                     frames: this.anims.generateFrameNumbers(`guest_anim_${i}`, { start: 0, end: 7 }),
                     frameRate: 8,
+                    repeat: -1
+                });
+                this.anims.create({
+                    key: `guest_anim_${i}_work`,
+                    frames: this.anims.generateFrameNumbers(`guest_anim_${i}`, { start: 0, end: 7 }),
+                    frameRate: 14 + (i % 3),
+                    repeat: -1
+                });
+                this.anims.create({
+                    key: `guest_anim_${i}_rest`,
+                    frames: this.anims.generateFrameNumbers(`guest_anim_${i}`, { start: 0, end: 2 }),
+                    frameRate: 3,
+                    yoyo: true,
                     repeat: -1
                 });
             }
@@ -4597,6 +4762,16 @@ function toggleBrokerPanel() {
             // Sofa stays static when idle (no longer the main idle animation)
             sofa.anims.stop();
             sofa.setTexture('sofa_idle');
+            if (!window.staffRestSign) {
+                window.staffRestSign = this.add.text(IDLE_SOFA_ANCHOR.x, IDLE_SOFA_ANCHOR.y - 78, '休憩', {
+                    fontFamily: 'ArkPixel, monospace',
+                    fontSize: '16px',
+                    fill: '#86efac',
+                    stroke: '#000',
+                    strokeThickness: 4
+                }).setOrigin(0.5);
+                window.staffRestSign.setDepth(25);
+            }
 
             // ピクセル看板
             const plaqueX = config.width / 2;
@@ -4761,9 +4936,10 @@ function toggleBrokerPanel() {
                     wordWrap: { width: 200 }
                 }).setOrigin(0.5, 1);
                 label.setDepth(1260);
-                staffSprites.push({ staff, sprite, label });
+                staffSprites.push({ staff, sprite, label, onDuty: true, poseKey: '' });
             });
             window.staffDeskSprites = staffSprites;
+            applyStaffFloorPose(window.__officeBoardData || {});
 
             // Random flower pot at (310,390), default scale 0.8 (top layer)
             const flowerFrameCount = Math.max(1, FLOWERS_FRAME_COLS * FLOWERS_FRAME_ROWS); // 動的フレーム数
