@@ -242,16 +242,18 @@ def main() -> int:
     if "saiyan-ai-virtual-office.surge.sh" not in build:
         fail("public office must publish to a named surge.sh domain")
     pages = (ROOT / "scripts" / "build_pages.sh").read_text(encoding="utf-8")
-    if "PUBLIC_ASSET_PREFIX=" not in pages or "/saiyan-office" not in pages:
-        fail("GitHub Pages build must prefix assets for /saiyan-office/")
+    if "PUBLIC_RELATIVE_ASSETS=1" not in pages:
+        fail("GitHub Pages build must use relative static/ assets for /saiyan-office/")
     if "static-preview/index.html" in pages:
         fail("GitHub Pages must publish the current public office, not the old static-preview")
-    prefixed = sanitize_public_html(html).replace("/static/", "/saiyan-office/static/")
-    if "/saiyan-office/static/" not in prefixed:
-        fail("pages HTML must use /saiyan-office/static/")
-    if "https://saiyan-ai-virtual-office.rust-sauce.workers.dev/set_state" not in prefixed:
+    relative = sanitize_public_html(html).replace("/static/", "static/")
+    if 'src="static/' not in relative:
+        fail("pages HTML must use relative static/ asset paths")
+    if 'src="/static/' in relative or "url('/static/" in relative:
+        fail("pages HTML still uses root /static/ paths")
+    if "https://saiyan-ai-virtual-office.rust-sauce.workers.dev/set_state" not in relative:
         fail("pages HTML must still post to the Worker")
-    if "PAGES_PUBLISH_20260903" not in prefixed:
+    if "PAGES_PUBLISH_20260903" not in relative:
         fail("pages HTML missing publish marker")
 
     print("OK office_board")

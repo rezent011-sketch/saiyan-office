@@ -23,6 +23,7 @@ API_ORIGIN = os.environ.get(
     "https://saiyan-ai-virtual-office.rust-sauce.workers.dev",
 ).strip().rstrip("/")
 ASSET_PREFIX = os.environ.get("PUBLIC_ASSET_PREFIX", "").strip().rstrip("/")
+RELATIVE_ASSETS = os.environ.get("PUBLIC_RELATIVE_ASSETS", "").strip().lower() in {"1", "true", "yes"}
 WRITE_CNAME = os.environ.get("PUBLIC_WRITE_CNAME", "1").strip().lower() not in {"0", "false", "no"}
 SKIP_NAMES = {
     "electron-standalone.html",
@@ -86,6 +87,8 @@ def sanitize_public_html(html: str) -> str:
 
 
 def apply_asset_prefix(html: str) -> str:
+    if RELATIVE_ASSETS:
+        return html.replace("/static/", "static/")
     if not ASSET_PREFIX:
         return html
     return html.replace("/static/", f"{ASSET_PREFIX}/static/")
@@ -115,7 +118,12 @@ def assert_public_html(html: str) -> None:
         raise SystemExit("public HTML still fetches relative /set_state")
     if "fetch('/status'" in html or 'fetch("/status"' in html:
         raise SystemExit("public HTML still fetches relative /status")
-    if ASSET_PREFIX:
+    if RELATIVE_ASSETS:
+        if 'src="static/' not in html:
+            raise SystemExit("public HTML missing relative static/ asset paths")
+        if 'src="/static/' in html or "url('/static/" in html:
+            raise SystemExit("public HTML still uses root /static/ paths")
+    elif ASSET_PREFIX:
         if f"{ASSET_PREFIX}/static/" not in html:
             raise SystemExit("public HTML missing project Pages asset prefix")
         if 'src="/static/' in html or "url('/static/" in html:

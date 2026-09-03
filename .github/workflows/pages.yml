@@ -1,7 +1,8 @@
-name: Deploy GitHub Pages
+name: pages
 on:
   push:
     branches:
+      - gh-pages
       - cursor/grok-cursor-office-board-6913
   workflow_dispatch:
 permissions:
@@ -19,13 +20,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build static office preview
-        run: bash scripts/build_pages.sh
+      - name: Build office when sources are present
+        run: |
+          if [ -f scripts/build_pages.sh ]; then
+            bash scripts/build_pages.sh
+            echo "PAGES_PATH=_site" >> "$GITHUB_ENV"
+          else
+            echo "PAGES_PATH=." >> "$GITHUB_ENV"
+          fi
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: ${{ env.PAGES_PATH }}
       - id: deployment
         uses: actions/deploy-pages@v4
