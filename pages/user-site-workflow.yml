@@ -1,0 +1,58 @@
+# Snapshot of rezent011-sketch.github.io .github/workflows/pages.yml
+# This is the omamori-empty-catalog pattern: the user-site Pages deploy
+# vendors this repo's gh-pages branch into /saiyan-office/ without
+# touching the store root. Project Pages on saiyan-office cannot be
+# created via API/Actions (403, same as omamori-empty-catalog).
+name: pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Vendor current saiyan-office static site
+        uses: actions/checkout@v4
+        with:
+          repository: rezent011-sketch/saiyan-office
+          ref: gh-pages
+          path: saiyan-office
+          persist-credentials: false
+      - name: Keep user-site root; persist office folder like omamori
+        run: |
+          set -euo pipefail
+          test -f index.html
+          test ! -f CNAME
+          rm -rf saiyan-office/.git saiyan-office/.github
+          test -f saiyan-office/index.html
+          test -f saiyan-office/.nojekyll
+          grep -q '<title>AIバーチャルオフィス</title>' saiyan-office/index.html
+          grep -q '送る' saiyan-office/index.html
+          grep -q '開発担当Bot' saiyan-office/index.html
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A saiyan-office
+          if git diff --cached --quiet; then
+            echo 'saiyan-office folder already current'
+          else
+            git commit -m "Sync saiyan-office from gh-pages [skip ci]"
+            git push
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
