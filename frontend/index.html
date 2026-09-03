@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="office-ui" content="ja-staff-bind-20260902e">
     <!-- STAFF_BIND_FIX_20260902E: 海外EC binds only to 開発担当Bot; idle desks are 待機中 -->
+    <!-- NO_OVERLAY_CARDS_20260903: no gold staff cards over the Phaser floor; status only on the bottom board -->
     <title>AIバーチャルオフィス</title>
     <style>
         @font-face {
@@ -150,14 +151,16 @@
             text-overflow: ellipsis;
             line-height: 1.2;
         }
-        /* Grok desks + Cursor work board (local JSON, pixel HUD) */
+        /* Status board sits under the pixel office, never over the characters. */
         #office-board {
-            position: absolute;
-            left: 8px;
-            right: 8px;
-            bottom: 8px;
-            z-index: 40;
-            max-height: 38%;
+            position: relative;
+            left: auto;
+            right: auto;
+            bottom: auto;
+            z-index: auto;
+            width: 100%;
+            max-height: none;
+            margin-top: 8px;
             overflow: auto;
             background: rgba(20, 23, 34, 0.92);
             border: 4px solid #0e1119;
@@ -296,7 +299,7 @@
             font-size: 10px;
             padding: 0 8px 4px;
         }
-        /* Real AI staff on the floor. Cat is a corner mascot, not a desk. */
+        /* Real AI staff are Phaser sprites on the floor. Cat is a corner mascot. */
         #office-mascot {
             position: absolute;
             top: 8px;
@@ -310,90 +313,13 @@
             opacity: 0.95;
             filter: drop-shadow(0 1px 0 #000);
         }
+        /* Do not paint HTML staff cards over the pixel office. */
         #staff-floor {
-            position: absolute;
-            left: 8px;
-            right: 8px;
-            top: 48px;
-            bottom: 42%;
-            z-index: 36;
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 8px;
-            overflow: auto;
-            pointer-events: none;
+            display: none !important;
         }
         .staff-desk {
-            pointer-events: auto;
-            display: flex;
-            align-items: stretch;
-            gap: 8px;
-            min-height: 86px;
-            background: rgba(14, 17, 28, 0.92);
-            border: 3px solid #3e2723;
-            box-shadow: inset 0 0 0 2px #ffd700;
-            padding: 8px;
-            cursor: pointer;
+            display: none !important;
         }
-        .staff-desk-char {
-            flex: 0 0 44px;
-            width: 44px;
-            align-self: center;
-            height: 56px;
-            image-rendering: pixelated;
-            position: relative;
-            background:
-                radial-gradient(circle at 50% 28%, #ffe8b0 0 7px, transparent 8px),
-                linear-gradient(hsl(var(--staff-hue), 72%, 48%), hsl(var(--staff-hue), 72%, 36%)) 10px 30px / 24px 18px no-repeat;
-        }
-        .staff-desk-char::after {
-            content: '';
-            position: absolute;
-            left: 4px;
-            right: 4px;
-            bottom: 0;
-            height: 10px;
-            background: #5d4037;
-            border: 2px solid #3e2723;
-        }
-        .staff-desk-copy {
-            min-width: 0;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .staff-desk-name {
-            color: #fff;
-            font-size: 16px;
-            font-weight: 700;
-            line-height: 1.25;
-            letter-spacing: 0;
-            text-shadow: 0 1px 0 #000;
-        }
-        .staff-desk-room {
-            color: #93c5fd;
-            font-size: 14px;
-            font-weight: 700;
-            line-height: 1.25;
-        }
-        .staff-desk-state {
-            font-size: 16px;
-            font-weight: 700;
-            line-height: 1.25;
-        }
-        .staff-desk[data-state="動いている"] .staff-desk-state { color: #ffd700; }
-        .staff-desk[data-state="許可待ち"] .staff-desk-state { color: #fb923c; }
-        .staff-desk[data-state="できたまま"] .staff-desk-state { color: #cbd5e1; }
-        .staff-desk[data-state="待機中"] .staff-desk-state { color: #86efac; }
-        .staff-desk-task,
-        .staff-desk-eta {
-            color: #fde68a;
-            font-size: 14px;
-            line-height: 1.35;
-            word-break: break-word;
-        }
-        .staff-desk-eta { color: #a5b4fc; }
         .office-chip.queued { border-color: #f59e0b; }
         .kind.live { color: #86efac; }
         .kind.sample { color: #fdba74; }
@@ -1223,24 +1149,24 @@
             #game-container {
                 width: 100vw;
                 height: auto;
-                min-height: 100dvh;
+                min-height: 0;
                 max-width: 100vw;
                 max-height: none;
                 border-width: 0;
                 border-radius: 0;
-                aspect-ratio: auto;
+                aspect-ratio: 16 / 9;
                 flex: 0 0 auto;
                 touch-action: auto;
-                overflow: visible;
+                overflow: hidden;
             }
             #game-container canvas {
-                position: absolute;
-                inset: 0;
+                position: relative;
+                inset: auto;
                 width: 100% !important;
-                height: 42vh !important;
-                object-fit: cover;
-                object-position: top right;
-                opacity: 0.45;
+                height: 100% !important;
+                object-fit: contain;
+                object-position: center;
+                opacity: 1;
             }
 
             #main-stage {
@@ -1273,47 +1199,17 @@
                 width: 28px;
                 height: 28px;
             }
-            #staff-floor {
-                position: relative;
-                top: auto;
-                left: 8px;
-                right: 8px;
-                bottom: auto;
-                margin-top: 42vh;
-                margin-bottom: 8px;
-                grid-template-columns: 1fr;
-                gap: 10px;
-                padding-right: 2px;
-                max-height: none;
-                overflow: visible;
+            #staff-floor,
+            .staff-desk {
+                display: none !important;
             }
             #office-board {
                 position: relative;
-                left: 8px;
-                right: 8px;
+                left: auto;
+                right: auto;
                 bottom: auto;
                 max-height: none;
-            }
-            .staff-desk {
-                min-height: 96px;
-                padding: 10px;
-            }
-            .staff-desk-char {
-                flex-basis: 52px;
-                width: 52px;
-                height: 64px;
-                background-size: 52px 52px;
-            }
-            .staff-desk-name,
-            .staff-desk-state {
-                font-size: 18px;
-            }
-            .staff-desk-room {
-                font-size: 16px;
-            }
-            .staff-desk-task,
-            .staff-desk-eta {
-                font-size: 16px;
+                width: 100%;
             }
             #office-instruction select,
             #office-instruction input,
@@ -1460,36 +1356,37 @@
         <div id="game-container">
             <div id="game-skeleton"><div class="hint">Saiyan Officeに入っています…</div></div>
             <div id="office-mascot" aria-hidden="true" title=""></div>
-            <div id="staff-floor" aria-label="AI社員デスク"></div>
+            <div id="staff-floor" hidden aria-hidden="true"></div>
             <div id="status-text">待機中</div>
-            <div id="office-board" aria-label="Grok rooms and Cursor agents">
-                <div id="office-board-header">
-                    <span id="office-board-title">デスク＝Grok部屋 / 作業＝Cursor</span>
-                    <span id="office-board-source">実況ボード（デスク＝Grok部屋 / 作業＝Cursor）</span>
-                </div>
-                <form id="office-instruction">
-                    <select id="instruction-room" aria-label="desk"></select>
-                    <input id="instruction-text" type="text" maxlength="200" autocomplete="off" placeholder="デスクへの指示を書く" />
-                    <button type="submit" id="instruction-send">送る</button>
-                    <div id="office-instruction-hint">投稿・広告・課金はしません。送信はその部屋の担当に渡します（未実行）。</div>
-                </form>
-                <div id="office-buckets">
-                    <section class="office-bucket" data-bucket="動いている">
-                        <div class="office-bucket-title">動いている</div>
-                        <div class="office-chip-list" id="bucket-running"></div>
-                    </section>
-                    <section class="office-bucket" data-bucket="許可待ち">
-                        <div class="office-bucket-title">許可待ち</div>
-                        <div class="office-chip-list" id="bucket-waiting"></div>
-                    </section>
-                    <section class="office-bucket" data-bucket="できたまま">
-                        <div class="office-bucket-title">できたまま</div>
-                        <div class="office-chip-list" id="bucket-done"></div>
-                    </section>
-                </div>
-                <div id="office-board-toast" role="status"></div>
-            </div>
         </div>
+        <div id="office-board" aria-label="Grok rooms and Cursor agents">
+            <div id="office-board-header">
+                <span id="office-board-title">デスク＝Grok部屋 / 作業＝Cursor</span>
+                <span id="office-board-source">実況ボード（デスク＝Grok部屋 / 作業＝Cursor）</span>
+            </div>
+            <form id="office-instruction">
+                <select id="instruction-room" aria-label="desk"></select>
+                <input id="instruction-text" type="text" maxlength="200" autocomplete="off" placeholder="デスクへの指示を書く" />
+                <button type="submit" id="instruction-send">送る</button>
+                <div id="office-instruction-hint">投稿・広告・課金はしません。送信はその部屋の担当に渡します（未実行）。</div>
+            </form>
+            <div id="office-buckets">
+                <section class="office-bucket" data-bucket="動いている">
+                    <div class="office-bucket-title">動いている</div>
+                    <div class="office-chip-list" id="bucket-running"></div>
+                </section>
+                <section class="office-bucket" data-bucket="許可待ち">
+                    <div class="office-bucket-title">許可待ち</div>
+                    <div class="office-chip-list" id="bucket-waiting"></div>
+                </section>
+                <section class="office-bucket" data-bucket="できたまま">
+                    <div class="office-bucket-title">できたまま</div>
+                    <div class="office-chip-list" id="bucket-done"></div>
+                </section>
+            </div>
+            <div id="office-board-toast" role="status"></div>
+        </div>
+    </div>
     
     <!-- 下部パネル -->
     <div id="bottom-panels">
@@ -1521,7 +1418,6 @@
             <div id="guest-agent-panel-title">仲間リスト</div>
             <div id="guest-agent-list">
                 <div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">訪問者はいない</div>
-            </div>
             </div>
         </div>
     </div>
@@ -2319,51 +2215,22 @@
 
         function renderStaffFloor(data) {
             const host = document.getElementById('staff-floor');
-            if (!host) return;
-            const queued = mergeInstructions(data && data.queuedInstructions);
-            host.innerHTML = STAFF_ROSTER.map((staff, idx) => {
-                const view = staffDeskView(staff, data || {}, queued.pending, queued.delivered);
-                const task = view.task
-                    ? `<div class="staff-desk-task">${escapeHtml(view.task)}</div>`
-                    : '';
-                const eta = view.eta
-                    ? `<div class="staff-desk-eta">${escapeHtml(view.eta)}</div>`
-                    : '';
-                return `<button type="button" class="staff-desk" data-state="${escapeHtml(view.state)}" data-name="${escapeHtml(staff.name)}" data-room="${escapeHtml(staff.room)}" style="--staff-hue:${staff.hue}">
-                    <span class="staff-desk-char" aria-hidden="true"></span>
-                    <span class="staff-desk-copy">
-                        <span class="staff-desk-name">${escapeHtml(staff.name)}</span>
-                        <span class="staff-desk-room">${escapeHtml(staff.room)}</span>
-                        <span class="staff-desk-state">${escapeHtml(view.state)}</span>
-                        ${task}${eta}
-                    </span>
-                </button>`;
-            }).join('');
-            host.querySelectorAll('.staff-desk').forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    const room = btn.getAttribute('data-room') || '';
-                    const sel = document.getElementById('instruction-room');
-                    if (sel && room && [...sel.options].some((opt) => opt.value === room)) {
-                        sel.value = room;
-                    }
-                    const input = document.getElementById('instruction-text');
-                    if (input) input.focus();
-                });
-            });
+            if (host) host.innerHTML = '';
             updatePhaserStaffLabels(data || {});
+        }
+
+        function staffFloorNameplate(staff) {
+            return [staff.name, staff.room].filter(Boolean).join('\n');
         }
 
         function updatePhaserStaffLabels(data) {
             const sprites = window.staffDeskSprites;
             if (!Array.isArray(sprites) || !game) return;
-            const queued = mergeInstructions(data && data.queuedInstructions);
             sprites.forEach((entry) => {
                 if (!entry || !entry.staff || !entry.sprite) return;
-                const view = staffDeskView(entry.staff, data, queued.pending, queued.delivered);
-                const lines = [entry.staff.name, entry.staff.room, view.state];
-                if (view.task) lines.push(view.task);
+                const lines = staffFloorNameplate(entry.staff);
                 if (!entry.label || !entry.label.active) {
-                    entry.label = game.add.text(entry.sprite.x, entry.sprite.y - 118, lines.join('\n'), {
+                    entry.label = game.add.text(entry.sprite.x, entry.sprite.y - 118, lines, {
                         fontFamily: 'ArkPixel, monospace',
                         fontSize: '14px',
                         fill: '#ffffff',
@@ -2374,7 +2241,7 @@
                     }).setOrigin(0.5, 1);
                     entry.label.setDepth(1260);
                 } else {
-                    entry.label.setText(lines.join('\n'));
+                    entry.label.setText(lines);
                     entry.label.setPosition(entry.sprite.x, entry.sprite.y - 118);
                 }
             });
@@ -2443,23 +2310,25 @@
             });
 
             queuedPending.forEach((row) => {
+                const assignee = row.assignee_name || officialAssignee(row.room, data);
                 grouped['許可待ち'].push({
                     kind: 'queued',
-                    name: row.room,
+                    name: assignee ? `${assignee} / ${row.room}` : row.room,
                     title: instructionBody(row),
                     sample: false,
                     meta: t('officeQueued'),
-                    mates: []
+                    mates: assignee ? [assignee] : []
                 });
             });
             queuedDelivered.forEach((row) => {
+                const assignee = row.assignee_name || officialAssignee(row.room, data);
                 grouped['できたまま'].push({
                     kind: 'delivered',
-                    name: row.room,
+                    name: assignee ? `${assignee} / ${row.room}` : row.room,
                     title: instructionBody(row),
                     sample: false,
                     meta: t('officeDelivered'),
-                    mates: []
+                    mates: assignee ? [assignee] : []
                 });
             });
 
@@ -4882,7 +4751,7 @@ function toggleBrokerPanel() {
                         sel.value = staff.room;
                     }
                 });
-                const label = this.add.text(point.x, point.y - 118, `${staff.name}\n${staff.room}\n待機中`, {
+                const label = this.add.text(point.x, point.y - 118, `${staff.name}\n${staff.room}`, {
                     fontFamily: 'ArkPixel, monospace',
                     fontSize: '14px',
                     fill: '#ffffff',

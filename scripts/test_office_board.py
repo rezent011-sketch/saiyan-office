@@ -208,6 +208,14 @@ def main() -> int:
         fail("Japanese empty states missing from index.html")
     if 'id="staff-floor"' not in html or 'id="office-mascot"' not in html:
         fail("staff floor / unlabeled mascot missing from index.html")
+    if "NO_OVERLAY_CARDS_20260903" not in html:
+        fail("overlay-card removal marker missing")
+    if "#staff-floor {\n            display: none !important;" not in html:
+        fail("HTML staff cards must stay hidden off the Phaser floor")
+    if "host.innerHTML = STAFF_ROSTER.map" in html or "class=\"staff-desk\"" in html:
+        fail("staff cards must not be painted over the pixel office")
+    if "staffFloorNameplate" not in html:
+        fail("Phaser nameplates must be name+room only, not status cards")
     for staff_name in TEAMMATE_NAMES:
         if staff_name not in html:
             fail(f"frontend/index.html missing staff {staff_name!r}")
