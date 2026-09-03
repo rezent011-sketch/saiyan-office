@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="office-ui" content="ja-staff-bind-20260902e">
+    <title>AIバーチャルオフィス</title>
+    <!-- PAGES_PUBLISH_20260903 -->
+    <!-- STAFF_BIND_FIX_20260902E: 海外EC binds only to 開発担当Bot; idle desks are 待機中 -->
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            min-height: 100vh;
+            background: #1a1a2e url("https://cdn.jsdelivr.net/gh/rezent011-sketch/saiyan-office@gh-pages/static/office_bg_small.webp") top center / 100% auto no-repeat;
+            background-color: #1a1a2e;
+            color: #eee;
+            font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+            padding: 12px;
+        }
+        #office-mascot {
+            position: fixed;
+            top: 8px;
+            right: 8px;
+            width: 36px;
+            height: 36px;
+            z-index: 20;
+            pointer-events: none;
+            image-rendering: pixelated;
+            background: url("https://cdn.jsdelivr.net/gh/rezent011-sketch/saiyan-office@gh-pages/static/cats-spritesheet.webp") 0 0 / 400% 400% no-repeat;
+        }
+        h1 { color: #ffd700; font-size: 20px; margin: 8px 0 12px; }
+        #staff-floor { display: grid; gap: 10px; max-width: 720px; margin: 0 auto 16px; }
+        .staff-desk {
+            display: flex; gap: 10px; align-items: stretch;
+            background: rgba(14,17,28,0.94);
+            border: 3px solid #3e2723;
+            box-shadow: inset 0 0 0 2px #ffd700;
+            padding: 10px; width: 100%; text-align: left; color: inherit;
+            font: inherit; cursor: pointer;
+        }
+        .staff-desk-char {
+            flex: 0 0 48px; width: 48px; height: 56px;
+            background:
+                radial-gradient(circle at 50% 28%, #ffe8b0 0 7px, transparent 8px),
+                linear-gradient(hsl(var(--staff-hue), 72%, 48%), hsl(var(--staff-hue), 72%, 36%)) 10px 30px / 24px 18px no-repeat;
+        }
+        .staff-desk-copy { min-width: 0; flex: 1; }
+        .staff-desk-name { font-size: 18px; font-weight: 700; }
+        .staff-desk-room { color: #93c5fd; font-size: 16px; font-weight: 700; }
+        .staff-desk-state { font-size: 18px; font-weight: 700; }
+        .staff-desk[data-state="動いている"] .staff-desk-state { color: #ffd700; }
+        .staff-desk[data-state="許可待ち"] .staff-desk-state { color: #fb923c; }
+        .staff-desk[data-state="できたまま"] .staff-desk-state { color: #cbd5e1; }
+        .staff-desk[data-state="待機中"] .staff-desk-state { color: #86efac; }
+        .staff-desk-task { color: #fde68a; font-size: 16px; margin-top: 2px; word-break: break-word; }
+        #office-instruction { display: flex; flex-wrap: wrap; gap: 8px; max-width: 720px; margin: 0 auto; }
+        #office-instruction select, #office-instruction input, #office-instruction button {
+            font: inherit; font-size: 16px; padding: 10px; background: #3a3f4f; color: #fff; border: 2px solid #555;
+        }
+        #office-instruction input { flex: 1 1 180px; }
+        #instruction-send { background: #5d4037; border-color: #ffd700; color: #ffd700; }
+        #office-instruction-hint { width: 100%; color: #94a3b8; font-size: 13px; }
+        #toast { display: none; max-width: 720px; margin: 10px auto 0; background: #1f2937; color: #fde68a; border: 2px solid #f59e0b; padding: 8px; }
+    </style>
+</head>
+<body>
+    <div id="office-mascot" aria-hidden="true"></div>
+    <h1>AIバーチャルオフィス</h1>
+    <div id="staff-floor" aria-label="AI社員デスク"></div>
+    <form id="office-instruction">
+        <select id="instruction-room" aria-label="desk"></select>
+        <input id="instruction-text" type="text" maxlength="200" autocomplete="off" placeholder="デスクへの指示を書く" />
+        <button type="submit" id="instruction-send">送る</button>
+        <div id="office-instruction-hint">投稿・広告・課金はしません。送信はその部屋の担当に渡します（未実行）。</div>
+    </form>
+    <div id="toast" role="status"></div>
+    <script>
+    const API = "https://saiyan-ai-virtual-office.rust-sauce.workers.dev";
+    const ROOM_ASSIGNEES = {
+        "司令塔": "メインAI社員",
+        "AIバーチャルオフィス": "開発担当Bot2",
+        "広告運用": "広告運用Bot",
+        "海外EC": "開発担当Bot",
+        "新規事業会議": "新規事業Bot",
+        "Xマーケティング自動化": "Xマーケティング担当Bot",
+        "動画生成": "動画生成担当Bot",
+        "コンサル管理": "コンサル管理Bot",
+        "新規顧客開拓": "新規顧客開拓Bot"
+    };
+    const STAFF_ROSTER = [
+        { name: "メインAI社員", room: "司令塔", hue: 38 },
+        { name: "開発担当Bot", room: "海外EC", hue: 200 },
+        { name: "開発担当Bot2", room: "AIバーチャルオフィス", hue: 168 },
+        { name: "UTAGE・LINE担当Bot", room: "AIバーチャルオフィス", hue: 88 },
+        { name: "TikTok LIVE切り抜きBot", room: "動画生成", hue: 320 },
+        { name: "動画生成担当Bot", room: "動画生成", hue: 280 },
+        { name: "広告運用Bot", room: "広告運用", hue: 12 },
+        { name: "新規事業Bot", room: "新規事業会議", hue: 48 },
+        { name: "新規顧客開拓Bot", room: "新規顧客開拓", hue: 140 },
+        { name: "Xマーケティング担当Bot", room: "Xマーケティング自動化", hue: 210 },
+        { name: "クラウド環境構築Bot", room: "AIバーチャルオフィス", hue: 190 },
+        { name: "コンサル管理Bot", room: "コンサル管理", hue: 24 },
+        { name: "Claude Code開発", room: "司令塔", hue: 260 }
+    ];
+    function escapeHtml(v) {
+        return String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+    }
+    function officialAssignee(room, data) {
+        return (data && data.roomAssignees && data.roomAssignees[room])
+            || ((data && data.grokRooms || []).find((r) => r.name === room) || {}).assignee
+            || ROOM_ASSIGNEES[room] || "";
+    }
+    function bodyOf(row) { return String((row && (row.body || row.text)) || "").trim(); }
+    function delivered(row) {
+        if (!row) return false;
+        if (row.delivered === true) return true;
+        if (row.queued === false && row.status === "できたまま") return true;
+        return false;
+    }
+    function ownInstruction(name, room, rows, data) {
+        const official = officialAssignee(room, data);
+        return (rows || []).filter((row) => {
+            if (!row || !bodyOf(row)) return false;
+            const assignee = String(row.assignee_name || "").trim();
+            if (assignee) return assignee === name;
+            return String(row.room || "") === room && name === official && official !== "";
+        }).pop() || null;
+    }
+    function staffDeskView(staff, data) {
+        const pending = (data.queuedInstructions || []).filter((r) => !delivered(r));
+        const done = (data.queuedInstructions || []).filter(delivered);
+        const queued = ownInstruction(staff.name, staff.room, pending, data);
+        const finished = ownInstruction(staff.name, staff.room, done, data);
+        if (queued) return { state: "許可待ち", task: bodyOf(queued), room: staff.room };
+        if (finished) return { state: "できたまま", task: bodyOf(finished), room: staff.room };
+        const mate = (data.teammates || []).find((m) => m.name === staff.name) || {};
+        const official = officialAssignee(staff.room, data);
+        const ownTask = String(mate.task || mate.currentTask || "").trim();
+        const ownBusy = String(mate.status || "") === "動いている" || String(mate.lifecycle || "").toLowerCase() === "running";
+        if (staff.name === official && ownTask && ownBusy) {
+            return { state: "動いている", task: ownTask, room: staff.room };
+        }
+        return { state: "待機中", task: "", room: staff.room };
+    }
+    function render(data) {
+        const rooms = Object.keys(ROOM_ASSIGNEES);
+        const sel = document.getElementById("instruction-room");
+        const cur = sel.value;
+        sel.innerHTML = rooms.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("");
+        if (rooms.includes(cur)) sel.value = cur;
+        document.getElementById("staff-floor").innerHTML = STAFF_ROSTER.map((staff) => {
+            const view = staffDeskView(staff, data || {});
+            const task = view.task ? `<div class="staff-desk-task">${escapeHtml(view.task)}</div>` : "";
+            return `<button type="button" class="staff-desk" data-state="${escapeHtml(view.state)}" data-room="${escapeHtml(staff.room)}" style="--staff-hue:${staff.hue}">
+                <span class="staff-desk-char" aria-hidden="true"></span>
+                <span class="staff-desk-copy">
+                    <span class="staff-desk-name">${escapeHtml(staff.name)}</span>
+                    <span class="staff-desk-room">${escapeHtml(staff.room)}</span>
+                    <span class="staff-desk-state">${escapeHtml(view.state)}</span>
+                    ${task}
+                </span>
+            </button>`;
+        }).join("");
+        document.querySelectorAll(".staff-desk").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const room = btn.getAttribute("data-room") || "";
+                if (room && [...sel.options].some((o) => o.value === room)) sel.value = room;
+                document.getElementById("instruction-text").focus();
+            });
+        });
+    }
+    function toast(msg) {
+        const el = document.getElementById("toast");
+        el.textContent = msg;
+        el.style.display = "block";
+        setTimeout(() => { el.style.display = "none"; }, 2400);
+    }
+    async function refresh() {
+        try {
+            const res = await fetch(API + "/status", { cache: "no-store" });
+            render(await res.json());
+        } catch (e) {
+            render({ queuedInstructions: [] });
+        }
+    }
+    document.getElementById("office-instruction").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const room = document.getElementById("instruction-room").value.trim();
+        const text = document.getElementById("instruction-text").value.trim();
+        if (!room || !text) { toast("指示を書いてから送ってください"); return; }
+        const res = await fetch(API + "/set_state", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ instruction: { room, text } })
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (res.ok) {
+            document.getElementById("instruction-text").value = "";
+            toast(payload.msg || "この部屋の担当に渡しました（未実行）");
+            await refresh();
+            return;
+        }
+        toast(payload.msg || "指示を書けませんでした");
+    });
+    render({});
+    refresh();
+    </script>
+</body>
+</html>
