@@ -15,13 +15,15 @@ sys.path.insert(0, str(ROOT / "backend"))
 
 from office_board import public_board  # noqa: E402
 
-DEST = ROOT / "public-office"
+DEST = Path(os.environ.get("PUBLIC_OFFICE_DEST", ROOT / "public-office"))
 FRONTEND = ROOT / "frontend"
 DOMAIN = "saiyan-ai-virtual-office.surge.sh"
 API_ORIGIN = os.environ.get(
     "PUBLIC_OFFICE_API_ORIGIN",
     "https://saiyan-ai-virtual-office.rust-sauce.workers.dev",
 ).strip().rstrip("/")
+ASSET_PREFIX = os.environ.get("PUBLIC_ASSET_PREFIX", "").strip().rstrip("/")
+WRITE_CNAME = os.environ.get("PUBLIC_WRITE_CNAME", "1").strip().lower() not in {"0", "false", "no"}
 SKIP_NAMES = {
     "electron-standalone.html",
     "join.html",
@@ -39,7 +41,13 @@ def _strip_id_block(html: str, element_id: str) -> str:
 
 def sanitize_public_html(html: str) -> str:
     """Keep the pixel board; drop broker/Gemini/drawer copy from the public page."""
-    html = html.replace("{{VERSION_TIMESTAMP}}", "public-20260902e")
+    html = html.replace("{{VERSION_TIMESTAMP}}", "public-20260903a")
+    if "PAGES_PUBLISH_20260903" not in html:
+        html = html.replace(
+            "<title>AIバーチャルオフィス</title>",
+            "<title>AIバーチャルオフィス</title>\n    <!-- PAGES_PUBLISH_20260903 -->",
+            1,
+        )
     for element_id in (
         "asset-drawer-backdrop",
         "asset-drawer",
@@ -77,6 +85,12 @@ def sanitize_public_html(html: str) -> str:
     return html
 
 
+def apply_asset_prefix(html: str) -> str:
+    if not ASSET_PREFIX:
+        return html
+    return html.replace("/static/", f"{ASSET_PREFIX}/static/")
+
+
 def assert_public_html(html: str) -> None:
     if "AIバーチャルオフィス" not in html:
         raise SystemExit("public HTML missing title AIバーチャルオフィス")
@@ -101,6 +115,11 @@ def assert_public_html(html: str) -> None:
         raise SystemExit("public HTML still fetches relative /set_state")
     if "fetch('/status'" in html or 'fetch("/status"' in html:
         raise SystemExit("public HTML still fetches relative /status")
+    if ASSET_PREFIX:
+        if f"{ASSET_PREFIX}/static/" not in html:
+            raise SystemExit("public HTML missing project Pages asset prefix")
+        if 'src="/static/' in html or "url('/static/" in html:
+            raise SystemExit("public HTML still uses root /static/ paths")
     for token in PUBLIC_BANNED + ("待命", "暂无访客", "zh-CN"):
         if token in html:
             raise SystemExit(f"public HTML still contains {token!r}")
@@ -132,12 +151,13 @@ def main() -> int:
     )
     shim_tag = (
         api_origin_js
-        + '<script src="/static/public-office-shim.js?v=public-20260902e"></script>\n    '
+        + '<script src="/static/public-office-shim.js?v=public-20260903a"></script>\n    '
     )
     needle = '<script src="/static/vendor/phaser-3.80.1.min.js'
     if needle not in html:
         raise SystemExit("phaser script tag missing")
     html = html.replace(needle, shim_tag + needle, 1)
+    html = apply_asset_prefix(html)
     assert_public_html(html)
     (DEST / "index.html").write_text(html, encoding="utf-8")
     shutil.copy2(ROOT / "scripts" / "public_office_shim.js", static_dir / "public-office-shim.js")
@@ -154,8 +174,11 @@ def main() -> int:
         json.dumps(status, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    (DEST / "CNAME").write_text(DOMAIN + "\n", encoding="utf-8")
-    print(f"Built {DEST} for https://{DOMAIN}")
+    (DEST / ".nojekyll").write_text("", encoding="utf-8")
+    if WRITE_CNAME:
+        (DEST / "CNAME").write_text(DOMAIN + "\n", encoding="utf-8")
+    host = f"https://rezent011-sketch.github.io{ASSET_PREFIX}/" if ASSET_PREFIX else f"https://{DOMAIN}"
+    print(f"Built {DEST} for {host}")
     return 0
 
 

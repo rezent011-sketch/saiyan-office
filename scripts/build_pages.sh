@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
-# Build a Flask-free static preview for GitHub Pages.
+# Build the current public office for GitHub Pages project URL
+# https://rezent011-sketch.github.io/saiyan-office/
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="${1:-"$ROOT/_site"}"
 
-rm -rf "$DEST"
-mkdir -p "$DEST"
+export PUBLIC_OFFICE_DEST="$DEST"
+export PUBLIC_ASSET_PREFIX="/saiyan-office"
+export PUBLIC_WRITE_CNAME=0
+export PUBLIC_OFFICE_API_ORIGIN="${PUBLIC_OFFICE_API_ORIGIN:-https://saiyan-ai-virtual-office.rust-sauce.workers.dev}"
 
-cp "$ROOT/static-preview/index.html" "$DEST/index.html"
-cp "$ROOT/state.sample.json" "$DEST/state.json"
-cp "$ROOT/frontend/office_bg_small.webp" "$DEST/office_bg_small.webp"
-cp "$ROOT/frontend/desk-v3.webp" "$DEST/desk-v3.webp"
-cp "$ROOT/frontend/fonts/ark-pixel-12px-proportional-ja.ttf.woff2" "$DEST/ark-pixel.woff2"
+python3 "$ROOT/scripts/build_public_office.py"
 touch "$DEST/.nojekyll"
 
-echo "Built static preview at $DEST"
+echo "Built GitHub Pages office at $DEST"
