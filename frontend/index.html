@@ -8,6 +8,7 @@
     <!-- NO_OVERLAY_CARDS_20260903: no gold staff cards over the Phaser floor; status only on the bottom board -->
     <!-- STAFF_REST_WORK_20260903: on-duty staff animate at desks; 待機中 rest on the sofa lounge -->
     <!-- WAITING_ROOM_20260904: idle staff sit in a separate 待機部屋 wing; no sofa pile-up -->
+    <!-- YESTERDAY_MEMO_20260904: Pages diary uses Worker /status for JST yesterday; never bare 昨日の日記はまだない -->
     <title>AIバーチャルオフィス</title>
     <style>
         @font-face {
@@ -1399,7 +1400,7 @@
             <div id="memo-date"></div>
             <div class="memo-decoration">─ ─ ─ ─ ─</div>
             <div id="memo-content">
-                <div id="memo-placeholder">昨日の日記はまだない</div>
+                <div id="memo-placeholder">昨日の記録を確認しています</div>
             </div>
             <div class="memo-decoration">─ ─ ─ ─ ─</div>
         </div>
@@ -1569,7 +1570,7 @@
                 officeWorkKind: 'CURSOR',
                 officeNoLink: 'No room URL in state.json (not invented)',
                 officeEmptyBucket: 'empty',
-                memoEmpty: '昨日の日記はまだない',
+                memoEmpty: '昨日の記録を確認しています',
                 memoLoading: 'Loading...',
                 memoLoadFail: 'Failed to load',
                 guestEmpty: '訪問者はいない',
@@ -1615,7 +1616,7 @@
                 officeBoardSource: '実況ボード（デスク＝Grok部屋 / 作業＝Cursor）',
                 officeDeskKind: 'デスク',
                 officeWorkKind: 'Cursor作業',
-                memoEmpty: '昨日の日記はまだない',
+                memoEmpty: '昨日の記録を確認しています',
                 memoLoading: '読み込み中...',
                 memoLoadFail: '読み込みに失敗しました',
                 guestEmpty: '訪問者はいない',
@@ -1716,7 +1717,7 @@
             setText('office-instruction-hint', 'instructionHint');
             setPh('instruction-text', 'instructionPlaceholder');
             const memoPh = document.getElementById('memo-placeholder');
-            if (memoPh) memoPh.textContent = t('memoEmpty');
+            if (memoPh && !window.__memoLoaded) memoPh.textContent = t('memoLoading');
             if (window.__officeBoardData) {
                 renderOfficeBoard(window.__officeBoardData);
             }
@@ -1807,24 +1808,136 @@
         let loadedAssets = 0;
         let loadingProgressBar, loadingProgressContainer, loadingOverlay, loadingText;
 
-        // メモ関数
-        async function loadMemo() {
+        const YESTERDAY_MEMO_URL = 'https://saiyan-ai-virtual-office.rust-sauce.workers.dev/yesterday-memo';
+        const YESTERDAY_STATUS_URL = 'https://saiyan-ai-virtual-office.rust-sauce.workers.dev/status';
+
+        function tokyoYmdFromDate(date) {
+            return new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit'
+            }).format(date);
+        }
+
+        function yesterdayTokyoYmd(now) {
+            const parts = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit'
+            }).formatToParts(now || new Date());
+            const map = {};
+            parts.forEach((p) => { if (p.type !== 'literal') map[p.type] = p.value; });
+            const today = new Date(Date.UTC(Number(map.year), Number(map.month) - 1, Number(map.day)));
+            today.setUTCDate(today.getUTCDate() - 1);
+            return today.toISOString().slice(0, 10);
+        }
+
+        function itemTokyoYmd(item) {
+            if (!item || typeof item !== 'object') return '';
+            const raw = item.delivered_at || item.finished_at || item.updated_at || item.created_at || item.timestamp;
+            if (!raw) return '';
+            const d = new Date(raw);
+            return Number.isNaN(d.getTime()) ? '' : tokyoYmdFromDate(d);
+        }
+
+        function buildYesterdayMemoFromStatus(status) {
+            const source = YESTERDAY_STATUS_URL;
+            const yst = yesterdayTokyoYmd(new Date());
+            const lines = [];
+            const seen = {};
+            const add = (state, who, body) => {
+                const text = '・' + [state, who, body].filter(Boolean).join(' ');
+                if (seen[text]) return;
+                seen[text] = true;
+                lines.push(text);
+            };
+            (status && status.queuedInstructions || []).forEach((row) => {
+                if (!row || itemTokyoYmd(row) !== yst) return;
+                const body = String(row.body || row.text || '').trim();
+                if (!body) return;
+                const delivered = row.delivered === true || String(row.status || '') === 'できたまま';
+                const state = delivered ? 'できたまま' : String(row.status || '許可待ち');
+                if (state !== 'できたまま' && state !== '動いている' && state !== '許可待ち') return;
+                add(state, String(row.assignee_name || row.room || '').trim(), body);
+            });
+            (status && status.cursorAgents || []).forEach((agent) => {
+                if (!agent || itemTokyoYmd(agent) !== yst) return;
+                const life = String(agent.lifecycle || '').trim().toLowerCase();
+                const st = String(agent.status || '').trim();
+                const done = life === 'finished' || st === 'できたまま';
+                const progress = life === 'running' || st === '動いている';
+                if (!done && !progress) return;
+                const name = String(agent.title || agent.name || '').trim();
+                if (!name) return;
+                add(done ? 'できたまま' : '動いている', name, String(agent.branch || '').trim());
+            });
+            (status && status.grokRooms || []).forEach((room) => {
+                if (!room || itemTokyoYmd(room) !== yst) return;
+                const task = String(room.task || room.currentTask || '').trim();
+                if (!task) return;
+                const life = String(room.lifecycle || '').trim().toLowerCase();
+                const st = String(room.status || '').trim();
+                const done = life === 'finished' || st === 'できたまま';
+                const progress = life === 'running' || st === '動いている';
+                if (!done && !progress) return;
+                add(done ? 'できたまま' : '動いている', String(room.assignee || room.name || '').trim(), task);
+            });
+            if (lines.length) {
+                return { success: true, date: yst, timezone: 'Asia/Tokyo', source: source, memo: lines.join('\n') };
+            }
+            const reasons = ['JST昨日（' + yst + '）に日付付きの完了・進行行がなかった'];
+            const undatedDone = (status && status.cursorAgents || []).some((a) => a && !itemTokyoYmd(a) && (String(a.lifecycle || '').toLowerCase() === 'finished' || String(a.status || '') === 'できたまま'));
+            if (undatedDone) reasons.push('cursorAgents のできたままに日付がないため昨日に含めない');
+            const datedRooms = (status && status.grokRooms || []).some((r) => r && itemTokyoYmd(r));
+            if (!datedRooms) reasons.push('部屋の完了に日付がない');
+            const reason = reasons.join('。');
+            return {
+                success: false,
+                empty: true,
+                date: yst,
+                timezone: 'Asia/Tokyo',
+                source: source,
+                reason: reason,
+                msg: '昨日（JST ' + yst + '）の記録なし。出典 ' + source + '。' + reason
+            };
+        }
+
+        function renderYesterdayMemo(data) {
             const memoDate = document.getElementById('memo-date');
             const memoContent = document.getElementById('memo-content');
-            
+            if (!memoContent) return;
+            window.__memoLoaded = true;
+            if (data && data.success && data.memo) {
+                if (memoDate) memoDate.textContent = data.date || '';
+                memoContent.innerHTML = escapeHtml(data.memo).replace(/\n/g, '<br>');
+                return;
+            }
+            const yst = (data && data.date) || yesterdayTokyoYmd(new Date());
+            const source = (data && data.source) || YESTERDAY_STATUS_URL;
+            const reason = (data && (data.reason || data.msg)) || '日付付きの完了・進行行がなかった';
+            if (memoDate) memoDate.textContent = yst;
+            memoContent.innerHTML = `<div id="memo-placeholder">${escapeHtml('昨日（JST ' + yst + '）の記録なし。出典 ' + source + '。' + reason)}</div>`;
+        }
+
+        async function loadMemo() {
             try {
-                const response = await fetch('/yesterday-memo?t=' + Date.now(), { cache: 'no-store' });
+                const response = await fetch(YESTERDAY_MEMO_URL + '?t=' + Date.now(), { cache: 'no-store' });
                 const data = await response.json();
-                
-                if (data.success && data.memo) {
-                    memoDate.textContent = data.date || '';
-                    memoContent.innerHTML = data.memo.replace(/\n/g, '<br>');
-                } else {
-                    setMemoPlaceholder('memoEmpty');
+                const stub = !data || data.msg === '昨日の日記はまだない' || (!data.success && !data.empty && !data.reason);
+                if (!stub && (data.success || data.empty || data.msg)) {
+                    renderYesterdayMemo(data);
+                    return;
                 }
+            } catch (e) {}
+            try {
+                const res = await fetch(YESTERDAY_STATUS_URL + '?t=' + Date.now(), { cache: 'no-store' });
+                const status = await res.json();
+                renderYesterdayMemo(buildYesterdayMemoFromStatus(status || {}));
+                return;
             } catch (e) {
-                console.error('memo load failed', e);
-                setMemoPlaceholder('memoLoadFail');
+                renderYesterdayMemo({
+                    success: false,
+                    empty: true,
+                    date: yesterdayTokyoYmd(new Date()),
+                    source: YESTERDAY_STATUS_URL,
+                    reason: '出典の取得に失敗した'
+                });
             }
         }
 

@@ -124,7 +124,7 @@
             return Promise.resolve(jsonResponse({ status: 'ok' }));
         }
         if (path === '/yesterday-memo') {
-            return Promise.resolve(jsonResponse({ success: false, msg: '昨日の日記はまだない' }));
+            return origFetch(apiUrl('/yesterday-memo') + '?t=' + Date.now(), { cache: 'no-store' });
         }
         if (path === '/agents') {
             return Promise.resolve(jsonResponse([]));

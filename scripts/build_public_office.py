@@ -83,6 +83,8 @@ def sanitize_public_html(html: str) -> str:
         html = html.replace("fetch('/status'", f"fetch('{API_ORIGIN}/status'")
         html = html.replace('fetch("/status"', f'fetch("{API_ORIGIN}/status"')
         html = html.replace("fetch('/status.json'", f"fetch('{API_ORIGIN}/status.json'")
+        html = html.replace("fetch('/yesterday-memo'", f"fetch('{API_ORIGIN}/yesterday-memo'")
+        html = html.replace('fetch("/yesterday-memo"', f'fetch("{API_ORIGIN}/yesterday-memo"')
     return html
 
 
@@ -126,6 +128,12 @@ def assert_public_html(html: str) -> None:
         raise SystemExit("public HTML still fetches relative /set_state")
     if "fetch('/status'" in html or 'fetch("/status"' in html:
         raise SystemExit("public HTML still fetches relative /status")
+    if f"{API_ORIGIN}/yesterday-memo" not in html:
+        raise SystemExit("public HTML must load yesterday memo from the rust-sauce workers origin")
+    if "YESTERDAY_MEMO_20260904" not in html or "buildYesterdayMemoFromStatus" not in html:
+        raise SystemExit("public HTML missing Pages yesterday-memo builder")
+    if 'id="memo-placeholder">昨日の日記はまだない' in html:
+        raise SystemExit("public HTML still ships the bare empty diary placeholder")
     if RELATIVE_ASSETS:
         if 'src="static/' not in html:
             raise SystemExit("public HTML missing relative static/ asset paths")
@@ -188,6 +196,26 @@ def main() -> int:
     }
     (DEST / "status.json").write_text(
         json.dumps(status, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from yesterday_memo import STATUS_URL as MEMO_STATUS_URL  # noqa: E402
+    from yesterday_memo import build_yesterday_memo  # noqa: E402
+
+    memo_status = dict(status)
+    try:
+        import urllib.request
+
+        req = urllib.request.Request(MEMO_STATUS_URL, headers={"User-Agent": "saiyan-office-pages"})
+        with urllib.request.urlopen(req, timeout=12) as res:
+            live = json.loads(res.read().decode("utf-8"))
+        if isinstance(live, dict):
+            memo_status = live
+    except Exception:
+        pass
+    memo = build_yesterday_memo(memo_status)
+    (DEST / "yesterday-memo.json").write_text(
+        json.dumps(memo, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     (DEST / ".nojekyll").write_text("", encoding="utf-8")

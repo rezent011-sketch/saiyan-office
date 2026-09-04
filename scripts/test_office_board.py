@@ -204,8 +204,14 @@ def main() -> int:
         fail("サンプル may exist only as a hide-filter, never as a visible label")
     if "const uiLang = 'ja'" not in html or 'lang="ja"' not in html:
         fail("UI language must be forced to ja")
-    if "昨日の日記はまだない" not in html or "訪問者はいない" not in html or "待機中" not in html:
+    if "訪問者はいない" not in html or "待機中" not in html:
         fail("Japanese empty states missing from index.html")
+    if 'id="memo-placeholder">昨日の日記はまだない' in html:
+        fail("bare 昨日の日記はまだない must not be the diary empty state")
+    if "YESTERDAY_MEMO_20260904" not in html or "buildYesterdayMemoFromStatus" not in html:
+        fail("Pages diary must build from Worker /status for JST yesterday")
+    if "https://saiyan-ai-virtual-office.rust-sauce.workers.dev/yesterday-memo" not in html:
+        fail("Pages diary must use the rust-sauce yesterday-memo URL")
     if 'id="staff-floor"' not in html or 'id="office-mascot"' not in html:
         fail("staff floor / unlabeled mascot missing from index.html")
     if "NO_OVERLAY_CARDS_20260903" not in html:

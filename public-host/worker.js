@@ -159,6 +159,113 @@ async function handleSetState(request, env) {
   });
 }
 
+function tokyoYmd(date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+function yesterdayTokyo(now) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now || new Date());
+  const map = {};
+  parts.forEach((p) => {
+    if (p.type !== "literal") map[p.type] = p.value;
+  });
+  const today = new Date(Date.UTC(Number(map.year), Number(map.month) - 1, Number(map.day)));
+  today.setUTCDate(today.getUTCDate() - 1);
+  return today.toISOString().slice(0, 10);
+}
+
+function itemTokyoYmd(item) {
+  if (!item || typeof item !== "object") return "";
+  const raw = item.delivered_at || item.finished_at || item.updated_at || item.created_at || item.timestamp;
+  if (!raw) return "";
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return "";
+  return tokyoYmd(d);
+}
+
+function buildYesterdayMemo(status) {
+  const source = "https://saiyan-ai-virtual-office.rust-sauce.workers.dev/status";
+  const yst = yesterdayTokyo(new Date());
+  const lines = [];
+  const seen = {};
+  const add = (state, who, body) => {
+    const text = "・" + [state, who, body].filter(Boolean).join(" ");
+    if (seen[text]) return;
+    seen[text] = true;
+    lines.push(text);
+  };
+  (status.queuedInstructions || []).forEach((row) => {
+    if (!row || itemTokyoYmd(row) !== yst) return;
+    const body = String(row.body || row.text || "").trim();
+    if (!body) return;
+    const delivered = row.delivered === true || String(row.status || "") === "できたまま";
+    const state = delivered ? "できたまま" : String(row.status || "許可待ち");
+    if (state !== "できたまま" && state !== "動いている" && state !== "許可待ち") return;
+    add(state, String(row.assignee_name || row.room || "").trim(), body);
+  });
+  (status.cursorAgents || []).forEach((agent) => {
+    if (!agent || itemTokyoYmd(agent) !== yst) return;
+    const life = String(agent.lifecycle || "").trim().toLowerCase();
+    const st = String(agent.status || "").trim();
+    const done = life === "finished" || st === "できたまま";
+    const progress = life === "running" || st === "動いている";
+    if (!done && !progress) return;
+    const name = String(agent.title || agent.name || "").trim();
+    if (!name) return;
+    add(done ? "できたまま" : "動いている", name, String(agent.branch || "").trim());
+  });
+  (status.grokRooms || []).forEach((room) => {
+    if (!room || itemTokyoYmd(room) !== yst) return;
+    const task = String(room.task || room.currentTask || "").trim();
+    if (!task) return;
+    const life = String(room.lifecycle || "").trim().toLowerCase();
+    const st = String(room.status || "").trim();
+    const done = life === "finished" || st === "できたまま";
+    const progress = life === "running" || st === "動いている";
+    if (!done && !progress) return;
+    add(done ? "できたまま" : "動いている", String(room.assignee || room.name || "").trim(), task);
+  });
+  if (lines.length) {
+    return { success: true, date: yst, timezone: "Asia/Tokyo", source: source, memo: lines.join("\n"), count: lines.length };
+  }
+  const reasons = ["JST昨日（" + yst + "）に日付付きの完了・進行行がなかった"];
+  const undatedDone = (status.cursorAgents || []).some((a) => a && !itemTokyoYmd(a) && (String(a.lifecycle || "").toLowerCase() === "finished" || String(a.status || "") === "できたまま"));
+  if (undatedDone) reasons.push("cursorAgents のできたままに日付がないため昨日に含めない");
+  const datedRooms = (status.grokRooms || []).some((r) => r && itemTokyoYmd(r));
+  if (!datedRooms) reasons.push("部屋の完了に日付がない");
+  const reason = reasons.join("。");
+  return {
+    success: false,
+    empty: true,
+    date: yst,
+    timezone: "Asia/Tokyo",
+    source: source,
+    reason: reason,
+    msg: "昨日（JST " + yst + "）の記録なし。出典 " + source + "。" + reason,
+  };
+}
+
+async function handleYesterdayMemo(env) {
+  let data = {};
+  try {
+    const res = await handleStatus(env);
+    data = await res.json();
+  } catch (_e) {
+    data = {};
+  }
+  return jsonResponse(buildYesterdayMemo(data || {}));
+}
+
 async function handleStatus(env) {
   let data = {};
   try {
@@ -189,8 +296,8 @@ async function handleRequest(request, env) {
   if (path === "/health" && request.method === "GET") {
     return jsonResponse({ ok: true });
   }
-  if (path === "/yesterday-memo") {
-    return jsonResponse({ success: false, msg: "昨日の日記はまだない" });
+  if (path === "/yesterday-memo" && request.method === "GET") {
+    return handleYesterdayMemo(env);
   }
   if (path === "/agents") {
     return jsonResponse([]);
