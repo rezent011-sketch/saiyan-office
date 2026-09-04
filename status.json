@@ -1,0 +1,352 @@
+{
+  "state": "idle",
+  "detail": "待機中",
+  "progress": 0,
+  "officeName": "AIバーチャルオフィス",
+  "dataSource": "local",
+  "liveCursorApi": false,
+  "buckets": [
+    "動いている",
+    "許可待ち",
+    "できたまま"
+  ],
+  "grokRooms": [
+    {
+      "id": "司令塔",
+      "name": "司令塔",
+      "kind": "desk",
+      "status": "動いている",
+      "url": "",
+      "assignee": "メインAI社員",
+      "teammates": [
+        "メインAI社員",
+        "Claude Code開発"
+      ],
+      "eta": ""
+    },
+    {
+      "id": "AIバーチャルオフィス",
+      "name": "AIバーチャルオフィス",
+      "kind": "desk",
+      "status": "動いている",
+      "url": "",
+      "assignee": "開発担当Bot2",
+      "teammates": [
+        "開発担当Bot2",
+        "UTAGE・LINE担当Bot",
+        "クラウド環境構築Bot"
+      ],
+      "eta": ""
+    },
+    {
+      "id": "広告運用",
+      "name": "広告運用",
+      "kind": "desk",
+      "status": "動いている",
+      "url": "",
+      "assignee": "広告運用Bot",
+      "teammates": [
+        "広告運用Bot"
+      ],
+      "eta": ""
+    },
+    {
+      "id": "海外EC",
+      "name": "海外EC",
+      "kind": "desk",
+      "status": "動いている",
+      "url": "",
+      "assignee": "開発担当Bot",
+      "teammates": [
+        "開発担当Bot"
+      ],
+      "eta": ""
+    },
+    {
+      "id": "新規事業会議",
+      "name": "新規事業会議",
+      "kind": "desk",
+      "status": "動いている",
+      "url": "",
+      "assignee": "新規事業Bot",
+      "teammates": [
+        "新規事業Bot"
+      ],
+      "eta": ""
+    },
+    {
+      "id": "Xマーケティング自動化",
+      "name": "Xマーケティング自動化",
+      "kind": "desk",
+      "status": "動いている",
+      "url": "",
+      "assignee": "Xマーケティング担当Bot",
+      "teammates": [
+        "Xマーケティング担当Bot"
+      ],
+      "eta": ""
+    },
+    {
+      "id": "動画生成",
+      "name": "動画生成",
+      "kind": "desk",
+      "status": "動いている",
+      "url": "",
+      "assignee": "動画生成担当Bot",
+      "teammates": [
+        "動画生成担当Bot",
+        "TikTok LIVE切り抜きBot"
+      ],
+      "eta": ""
+    },
+    {
+      "id": "コンサル管理",
+      "name": "コンサル管理",
+      "kind": "desk",
+      "status": "動いている",
+      "url": "",
+      "assignee": "コンサル管理Bot",
+      "teammates": [
+        "コンサル管理Bot"
+      ],
+      "eta": ""
+    },
+    {
+      "id": "新規顧客開拓",
+      "name": "新規顧客開拓",
+      "kind": "desk",
+      "status": "動いている",
+      "url": "",
+      "assignee": "新規顧客開拓Bot",
+      "teammates": [
+        "新規顧客開拓Bot"
+      ],
+      "eta": ""
+    }
+  ],
+  "teammates": [
+    {
+      "id": "メインAI社員",
+      "name": "メインAI社員",
+      "room": "司令塔",
+      "status": "できたまま"
+    },
+    {
+      "id": "開発担当Bot",
+      "name": "開発担当Bot",
+      "room": "海外EC",
+      "status": "できたまま"
+    },
+    {
+      "id": "開発担当Bot2",
+      "name": "開発担当Bot2",
+      "room": "AIバーチャルオフィス",
+      "status": "できたまま"
+    },
+    {
+      "id": "UTAGE・LINE担当Bot",
+      "name": "UTAGE・LINE担当Bot",
+      "room": "AIバーチャルオフィス",
+      "status": "できたまま"
+    },
+    {
+      "id": "TikTok LIVE切り抜きBot",
+      "name": "TikTok LIVE切り抜きBot",
+      "room": "動画生成",
+      "status": "できたまま"
+    },
+    {
+      "id": "動画生成担当Bot",
+      "name": "動画生成担当Bot",
+      "room": "動画生成",
+      "status": "できたまま"
+    },
+    {
+      "id": "広告運用Bot",
+      "name": "広告運用Bot",
+      "room": "広告運用",
+      "status": "できたまま"
+    },
+    {
+      "id": "新規事業Bot",
+      "name": "新規事業Bot",
+      "room": "新規事業会議",
+      "status": "できたまま"
+    },
+    {
+      "id": "新規顧客開拓Bot",
+      "name": "新規顧客開拓Bot",
+      "room": "新規顧客開拓",
+      "status": "できたまま"
+    },
+    {
+      "id": "Xマーケティング担当Bot",
+      "name": "Xマーケティング担当Bot",
+      "room": "Xマーケティング自動化",
+      "status": "できたまま"
+    },
+    {
+      "id": "クラウド環境構築Bot",
+      "name": "クラウド環境構築Bot",
+      "room": "AIバーチャルオフィス",
+      "status": "できたまま"
+    },
+    {
+      "id": "コンサル管理Bot",
+      "name": "コンサル管理Bot",
+      "room": "コンサル管理",
+      "status": "できたまま"
+    },
+    {
+      "id": "Claude Code開発",
+      "name": "Claude Code開発",
+      "room": "司令塔",
+      "status": "できたまま"
+    }
+  ],
+  "cursorAgents": [
+    {
+      "name": "Grok rooms + Cursor status on saiyan-office",
+      "title": "",
+      "status": "動いている",
+      "lifecycle": "running",
+      "branch": "",
+      "prUrl": "https://github.com/rezent011-sketch/saiyan-office/pull/1",
+      "url": "https://cursor.com/agents/bc-3356893b-3dfd-4261-92d1-fd6004956913",
+      "id": "bc-3356893b-3dfd-4261-92d1-fd6004956913",
+      "sample": false,
+      "openUrl": "https://cursor.com/agents/bc-3356893b-3dfd-4261-92d1-fd6004956913",
+      "eta": ""
+    },
+    {
+      "name": "Empty English omamori catalog",
+      "title": "",
+      "status": "動いている",
+      "lifecycle": "running",
+      "branch": "",
+      "prUrl": "",
+      "url": "https://cursor.com/agents/bc-7cad7c8d-aff9-4dd4-8432-73430ad181d1",
+      "id": "bc-7cad7c8d-aff9-4dd4-8432-73430ad181d1",
+      "sample": false,
+      "openUrl": "https://cursor.com/agents/bc-7cad7c8d-aff9-4dd4-8432-73430ad181d1",
+      "eta": ""
+    },
+    {
+      "name": "saiyan-office merge (人がmergeするまで。このPRをmergeしない)",
+      "title": "",
+      "status": "許可待ち",
+      "lifecycle": "",
+      "branch": "",
+      "prUrl": "https://github.com/rezent011-sketch/saiyan-office/pull/1",
+      "url": "",
+      "id": "",
+      "sample": false,
+      "openUrl": "https://github.com/rezent011-sketch/saiyan-office/pull/1",
+      "eta": ""
+    },
+    {
+      "name": "saiyan-office GitHub Pages (権限は翔斗さん側。Pages設定は触らない)",
+      "title": "",
+      "status": "許可待ち",
+      "lifecycle": "",
+      "branch": "",
+      "prUrl": "https://github.com/rezent011-sketch/saiyan-office/pull/1",
+      "url": "",
+      "id": "",
+      "sample": false,
+      "openUrl": "https://github.com/rezent011-sketch/saiyan-office/pull/1",
+      "eta": ""
+    },
+    {
+      "name": "Fix LP badges, proofs, celebrity collabs",
+      "title": "",
+      "status": "できたまま",
+      "lifecycle": "finished",
+      "branch": "",
+      "prUrl": "https://github.com/rezent011-sketch/skillengine-line-tokuten-lp/pull/3",
+      "url": "",
+      "id": "",
+      "sample": false,
+      "openUrl": "https://github.com/rezent011-sketch/skillengine-line-tokuten-lp/pull/3",
+      "eta": ""
+    },
+    {
+      "name": "Tighten LP proof-card layout gaps",
+      "title": "",
+      "status": "できたまま",
+      "lifecycle": "finished",
+      "branch": "",
+      "prUrl": "https://github.com/rezent011-sketch/skillengine-line-tokuten-lp/pull/5",
+      "url": "",
+      "id": "",
+      "sample": false,
+      "openUrl": "https://github.com/rezent011-sketch/skillengine-line-tokuten-lp/pull/5",
+      "eta": ""
+    },
+    {
+      "name": "Enable GitHub Pages on LP main",
+      "title": "",
+      "status": "できたまま",
+      "lifecycle": "finished",
+      "branch": "",
+      "prUrl": "",
+      "url": "",
+      "id": "",
+      "sample": false,
+      "openUrl": "https://cursor.com/agents",
+      "eta": ""
+    },
+    {
+      "name": "Fix 50社 badge alignment",
+      "title": "",
+      "status": "できたまま",
+      "lifecycle": "finished",
+      "branch": "",
+      "prUrl": "https://github.com/rezent011-sketch/skillengine-line-tokuten-lp/pull/2",
+      "url": "",
+      "id": "",
+      "sample": false,
+      "openUrl": "https://github.com/rezent011-sketch/skillengine-line-tokuten-lp/pull/2",
+      "eta": ""
+    },
+    {
+      "name": "Add Skill Engine LP image assets",
+      "title": "",
+      "status": "できたまま",
+      "lifecycle": "finished",
+      "branch": "",
+      "prUrl": "https://github.com/rezent011-sketch/skillengine-line-tokuten-lp/pull/1",
+      "url": "",
+      "id": "",
+      "sample": false,
+      "openUrl": "https://github.com/rezent011-sketch/skillengine-line-tokuten-lp/pull/1",
+      "eta": ""
+    },
+    {
+      "name": "Rebuild Gagalot LP",
+      "title": "",
+      "status": "できたまま",
+      "lifecycle": "finished",
+      "branch": "",
+      "prUrl": "https://github.com/rezent011-sketch/gagalot-line-tokuten-lp/pull/1",
+      "url": "",
+      "id": "",
+      "sample": false,
+      "openUrl": "https://github.com/rezent011-sketch/gagalot-line-tokuten-lp/pull/1",
+      "eta": ""
+    }
+  ],
+  "queuedInstructions": [],
+  "liveApiNote": "実況ボード（デスク＝Grok部屋 / 作業＝Cursor）",
+  "roomAssignees": {
+    "司令塔": "メインAI社員",
+    "AIバーチャルオフィス": "開発担当Bot2",
+    "広告運用": "広告運用Bot",
+    "海外EC": "開発担当Bot",
+    "新規事業会議": "新規事業Bot",
+    "Xマーケティング自動化": "Xマーケティング担当Bot",
+    "動画生成": "動画生成担当Bot",
+    "コンサル管理": "コンサル管理Bot",
+    "新規顧客開拓": "新規顧客開拓Bot"
+  }
+}
