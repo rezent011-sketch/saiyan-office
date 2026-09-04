@@ -27,6 +27,15 @@ from store_utils import (
     load_join_keys as _store_load_join_keys,
     save_join_keys as _store_save_join_keys,
 )
+from office_board import (
+    ensure_office_board,
+    patch_cursor_agent,
+    patch_room,
+    patch_teammate,
+    public_board,
+    queue_instruction,
+    sanitize_public_detail,
+)
 
 try:
     from PIL import Image
@@ -145,11 +154,14 @@ def add_no_cache_headers(response):
 # Default state
 DEFAULT_STATE = {
     "state": "idle",
-    "detail": "修行中...",
+    "detail": "待機中",
     "progress": 0,
     "officeName": "Saiyan Office 🐉",
-    "updated_at": datetime.now().isoformat()
+    "updated_at": datetime.now().isoformat(),
+    "dataSource": "local",
+    "liveCursorApi": False,
 }
+ensure_office_board(DEFAULT_STATE)
 
 
 def load_state():
@@ -172,6 +184,20 @@ def load_state():
     if not isinstance(state, dict):
         state = dict(DEFAULT_STATE)
 
+    cleaned_detail = sanitize_public_detail(state.get("detail"), "待機中")
+    if state.get("detail") != cleaned_detail:
+        state["detail"] = cleaned_detail
+        try:
+            save_state(state)
+        except Exception:
+            pass
+
+    if ensure_office_board(state):
+        try:
+            save_state(state)
+        except Exception:
+            pass
+
     # Auto-idle
     try:
         ttl = int(state.get("ttl_seconds", 300))
@@ -188,7 +214,7 @@ def load_state():
                 age = (datetime.now() - dt).total_seconds()
             if age > ttl:
                 state["state"] = "idle"
-                state["detail"] = "待命中（自动回到休息区）"
+                state["detail"] = "待機中"
                 state["progress"] = 0
                 state["updated_at"] = datetime.now().isoformat()
                 # persist the auto-idle so every client sees it consistently
@@ -246,24 +272,24 @@ if not os.path.exists(STATE_FILE):
 ensure_electron_standalone_snapshot()
 
 
+# Never cache index.html in-process. Always read frontend/index.html from disk.
 _INDEX_HTML_CACHE = None
 
 
 @app.route("/", methods=["GET"])
 def index():
-    """Serve the pixel office UI with built-in version cache busting"""
-    # 默认禁用页面打开即换背景，避免首屏慢
-    # 如需启用，可配置 AUTO_ROTATE_HOME_ON_PAGE_OPEN=1
+    """Serve the pixel office UI from disk every request."""
     _maybe_apply_random_home_favorite()
 
-    global _INDEX_HTML_CACHE
-    if _INDEX_HTML_CACHE is None:
-        with open(FRONTEND_INDEX_FILE, "r", encoding="utf-8") as f:
-            raw_html = f.read()
-        _INDEX_HTML_CACHE = raw_html.replace("{{VERSION_TIMESTAMP}}", VERSION_TIMESTAMP)
-
-    resp = make_response(_INDEX_HTML_CACHE)
+    with open(FRONTEND_INDEX_FILE, "r", encoding="utf-8") as f:
+        raw_html = f.read()
+    html = raw_html.replace("{{VERSION_TIMESTAMP}}", VERSION_TIMESTAMP)
+    resp = make_response(html)
     resp.headers["Content-Type"] = "text/html; charset=utf-8"
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    resp.headers["X-Office-UI"] = "ja-disk-20260902"
     return resp
 
 
@@ -311,7 +337,7 @@ DEFAULT_AGENTS = [
         "name": "Star",
         "isMain": True,
         "state": "idle",
-        "detail": "待命中，随时准备为你服务",
+        "detail": sanitize_public_detail("待機中", "待機中"),
         "updated_at": datetime.now().isoformat(),
         "area": "breakroom",
         "source": "local",
@@ -324,7 +350,21 @@ DEFAULT_AGENTS = [
 
 
 def load_agents_state():
-    return _store_load_agents_state(AGENTS_STATE_FILE, DEFAULT_AGENTS)
+    agents = _store_load_agents_state(AGENTS_STATE_FILE, DEFAULT_AGENTS)
+    changed = False
+    for agent in agents:
+        if not isinstance(agent, dict):
+            continue
+        cleaned = sanitize_public_detail(agent.get("detail"), "待機中")
+        if agent.get("detail") != cleaned:
+            agent["detail"] = cleaned
+            changed = True
+    if changed:
+        try:
+            save_agents_state(agents)
+        except Exception:
+            pass
+    return agents
 
 
 def save_agents_state(agents):
@@ -846,6 +886,8 @@ def get_agents():
     keys_data = load_join_keys()
 
     for a in agents:
+        if isinstance(a, dict) and "detail" in a:
+            a["detail"] = sanitize_public_detail(a.get("detail"), "待機中")
         if a.get("isMain"):
             cleaned_agents.append(a)
             continue
@@ -1151,6 +1193,9 @@ def get_status():
     office_name = get_office_name_from_identity()
     if office_name:
         state["officeName"] = office_name
+    state.update(public_board(state))
+    state["liveCursorApi"] = False
+    state["detail"] = sanitize_public_detail(state.get("detail"), "待機中")
     return jsonify(state)
 
 
@@ -1279,7 +1324,7 @@ def get_yesterday_memo():
         else:
             return jsonify({
                 "success": False,
-                "msg": "没有找到昨日日记"
+                "msg": "昨日の日記はまだない"
             })
     except Exception as e:
         return jsonify({
@@ -1301,10 +1346,32 @@ def set_state_endpoint():
             if s in VALID_AGENT_STATES:
                 state["state"] = s
         if "detail" in data:
-            state["detail"] = data["detail"]
+            state["detail"] = sanitize_public_detail(data["detail"], "待機中")
+        if isinstance(data.get("room"), dict):
+            patch_room(state, data["room"])
+        if isinstance(data.get("teammate"), dict):
+            patch_teammate(state, data["teammate"])
+        if isinstance(data.get("cursor"), dict):
+            patch_cursor_agent(state, data["cursor"])
+        queued = None
+        if isinstance(data.get("instruction"), dict):
+            queued = queue_instruction(state, data["instruction"])
+            if queued is None:
+                return jsonify({"status": "error", "msg": "指示を書けませんでした（部屋と本文が必要です）"}), 400
         state["updated_at"] = datetime.now().isoformat()
         save_state(state)
-        return jsonify({"status": "ok"})
+        board = public_board(state)
+        resp = {"status": "ok", "board": board}
+        if queued:
+            ack = f"「{queued['assignee_name']}」に渡しました（未実行）"
+            resp["msg"] = ack
+            resp["queuedInstruction"] = {
+                "room": queued["room"],
+                "assignee_name": queued["assignee_name"],
+                "body": queued["body"],
+                "timestamp": queued["timestamp"],
+            }
+        return jsonify(resp)
     except Exception as e:
         return jsonify({"status": "error", "msg": str(e)}), 500
 

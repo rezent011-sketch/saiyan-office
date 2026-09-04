@@ -1634,7 +1634,7 @@
         <div id="control-bar">
             <div id="control-bar-title">Star 状态</div>
             <div id="control-buttons">
-                <button id="btn-state-idle" onclick="setState('idle', getStateDetailByState('idle'))">待命</button>
+                <button id="btn-state-idle" onclick="setState('idle', getStateDetailByState('idle'))">待機</button>
                 <button id="btn-state-writing" onclick="setState('writing', getStateDetailByState('writing'))">工作</button>
                 <button id="btn-state-syncing" onclick="setState('syncing', getStateDetailByState('syncing'))">同步</button>
                 <button id="btn-state-error" onclick="setState('error', getStateDetailByState('error'))">报警</button>
@@ -1770,7 +1770,7 @@
         const I18N = {
             zh: {
                 controlTitle: 'Star 状态',
-                btnIdle: '待命', btnWork: '工作', btnSync: '同步', btnError: '报警', btnDecor: '装修房间',
+                btnIdle: '待機', btnWork: '作業', btnSync: '同期', btnError: '警報', btnDecor: '部屋を編集',
                 drawerTitle: '装修房间 · 资产侧边栏', drawerClose: '关闭',
                 authTitle: '请输入装修验证码', authPlaceholder: '输入验证码', authVerify: '验证', authDefaultPassHint: '默认密码：1234（可随时让我帮你改，建议改成强密码）',
                 drawerVisibilityTip: '可见性：点击条目右侧眼睛按钮切换该资产显示',
@@ -1798,8 +1798,8 @@
                 panelExpand: '展开', panelCollapse: '收起',
                 hiddenTag: '已隐藏', assetListLoaded: '已加载资产', sceneCaptured: '场景抓取', assetListLoadFailed: '资产加载失败，请点“刷新”重试',
                 authNeedInput: '请输入验证码', authPassOk: '验证通过', authPassWrong: '验证码错误',
-                stateDetailIdle: '待命', stateDetailWriting: '整理文档', stateDetailResearching: '搜索信息', stateDetailExecuting: '执行任务', stateDetailSyncing: '同步备份', stateDetailError: '出错了',
-                stateLabelIdle: '待命', stateLabelWriting: '整理文档', stateLabelResearching: '搜索信息', stateLabelExecuting: '执行任务', stateLabelSyncing: '同步备份', stateLabelError: '出错了',
+                stateDetailIdle: '待機中', stateDetailWriting: '作業中', stateDetailResearching: '調査中', stateDetailExecuting: '実行中', stateDetailSyncing: '同期中', stateDetailError: '警報',
+                stateLabelIdle: '待機中', stateLabelWriting: '作業中', stateLabelResearching: '調査中', stateLabelExecuting: '実行中', stateLabelSyncing: '同期中', stateLabelError: '警報',
                 statusBrokerDecorating: '正在处理中介装修方案', statusMovingHome: '正在搬新家', statusRestoreHome: '正在回老家', statusRestoreLastBg: '正在回退到上一次背景', statusApplyFavorite: '正在替换收藏地图'
             },
             en: {
@@ -2379,7 +2379,7 @@
                     memoDate.textContent = data.date || '';
                     memoContent.innerHTML = data.memo.replace(/\n/g, '<br>');
                 } else {
-                    memoContent.innerHTML = '<div id="memo-placeholder">暂无昨日日记</div>';
+                    memoContent.innerHTML = '<div id="memo-placeholder">昨日の日記はまだない</div>';
                 }
             } catch (e) {
                 console.error('加载 memo 失败:', e);
@@ -2422,7 +2422,7 @@
         // 懒加载逻辑已取消（体验优先：装饰首屏直接出现）
 
         const STATES = {
-            idle: { name: '待命', area: 'breakroom' },
+            idle: { name: '待機中', area: 'breakroom' },
             writing: { name: '整理文档', area: 'writing' },
             researching: { name: '搜索信息', area: 'researching' },
             executing: { name: '执行任务', area: 'writing' },
@@ -4336,7 +4336,7 @@ function toggleBrokerPanel() {
 
             const visitors = getMergedVisitors();
             if (visitors.length === 0) {
-                list.innerHTML = '<div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">暂无访客</div>';
+                list.innerHTML = '<div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">訪問者はいない</div>';
                 return;
             }
 
@@ -4351,7 +4351,7 @@ function toggleBrokerPanel() {
                     offline: '离线'
                 };
                 const stateMap = {
-                    idle: '待命',
+                    idle: '待機',
                     writing: '工作',
                     researching: '调研',
                     executing: '执行',
@@ -5482,7 +5482,9 @@ function toggleBrokerPanel() {
                     const stateInfo = STATES[nextState] || STATES.idle;
                     // If we're mid-transition, don't restart the path every poll
                     const changed = (pendingDesiredState === null) && (nextState !== currentState);
-                    const nextLine = '[' + getStateLabelByState(nextState) + '] ' + (data.detail || getStateDetailByState(nextState));
+                    const rawDetail = String(data.detail || '').trim();
+                    const leftover = /待命|修行中|暂无|暫無|访客|訪客/.test(rawDetail) || (/[\u4e00-\u9fff]/.test(rawDetail) && !/[\u3040-\u30ff]/.test(rawDetail));
+                    const nextLine = leftover || !rawDetail ? '待機中' : ('待機中' === rawDetail ? '待機中' : ('待機中 ' + rawDetail));
                     if (changed) {
                         typewriterTarget = nextLine;
                         typewriterText = '';

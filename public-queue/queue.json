@@ -1,0 +1,19 @@
+{
+  "queuedInstructions": [
+    {
+      "id": "pub-1788352321541-2bze6w",
+      "room": "AIバーチャルオフィス",
+      "assignee_name": "開発担当Bot2",
+      "text": "test",
+      "body": "test",
+      "queued": true,
+      "executed": false,
+      "delivered": false,
+      "status": "許可待ち",
+      "timestamp": "2026-09-02T12:32:01.541Z",
+      "created_at": "2026-09-02T12:32:01.541Z",
+      "source": "public"
+    }
+  ],
+  "updated_at": "2026-09-02T12:32:30.979903"
+}

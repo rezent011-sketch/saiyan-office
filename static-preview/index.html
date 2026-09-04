@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saiyan Office 🐉</title>
+  <style>
+    @font-face {
+      font-family: 'ArkPixel';
+      src: url('./ark-pixel.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: #1a1a2e;
+      color: #eee;
+      font-family: 'ArkPixel', 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 8px 20px;
+    }
+    h1 {
+      color: #ffd700;
+      font-size: 18px;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .source {
+      color: #94a3b8;
+      font-size: 11px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    #stage {
+      position: relative;
+      width: min(1280px, 100%);
+      aspect-ratio: 16 / 9;
+      border: 4px solid #64477d;
+      image-rendering: pixelated;
+      background: #151522 url('./office_bg_small.webp') center / cover no-repeat;
+      overflow: hidden;
+    }
+    #desk-row {
+      position: absolute;
+      top: 8px;
+      left: 6px;
+      right: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      z-index: 2;
+    }
+    .desk-plate {
+      background: rgba(62, 39, 35, 0.92);
+      color: #ffd700;
+      border: 2px solid #ffd700;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 6px 8px;
+      cursor: default;
+    }
+    .desk-plate.has-url { cursor: pointer; }
+    .desk-plate:hover { filter: brightness(1.08); }
+    #office-board {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      max-height: 48%;
+      overflow: auto;
+      background: rgba(20, 23, 34, 0.92);
+      border: 4px solid #0e1119;
+      box-shadow: inset 0 0 0 2px #1a1b2f;
+      z-index: 3;
+    }
+    #office-board-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 10px;
+      color: #ffd700;
+      font-size: 13px;
+      border-bottom: 2px solid #1a1b2f;
+    }
+    #office-board-source { color: #94a3b8; font-size: 11px; }
+    #office-buckets {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      padding: 8px;
+    }
+    .office-bucket { background: #0f1220; border: 2px solid #2a2f42; padding: 6px; min-width: 0; }
+    .office-bucket-title { text-align: center; font-size: 13px; margin-bottom: 6px; }
+    .office-bucket[data-bucket="動いている"] .office-bucket-title { color: #ffd700; }
+    .office-bucket[data-bucket="許可待ち"] .office-bucket-title { color: #f59e0b; }
+    .office-bucket[data-bucket="できたまま"] .office-bucket-title { color: #94a3b8; }
+    .office-chip-list { display: flex; flex-direction: column; gap: 5px; }
+    .office-chip, a.office-chip {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: #3a3f4f;
+      color: #fff;
+      border: 2px solid #555;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-family: inherit;
+      font-size: 12px;
+      line-height: 1.35;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .office-chip.no-link { cursor: default; }
+    .office-chip .kind { color: #fde68a; font-size: 10px; margin-right: 6px; }
+    .sample-badge {
+      display: inline-block;
+      margin-left: 4px;
+      background: #7c2d12;
+      color: #fed7aa;
+      border: 1px solid #fb923c;
+      padding: 0 4px;
+      font-size: 10px;
+    }
+    .meta, .mates { display: block; font-size: 10px; margin-top: 2px; }
+    .meta { color: #cbd5e1; }
+    .mates { color: #a5b4fc; }
+    .office-empty { color: #64748b; font-size: 11px; text-align: center; padding: 8px 0; }
+    #toast {
+      display: none;
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 8px;
+      background: #1f2937;
+      color: #fde68a;
+      border: 2px solid #f59e0b;
+      padding: 6px 8px;
+      font-size: 11px;
+      z-index: 4;
+    }
+    #office-instruction {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 8px 0;
+      align-items: center;
+    }
+    #office-instruction select,
+    #office-instruction input,
+    #office-instruction button {
+      font-family: inherit;
+      font-size: 12px;
+      background: #3a3f4f;
+      color: #fff;
+      border: 2px solid #555;
+      padding: 6px 8px;
+    }
+    #office-instruction input { flex: 1 1 180px; min-width: 140px; }
+    #office-instruction button { background: #5d4037; border-color: #ffd700; color: #ffd700; cursor: pointer; }
+    #office-instruction-hint { width: 100%; color: #94a3b8; font-size: 10px; }
+    .office-chip.queued { border-color: #f59e0b; }
+    @media (max-width: 800px) {
+      #office-buckets { grid-template-columns: 1fr; }
+      #office-board { max-height: 58%; }
+      .desk-plate { font-size: 10px; padding: 5px 6px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Saiyan Office 🐉</h1>
+  <p class="source">静的プレビュー · ローカルJSON（ライブAPI未接続）</p>
+  <div id="stage">
+    <div id="desk-row"></div>
+    <div id="office-board">
+      <div id="office-board-header">
+        <span>デスク＝Grok部屋 / 作業＝Cursor</span>
+        <span id="office-board-source">Cursor / Grok ライブAPI未接続。デスクは実在の部屋。Cursor作業は未接続のため非表示。</span>
+      </div>
+      <form id="office-instruction">
+        <select id="instruction-room" aria-label="desk"></select>
+        <input id="instruction-text" type="text" maxlength="200" autocomplete="off" placeholder="デスクへの指示を書く" />
+        <button type="submit">送る</button>
+        <div id="office-instruction-hint">投稿・広告・課金はしません。送信はローカル待ち行列（未実行）です。</div>
+      </form>
+      <div id="office-buckets">
+        <section class="office-bucket" data-bucket="動いている">
+          <div class="office-bucket-title">動いている</div>
+          <div class="office-chip-list" id="bucket-running"></div>
+        </section>
+        <section class="office-bucket" data-bucket="許可待ち">
+          <div class="office-bucket-title">許可待ち</div>
+          <div class="office-chip-list" id="bucket-waiting"></div>
+        </section>
+        <section class="office-bucket" data-bucket="できたまま">
+          <div class="office-bucket-title">できたまま</div>
+          <div class="office-chip-list" id="bucket-done"></div>
+        </section>
+      </div>
+    </div>
+    <div id="toast" role="status"></div>
+  </div>
+  <script>
+    const BUCKETS = ['動いている', '許可待ち', 'できたまま'];
+    const BUCKET_IDS = { '動いている': 'bucket-running', '許可待ち': 'bucket-waiting', 'できたまま': 'bucket-done' };
+    const CURSOR_HOME = 'https://cursor.com/agents';
+    const ETA_LABEL = '分・時間の見込み';
+    const FALLBACK = {
+      grokRooms: [
+        { name: '司令塔', status: '動いている', url: '', teammates: ['メインAI社員', 'コンサル管理Bot', '新規事業Bot', '新規顧客開拓Bot'] },
+        { name: 'Xマーケティング自動化', status: '動いている', url: '', teammates: ['Xマーケティング担当Bot'] },
+        { name: '動画生成', status: 'できたまま', url: '', teammates: ['TikTok LIVE切り抜きBot', '動画生成担当Bot'] },
+        { name: '広告運用', status: '許可待ち', url: '', teammates: ['広告運用Bot'] },
+        { name: 'AIバーチャルオフィス', status: '動いている', url: '', teammates: ['開発担当Bot', 'UTAGE・LINE担当Bot', 'クラウド環境構築Bot'] }
+      ],
+      cursorAgents: []
+    };
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+    function bucketOf(item) {
+      const life = String((item && item.lifecycle) || '').toLowerCase();
+      if (life === 'running') return '動いている';
+      if (life === 'finished') return 'できたまま';
+      const raw = String((item && item.status) || '').trim();
+      return BUCKETS.includes(raw) ? raw : 'できたまま';
+    }
+    function etaText(item) {
+      if (!item || typeof item !== 'object') return '';
+      if (Object.prototype.hasOwnProperty.call(item, ETA_LABEL)) {
+        const val = String(item[ETA_LABEL] ?? '').trim();
+        return val ? (ETA_LABEL + ' ' + val) : '';
+      }
+      const eta = item.eta;
+      if (typeof eta === 'string' && eta.includes(ETA_LABEL)) return eta.trim();
+      return '';
+    }
+    function cursorHref(item) {
+      const url = String((item && item.url) || '').trim();
+      return url.startsWith(CURSOR_HOME) ? url : CURSOR_HOME;
+    }
+    function showToast(message) {
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.style.display = 'block';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => { el.style.display = 'none'; }, 2400);
+    }
+    function openRoom(name, url) {
+      const href = String(url || '').trim();
+      if (!href) {
+        showToast('リンク未設定（state.json の url を書いてください）');
+        return;
+      }
+      window.location.href = href;
+    }
+    const STORE = 'saiyan-office-queued-instructions';
+    function loadQueued() {
+      try { const rows = JSON.parse(localStorage.getItem(STORE) || '[]'); return Array.isArray(rows) ? rows : []; }
+      catch (e) { return []; }
+    }
+    function render(data) {
+      const rooms = Array.isArray(data.grokRooms) ? data.grokRooms : FALLBACK.grokRooms;
+      const agents = Array.isArray(data.cursorAgents) ? data.cursorAgents : FALLBACK.cursorAgents;
+      const queued = loadQueued();
+      const roomSel = document.getElementById('instruction-room');
+      if (roomSel) {
+        const cur = roomSel.value;
+        roomSel.innerHTML = rooms.map((r) => `<option value="${escapeHtml(r.name)}">${escapeHtml(r.name)}</option>`).join('');
+        if (cur) roomSel.value = cur;
+      }
+      const deskRow = document.getElementById('desk-row');
+      deskRow.innerHTML = rooms.map((room) => {
+        const url = String(room.url || '').trim();
+        const cls = url ? 'desk-plate has-url' : 'desk-plate';
+        return `<button type="button" class="${cls}" data-room="${escapeHtml(room.name)}" data-url="${escapeHtml(url)}">${escapeHtml(room.name)}</button>`;
+      }).join('');
+      deskRow.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => openRoom(btn.dataset.room, btn.dataset.url));
+      });
+
+      const grouped = { '動いている': [], '許可待ち': [], 'できたまま': [] };
+      rooms.forEach((room) => {
+        grouped[bucketOf(room)].push({ kind: 'desk', room });
+      });
+      agents.forEach((agent) => {
+        grouped[bucketOf(agent)].push({ kind: 'cursor', agent });
+      });
+      queued.forEach((row) => {
+        grouped['許可待ち'].push({ kind: 'queued', row });
+      });
+      BUCKETS.forEach((name) => {
+        const host = document.getElementById(BUCKET_IDS[name]);
+        const items = grouped[name];
+        if (!items.length) {
+          host.innerHTML = '<div class="office-empty">なし</div>';
+          return;
+        }
+        host.innerHTML = items.map((item) => {
+          if (item.kind === 'queued') {
+            return `<div class="office-chip queued no-link"><span class="kind">指示（キュー・未実行）</span>${escapeHtml(item.row.room)}<span class="meta">${escapeHtml(item.row.text)}</span></div>`;
+          }
+          if (item.kind === 'desk') {
+            const room = item.room;
+            const url = String(room.url || '').trim();
+            const mates = (room.teammates || []).join(' / ');
+            const eta = etaText(room);
+            return `<button type="button" class="office-chip${url ? '' : ' no-link'}" data-room="${escapeHtml(room.name)}" data-url="${escapeHtml(url)}"><span class="kind">デスク（実在）</span>${escapeHtml(room.name)}${eta ? `<span class="meta">${escapeHtml(eta)}</span>` : ''}${mates ? `<span class="mates">${escapeHtml(mates)}</span>` : ''}</button>`;
+          }
+          const agent = item.agent;
+          const href = escapeHtml(cursorHref(agent));
+          const bits = [];
+          const life = String(agent.lifecycle || '').toLowerCase();
+          if (life === 'running' || life === 'finished') bits.push(life);
+          if (agent.branch) bits.push(agent.branch);
+          if (agent.prUrl) bits.push(agent.prUrl);
+          const eta = etaText(agent);
+          if (eta) bits.push(eta);
+          const title = agent.title && agent.title !== agent.name ? `<span class="meta">${escapeHtml(agent.title)}</span>` : '';
+          const meta = bits.length ? `<span class="meta">${escapeHtml(bits.join(' · '))}</span>` : '';
+          const sample = agent.sample ? '<span class="sample-badge">サンプル</span>' : '';
+          return `<a class="office-chip" href="${href}"><span class="kind">Cursor作業</span>${escapeHtml(agent.name || agent.title || 'Cursor')}${sample}${title}${meta}</a>`;
+        }).join('');
+        host.querySelectorAll('button.office-chip').forEach((btn) => {
+          btn.addEventListener('click', () => openRoom(btn.dataset.room, btn.dataset.url));
+        });
+      });
+    }
+
+    window.__previewData = FALLBACK;
+    fetch('./state.json', { cache: 'no-store' })
+      .then((r) => r.ok ? r.json() : FALLBACK)
+      .catch(() => FALLBACK)
+      .then((data) => { window.__previewData = data; render(data); });
+    document.getElementById('office-instruction').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const room = (document.getElementById('instruction-room').value || '').trim();
+      const text = (document.getElementById('instruction-text').value || '').trim();
+      if (!room || !text) { showToast('指示を書いてから送ってください'); return; }
+      const rows = loadQueued();
+      rows.push({ id: 'local-' + Date.now(), room, text, status: '許可待ち', queued: true, executed: false });
+      localStorage.setItem(STORE, JSON.stringify(rows.slice(-40)));
+      document.getElementById('instruction-text').value = '';
+      render(window.__previewData || FALLBACK);
+      showToast('待ち行列に入れました（未実行）');
+    });
+  </script>
+</body>
+</html>

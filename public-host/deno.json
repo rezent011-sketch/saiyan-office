@@ -1,0 +1,6 @@
+{
+  "deploy": {
+    "project": "saiyan-ai-virtual-office",
+    "entrypoint": "worker.js"
+  }
+}

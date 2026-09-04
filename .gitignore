@@ -13,7 +13,10 @@ venv/
 
 # Runtime state (local only)
 state.json
+_site/
+public-office/
 agents-state.json
+outbox/*.jsonl
 runtime-config.json
 *.log
 *.out
