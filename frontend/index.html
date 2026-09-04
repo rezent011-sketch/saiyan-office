@@ -7,6 +7,7 @@
     <!-- STAFF_BIND_FIX_20260902E: 海外EC binds only to 開発担当Bot; idle desks are 待機中 -->
     <!-- NO_OVERLAY_CARDS_20260903: no gold staff cards over the Phaser floor; status only on the bottom board -->
     <!-- STAFF_REST_WORK_20260903: on-duty staff animate at desks; 待機中 rest on the sofa lounge -->
+    <!-- WAITING_ROOM_20260904: idle staff sit in a separate 待機部屋 wing; no sofa pile-up -->
     <title>AIバーチャルオフィス</title>
     <style>
         @font-face {
@@ -1286,6 +1287,7 @@
 
             #coords-toggle,
             #pan-toggle,
+            #wait-room-toggle,
             #lang-btn-en,
             #lang-btn-jp {
                 font-size: 12px !important;
@@ -1523,6 +1525,9 @@
     </button>
     <button id="pan-toggle" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 12px); left:12px; z-index:999999; padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">
         視点移動
+    </button>
+    <button id="wait-room-toggle" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 52px); left:12px; z-index:999999; padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#1b2433; color:#86efac;">
+        待機部屋
     </button>
     <div id="lang-toggle-group" style="display:none;"></div>
 
@@ -2004,14 +2009,13 @@
             { x: 170, y: 530 }, { x: 390, y: 530 }, { x: 610, y: 530 }, { x: 860, y: 530 },
             { x: 1080, y: 530 }
         ];
-        // Existing pixel sofa / breakroom (IDLE_SOFA_ANCHOR). Idle staff leave the desks.
-        const STAFF_REST_POINTS = [
-            { x: 748, y: 248 }, { x: 798, y: 236 }, { x: 848, y: 248 },
-            { x: 728, y: 278 }, { x: 798, y: 268 }, { x: 868, y: 278 },
-            { x: 738, y: 308 }, { x: 798, y: 300 }, { x: 858, y: 308 },
-            { x: 708, y: 338 }, { x: 778, y: 334 }, { x: 838, y: 338 },
-            { x: 888, y: 324 }
-        ];
+        // Separate waiting-room wing to the right of the 1280 work floor.
+        const OFFICE_MAP = { width: 2000, height: 720 };
+        const WAITING_ROOM = { x: 1280, y: 0, w: 720, h: 720, focusX: 1640, focusY: 360 };
+        const STAFF_WAIT_POINTS = STAFF_ROSTER.map((_, idx) => ({
+            x: 1416 + (idx % 3) * 196,
+            y: 168 + Math.floor(idx / 3) * 168
+        }));
         const CURSOR_AGENTS_HOME = 'https://cursor.com/agents';
         const ETA_LABEL = '分・時間の見込み';
         let officeBoardToastTimer = null;
@@ -2240,9 +2244,10 @@
 
         function syncStaffLabel(entry) {
             if (!entry || !entry.label || !entry.label.active || !entry.sprite) return;
-            const lift = entry.onDuty ? 118 : 64;
+            const lift = entry.onDuty ? 118 : 78;
             entry.label.setText(staffFloorNameplate(entry.staff));
             entry.label.setPosition(entry.sprite.x, entry.sprite.y - lift);
+            if (entry.label.setWordWrapWidth) entry.label.setWordWrapWidth(180);
         }
 
         function stopStaffTween(entry, key) {
@@ -2292,9 +2297,8 @@
             }
             entry.fidgetTween = game.tweens.add({
                 targets: sprite,
-                scaleX: sprite.scaleX * 1.05,
-                scaleY: sprite.scaleY * 0.92,
-                duration: 980 + (idx % 6) * 60,
+                scaleY: 2.5,
+                duration: 1100 + (idx % 6) * 50,
                 yoyo: true,
                 repeat: -1,
                 ease: 'Sine.easeInOut',
@@ -2320,16 +2324,14 @@
             const sprites = window.staffDeskSprites;
             if (!Array.isArray(sprites) || !game) return;
             const queued = mergeInstructions(data && data.queuedInstructions);
-            let restSlot = 0;
             sprites.forEach((entry, idx) => {
                 if (!entry || !entry.staff || !entry.sprite) return;
                 const view = staffDeskView(entry.staff, data || {}, queued.pending, queued.delivered);
                 const onDuty = staffIsOnDuty(view);
                 const desk = STAFF_DESK_POINTS[idx] || { x: 200, y: 250 };
-                const rest = STAFF_REST_POINTS[restSlot % STAFF_REST_POINTS.length] || desk;
-                if (!onDuty) restSlot += 1;
-                const dest = onDuty ? desk : rest;
-                const poseKey = `${onDuty ? 'work' : 'rest'}:${view.state}:${view.task || ''}`;
+                const seat = STAFF_WAIT_POINTS[idx] || STAFF_WAIT_POINTS[0];
+                const dest = onDuty ? desk : seat;
+                const poseKey = `${onDuty ? 'work' : 'wait'}:${view.state}:${view.task || ''}`;
                 if (entry.poseKey === poseKey) {
                     syncStaffLabel(entry);
                     return;
@@ -2337,18 +2339,10 @@
                 entry.poseKey = poseKey;
                 entry.onDuty = onDuty;
                 playStaffAnim(entry.sprite, idx, onDuty);
-                if (onDuty) {
-                    entry.sprite.setAngle(0);
-                    entry.sprite.setAlpha(1);
-                    entry.sprite.setScale(3.4);
-                    entry.sprite.setFlipX(idx % 2 === 1);
-                } else {
-                    const lie = (idx % 3) === 0;
-                    entry.sprite.setScale(lie ? 2.05 : 2.35);
-                    entry.sprite.setAngle(lie ? 76 : ((idx % 2) ? -10 : 8));
-                    entry.sprite.setAlpha(0.96);
-                    entry.sprite.setFlipX(idx % 2 === 0);
-                }
+                entry.sprite.setAngle(0);
+                entry.sprite.setAlpha(1);
+                entry.sprite.setScale(onDuty ? 3.4 : 2.6);
+                entry.sprite.setFlipX(onDuty ? idx % 2 === 1 : idx % 2 === 0);
                 stopStaffTween(entry, 'moveTween');
                 stopStaffTween(entry, 'fidgetTween');
                 const arrive = () => {
@@ -2358,14 +2352,15 @@
                     startStaffFidget(entry, onDuty, idx, dest);
                     syncStaffLabel(entry);
                 };
-                const dx = Math.abs(entry.sprite.x - dest.x);
-                const dy = Math.abs(entry.sprite.y - dest.y);
-                if (dx > 8 || dy > 8) {
+                const dx = entry.sprite.x - dest.x;
+                const dy = entry.sprite.y - dest.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist > 8) {
                     entry.moveTween = game.tweens.add({
                         targets: entry.sprite,
                         x: dest.x,
                         y: dest.y,
-                        duration: 640 + (idx % 5) * 70,
+                        duration: Math.min(2200, 480 + dist * 0.85),
                         ease: 'Sine.easeInOut',
                         onUpdate: () => syncStaffLabel(entry),
                         onComplete: arrive
@@ -4695,10 +4690,67 @@ function toggleBrokerPanel() {
             this.load.spritesheet('guest_anim_6', '/static/guest_anim_6.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 32, frameHeight: 32 });
         }
 
+        function drawWaitingRoomWing(scene) {
+            const g = scene.add.graphics();
+            g.setDepth(1);
+            g.fillStyle(0x1b2433, 1);
+            g.fillRect(WAITING_ROOM.x, WAITING_ROOM.y, WAITING_ROOM.w, WAITING_ROOM.h);
+            g.fillStyle(0x121821, 1);
+            g.fillRect(WAITING_ROOM.x, 0, 22, WAITING_ROOM.h);
+            g.fillStyle(0x3d2a1a, 1);
+            g.fillRect(WAITING_ROOM.x - 8, 300, 36, 160);
+            g.fillStyle(0x243044, 1);
+            g.fillRect(1314, 56, 656, 608);
+            g.lineStyle(4, 0x86efac, 0.55);
+            g.strokeRect(1324, 66, 636, 588);
+            STAFF_WAIT_POINTS.forEach((p) => {
+                g.fillStyle(0x3e2723, 1);
+                g.fillRect(p.x - 40, p.y - 6, 80, 20);
+                g.fillStyle(0x8d6e63, 1);
+                g.fillRect(p.x - 36, p.y - 20, 72, 16);
+                g.fillStyle(0xc4a574, 1);
+                g.fillRect(p.x - 28, p.y - 28, 56, 10);
+            });
+            scene.add.text(1640, 34, '待機部屋', {
+                fontFamily: 'ArkPixel, monospace',
+                fontSize: '22px',
+                fill: '#86efac',
+                stroke: '#000',
+                strokeThickness: 5
+            }).setOrigin(0.5).setDepth(40);
+            scene.add.text(1640, 60, '仕事のない人はここで休む', {
+                fontFamily: 'ArkPixel, monospace',
+                fontSize: '12px',
+                fill: '#cbd5e1',
+                stroke: '#000',
+                strokeThickness: 3
+            }).setOrigin(0.5).setDepth(40);
+            scene.add.text(1268, 288, '待機部屋 →', {
+                fontFamily: 'ArkPixel, monospace',
+                fontSize: '14px',
+                fill: '#86efac',
+                stroke: '#000',
+                strokeThickness: 4
+            }).setOrigin(1, 0.5).setDepth(40);
+        }
+
+        function focusOfficeCamera(which) {
+            if (!game || !game.cameras || !game.cameras.main) return;
+            const camera = game.cameras.main;
+            const dest = which === 'wait'
+                ? { x: WAITING_ROOM.focusX, y: WAITING_ROOM.focusY }
+                : { x: 640, y: 360 };
+            window.__officeCameraFocus = which === 'wait' ? 'wait' : 'work';
+            camera.pan(dest.x, dest.y, 520, 'Sine.easeInOut');
+            const btn = document.getElementById('wait-room-toggle');
+            if (btn) btn.textContent = window.__officeCameraFocus === 'wait' ? '執務室' : '待機部屋';
+        }
+
         function create() {
             game = this;
             hideGameSkeleton();
             officeBgSprite = this.add.image(640, 360, 'office_bg');
+            drawWaitingRoomWing(this);
 
             // Place furniture: Sofa
             // NOTE: coordinates are interpreted as the TOP-LEFT corner of the sprite
@@ -4762,16 +4814,6 @@ function toggleBrokerPanel() {
             // Sofa stays static when idle (no longer the main idle animation)
             sofa.anims.stop();
             sofa.setTexture('sofa_idle');
-            if (!window.staffRestSign) {
-                window.staffRestSign = this.add.text(IDLE_SOFA_ANCHOR.x, IDLE_SOFA_ANCHOR.y - 78, '休憩', {
-                    fontFamily: 'ArkPixel, monospace',
-                    fontSize: '16px',
-                    fill: '#86efac',
-                    stroke: '#000',
-                    strokeThickness: 4
-                }).setOrigin(0.5);
-                window.staffRestSign.setDepth(25);
-            }
 
             // ピクセル看板
             const plaqueX = config.width / 2;
@@ -5038,8 +5080,8 @@ function toggleBrokerPanel() {
             let panStart = null; // {x,y,sx,sy}
             const camera = game.cameras.main;
 
-            const MAP_W = config.width;
-            const MAP_H = config.height;
+            const MAP_W = OFFICE_MAP.width;
+            const MAP_H = OFFICE_MAP.height;
             function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
             function maxScrollX() {
                 const viewportW = camera.width / Math.max(0.01, camera.zoom);
@@ -5078,7 +5120,10 @@ function toggleBrokerPanel() {
 
                 // 手動パン前だけ中央寄せ
                 if (!hasManuallyPanned) {
-                    camera.centerOn(MAP_W / 2, MAP_H / 2);
+                    const focus = window.__officeCameraFocus === 'work'
+                        ? { x: 640, y: 360 }
+                        : { x: WAITING_ROOM.focusX, y: WAITING_ROOM.focusY };
+                    camera.centerOn(focus.x, focus.y);
                 }
                 camera.scrollX = clamp(camera.scrollX, 0, maxX);
                 camera.scrollY = 0;
@@ -5114,9 +5159,17 @@ function toggleBrokerPanel() {
                 panToggle.addEventListener('click', () => setPanEnabled(!panEnabled));
             }
 
-            // スマホの画面ドラッグは既定オフ。左上スイッチでオン
+            // スマホは横ドラッグで執務室↔待機部屋を見られるようにする
             if (isTouchDevice) {
-                setPanEnabled(false);
+                setPanEnabled(true);
+            }
+            window.__officeCameraFocus = window.__officeCameraFocus || 'wait';
+            focusOfficeCamera(window.__officeCameraFocus);
+            const waitBtn = document.getElementById('wait-room-toggle');
+            if (waitBtn) {
+                waitBtn.addEventListener('click', () => {
+                    focusOfficeCamera(window.__officeCameraFocus === 'wait' ? 'work' : 'wait');
+                });
             }
 
             // iOS/Safari ジェスチャ：

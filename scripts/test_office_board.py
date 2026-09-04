@@ -216,14 +216,16 @@ def main() -> int:
         fail("staff cards must not be painted over the pixel office")
     if "staffFloorNameplate" not in html:
         fail("Phaser nameplates must be name+room only, not status cards")
-    if "STAFF_REST_WORK_20260903" not in html or "STAFF_REST_POINTS" not in html:
+    if "STAFF_REST_WORK_20260903" not in html:
         fail("staff rest/work floor poses missing")
+    if "WAITING_ROOM_20260904" not in html or "STAFF_WAIT_POINTS" not in html:
+        fail("separate 待機部屋 wing missing")
     if "function staffIsOnDuty" not in html or "guest_anim_${i}_work" not in html:
         fail("busy staff must play a work animation at their desk")
-    if "function applyStaffFloorPose" not in html:
-        fail("idle staff must leave desks for the sofa rest area")
-    if "IDLE_SOFA_ANCHOR" not in html or "休憩" not in html:
-        fail("rest area must use the existing sofa lounge")
+    if "function applyStaffFloorPose" not in html or "function drawWaitingRoomWing" not in html:
+        fail("idle staff must sit in the waiting room, not pile on the lounge sofa")
+    if "STAFF_REST_POINTS" in html:
+        fail("idle staff must not reuse the main-lounge sofa pile points")
     for staff_name in TEAMMATE_NAMES:
         if staff_name not in html:
             fail(f"frontend/index.html missing staff {staff_name!r}")

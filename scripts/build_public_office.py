@@ -109,6 +109,8 @@ def assert_public_html(html: str) -> None:
         raise SystemExit("public HTML still paints overlay staff cards")
     if "STAFF_REST_WORK_20260903" not in html or "staffIsOnDuty" not in html:
         raise SystemExit("public HTML missing busy-desk / sofa-rest poses")
+    if "WAITING_ROOM_20260904" not in html or "待機部屋" not in html:
+        raise SystemExit("public HTML missing the separate waiting room")
     if "display: none !important;" not in html or 'class="staff-desk"' in html:
         raise SystemExit("public HTML must not emit gold staff cards over the office")
     if "{ name: '開発担当Bot', room: '海外EC'" not in html:
